@@ -1,12 +1,24 @@
 const express = require('express');
-const main = express.Router();
+const {createProxyMiddleware} = require("http-proxy-middleware");
+const router = express.Router();
 
-main.get('/hello', function (req, res) {
+router.get('/hello', function (req, res) {
     res.send('Hello from main');
 });
 
+let codeProxy = createProxyMiddleware({
+    changeOrigin: true,
+    prependPath: false,
+    target: "http://localhost:8000",
+    logLevel: 'debug',
+    ws: true,
+    pathRewrite: {
+        '^/node/main/vscode': '', // remove base path
+    },
+});
+
+router.all('/vscode/*', codeProxy);
 
 
-
-module.exports = main;
+module.exports = router;
 
