@@ -12,9 +12,9 @@ let codeProxy = createProxyMiddleware({
     target: "http://127.0.0.1:8000/",
     logLevel: 'debug',
     ws: true,
-    // pathRewrite: {
-    //     '^/node/main/vscode': '', // remove base path
-    // },
+    pathRewrite: {
+        '^/node/main/vscode': '', // remove base path
+    },
 });
 
 router.all('/vscode/*', codeProxy);
