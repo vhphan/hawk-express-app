@@ -9,7 +9,7 @@ router.get('/hello', function (req, res) {
 let codeProxy = createProxyMiddleware({
     changeOrigin: true,
     prependPath: false,
-    target: "http://localhost:8000",
+    target: "http://localhost:8000/",
     logLevel: 'debug',
     ws: true,
     pathRewrite: {
