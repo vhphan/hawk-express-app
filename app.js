@@ -4,6 +4,7 @@ const baseUrl = '/node';
 // const {createProxyMiddleware} = require("http-proxy-middleware");
 
 app.use(baseUrl + '/main', require('./routes/main'));
+app.use(baseUrl + '/ctr', require('./routes/ctr'));
 app.get('/node/', function (req, res) {
     res.send('Hello World!');
 });
@@ -20,6 +21,9 @@ app.get('/node/', function (req, res) {
 //     })
 // );
 
+
+app.get('/node/bootstrap.bundle.min.js', (req, res) => res.sendFile(__dirname + '/node_modules/bootstrap/dist/js/bootstrap.bundle.min.js'));
+app.get('/node/bootstrap.min.css', (req, res) => res.sendFile(__dirname + '/node_modules/bootstrap/dist/css/bootstrap.min.css'));
 
 app.listen(3000, function () {
     console.log('Example app listening on port 3000!');
