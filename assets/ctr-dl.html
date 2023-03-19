@@ -1,124 +1,142 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CTR Downloader</title>
 
-    <link href="/node/bootstrap.min.css" rel="stylesheet" />
-  </head>
-  <body>
-    <main class="container-md">
-      <h2>Call Trace Logs</h2>
-      <div
-        id="my-alert"
-        class="alert alert-warning alert-dismissible fade"
-        role="alert"
-      >
-        <span id="my-alert-message"></span>
-        <button
-          type="button"
-          class="btn-close"
-          data-bs-dismiss="alert"
-          aria-label="Close"
-        ></button>
-      </div>
-      <div class="row justify-content-start">
-        <select
-          id="select-timestamp"
-          class="form-select col-4"
-          aria-label="Default select example"
-        ></select>
-        <button
-          class="btn btn-outline-secondary col-1"
-          type="button"
-          id="get-timestamps"
-        >
-          Refresh
-        </button>
-      </div>
-      <div class="input-group mt-3">
-        <span class="input-group-text">Key in site id/name to search</span>
-        <input type="text" id="site-name" class="form-control" />
-        <button
-          class="btn btn-outline-secondary"
-          type="button"
-          id="search-site"
-        >
-          Search
-        </button>
-      </div>
-      <div class="form-group mt-3">
-        <select
-          id="sites"
-          multiple="multiple"
-          class="form-control"
-          style="height: 500px"
-        ></select>
-      </div>
-    </main>
-    <script src="/node/bootstrap.bundle.min.js"></script>
-    <script>
-      // functions to retrieve data from server and populate the select box
-      async function getAvailableTimestamps() {
-        const availableTimestamps = await (
-          await fetch("/node/ctr/getAvailableTimestamps")
-        ).json();
-        const select = document.getElementById("select-timestamp");
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CTR Downloader</title>
 
-        // remove all current options
-        while (select.firstChild) {
-          select.removeChild(select.firstChild);
-        }
+  <link href="bootstrap.min.css" rel="stylesheet" />
+</head>
 
-        availableTimestamps.data.forEach((timestamp) => {
-          const option = document.createElement("option");
-          option.value = timestamp;
-          option.innerText = timestamp;
-          select.appendChild(option);
-        });
+<body>
+  <main class="container-md">
+    <h2>Call Trace Logs</h2>
+    <div id="my-alert" class="alert alert-warning alert-dismissible fade" role="alert">
+      <span id="my-alert-message"></span>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <div class="row justify-content-start">
+      <select id="select-timestamp" class="form-select col-4" aria-label="Default select example"></select>
+      <button class="btn btn-outline-secondary col-3" type="button" id="get-timestamps">
+        Refresh
+      </button>
+    </div>
+    <div class="input-group mt-3">
+      <span class="input-group-text">Key in site id/name to search</span>
+      <input type="text" id="site-name" class="form-control" />
+      <button class="btn btn-outline-secondary" type="button" id="search-site">
+        Search
+      </button>
+    </div>
+    <div class="form-group mt-3">
+      <select id="sites" multiple="multiple" class="form-control" style="height: 500px"></select>
+    </div>
+  </main>
+  <script src="bootstrap.bundle.min.js"></script>
+  <script>
+    // functions to retrieve data from server and populate the select box
+    async function getAvailableTimestamps() {
+      const availableTimestamps = await (
+        await fetch("getAvailableTimestamps")
+      ).json();
+      const select = document.getElementById("select-timestamp");
+
+      // remove all current options
+      while (select.firstChild) {
+        select.removeChild(select.firstChild);
       }
 
-      async function getAvailableSites() {
-        const siteSubstring = document.getElementById("site-name").value;
-        // make sure there are at least 3 characters
-        if (siteSubstring.length < 3) {
-          const alert = document.getElementById("my-alert");
-          const alertMessage = document.getElementById("my-alert-message");
-          alertMessage.innerText = "Please enter at least 3 characters";
-          return;
-        }
+      availableTimestamps.data.forEach((timestamp) => {
+        const option = document.createElement("option");
+        option.value = timestamp;
+        option.innerText = timestamp;
+        select.appendChild(option);
+      });
+    }
 
-        const availableSites = await (
-          await fetch("/node/ctr/getAvailableSites")
-        ).json();
-
-        const select = document.getElementById("sites");
-
-        // remove all current options
-        while (select.firstChild) {
-          select.removeChild(select.firstChild);
-        }
-
-        availableSites.data.forEach((site) => {
-          const option = document.createElement("option");
-          option.value = site;
-          option.innerText = site;
-          select.appendChild(option);
-        });
+    async function getAvailableSites() {
+      const siteSubstring = document.getElementById("site-name").value;
+      const timestamp = document.getElementById("select-timestamp").value;
+      // make sure there are at least 3 characters
+      if (siteSubstring.length < 3) {
+        const alert = document.getElementById("my-alert");
+        const alertMessage = document.getElementById("my-alert-message");
+        alertMessage.innerText = "Please enter at least 3 characters";
+        return;
       }
 
-      // events
-      document
-        .getElementById("get-timestamps")
-        .addEventListener("click", () => {
-          getAvailableTimestamps();
-        });
+      const availableSites = await (
+        await fetch(`getAvailableSites?timestamp=${timestamp}&siteSubstring=${siteSubstring}`)
+      ).json();
 
-      document
-        .getElementById("search-site")
-        .addEventListener("click", () => {});
-    </script>
-  </body>
+      const select = document.getElementById("sites");
+
+      // remove all current options
+      while (select.firstChild) {
+        select.removeChild(select.firstChild);
+      }
+
+      availableSites.data.forEach((site) => {
+        const option = document.createElement("option");
+        option.value = site;
+        option.innerText = site;
+        select.appendChild(option);
+      });
+    }
+
+    // events
+    document
+      .getElementById("get-timestamps")
+      .addEventListener("click", () => {
+        getAvailableTimestamps();
+      });
+
+    document
+      .getElementById("search-site")
+      .addEventListener("click", () => {
+        getAvailableSites();
+      });
+
+    // function to load js file
+    const loadScript = function (url, scriptClass, callback = null) {
+      let isLoaded = document.querySelectorAll('.' + scriptClass);
+      if (!(isLoaded.length > 0)) {
+        let myScript = document.createElement('script');
+        myScript.src = url;
+        myScript.className = scriptClass;
+        document.body.appendChild(myScript);
+        myScript.onload = function () {
+          if (callback) callback();
+        };
+      }
+    };
+
+    // function to load css file
+    const loadCss = function (url, cssClass, callback = null) {
+      let isLoaded = document.querySelectorAll('.' + cssClass);
+      if (!(isLoaded.length > 0)) {
+        let myCss = document.createElement('link');
+        myCss.href = url;
+        myCss.rel = 'stylesheet';
+        myCss.className = cssClass;
+        document.head.appendChild(myCss);
+        myCss.onload = function () {
+          if (callback) callback();
+        };
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+
+      getAvailableTimestamps();
+
+
+
+    }, false);
+
+  </script>
+</body>
+
 </html>

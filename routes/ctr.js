@@ -73,18 +73,31 @@ router.get("/getAvailableTimestamps", function (req, res) {
 });
 
 router.get("/getAvailableSites", function (req, res) {
-  const { timeStamp, siteSubString } = req.query;
-  const sites = getFoldersInDaySubFolder(timeStamp).filter((d) => {
+  const { timestamp, siteSubString } = req.query;
+  const sites = getFoldersInDaySubFolder(timestamp);
+  const filteredSites = sites.filter((d) => {
     const splittedString = d.split(",");
     const meContext = splittedString.find((s) => s.includes("MeContext="));
     const meContextValue = meContext.split("=")[1];
     return meContextValue.includes(siteSubString);
   });
 
+
   res.json({
     success: true,
-    data: sites,
+    data: filteredSites,
   });
 });
+
+
+
+router.get('/bootstrap.bundle.min.js', (req, res) => {
+  console.log(global);
+  res.sendFile(global.__basedir + '/node_modules/bootstrap/dist/js/bootstrap.bundle.min.js')
+});
+
+router.get('/bootstrap.min.css', (req, res) => res.sendFile(global.__basedir + '/node_modules/bootstrap/dist/css/bootstrap.min.css'));
+
+
 
 module.exports = router;
