@@ -1,7 +1,12 @@
 const express = require('express');
 const app = express();
+const bodyParser = require("body-parser");
+
 const baseUrl = '/node';
 global.__basedir = __dirname;
+
+app.use(bodyParser.json({limit: "50mb"}));
+app.use(bodyParser.urlencoded({limit: "50mb", extended: true, parameterLimit:50000}));
 
 // const {createProxyMiddleware} = require("http-proxy-middleware");
 const { codeProxy } = require('./middleware/proxies');

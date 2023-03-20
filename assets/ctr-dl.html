@@ -8,21 +8,26 @@
   <title>CTR Downloader</title>
 
   <link href="bootstrap.min.css" rel="stylesheet" />
+  <style>
+    /* @import url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css"); */
+  </style>
 </head>
 
 <body>
   <main class="container-md">
     <h2>Call Trace Logs</h2>
-    <div id="my-alert" class="alert alert-warning alert-dismissible fade" role="alert">
-      <span id="my-alert-message"></span>
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+
+    <div id="alert-container">
+
     </div>
+
     <div class="row justify-content-start">
       <select id="select-timestamp" class="form-select col-4" aria-label="Default select example"></select>
-      <button class="btn btn-outline-secondary col-3" type="button" id="get-timestamps">
+      <button class="btn btn-outline-primary col-4 mt-1" type="button" id="get-timestamps">
         Refresh
       </button>
     </div>
+
     <div class="input-group mt-3">
       <span class="input-group-text">Key in site id/name to search</span>
       <input type="text" id="site-name" class="form-control" />
@@ -30,24 +35,65 @@
         Search
       </button>
     </div>
-    <div class="form-group mt-3">
-      <select id="sites" multiple="multiple" class="form-control" style="height: 500px"></select>
+
+    <div class="row">
+      <div class="col-5 mt-3">
+        <input type="text" id="filter-sites" class="form-control" placeholder="Filter" />
+      </div>
+      <div class="row justify-content-start mt-3 col-2"></div>
+      <div class="col-5 mt-3">
+        <input type="text" id="filter-selected-sites" class="form-control" placeholder="Filter" />
+      </div>
+    </div>
+    <div class="row">
+      <div class="form-group mt-3 col-5">
+        <select id="sites" multiple="multiple" class="form-control" style="height: 350px"></select>
+      </div>
+
+      <div class="row justify-content-start mt-3 col-2" style="height: 150px">
+        <button class="btn btn-outline-primary h-25 mt-3" type="button" id="add-site">
+          <i class="bi-plus-circle"></i>
+          Add
+          <i class="bi-arrow-right"></i>
+        </button>
+        <button class="btn btn-outline-primary h-25 mt-3" type="button" id="remove-site">
+          <i class="bi-trash"></i>
+          Remove
+        </button>
+      </div>
+
+      <div class="form-group mt-3 col-5">
+        <select id="selected-sites" multiple="multiple" class="form-control" style="height: 350px"></select>
+      </div>
+    </div>
+
+    <div class="row justify-content-start mt-3">
+      <button class="btn btn-primary col-4" type="button" id="download-selected-sites">
+        Download
+      </button>
     </div>
   </main>
+
   <script src="bootstrap.bundle.min.js"></script>
+
   <script>
     // functions to retrieve data from server and populate the select box
     async function getAvailableTimestamps() {
       const availableTimestamps = await (
         await fetch("getAvailableTimestamps")
       ).json();
+      if (availableTimestamps.data.length === 0) {
+        createAlert('No timestamps available. Please try again later.')
+        return;
+      }
+      
       const select = document.getElementById("select-timestamp");
 
       // remove all current options
       while (select.firstChild) {
         select.removeChild(select.firstChild);
       }
-
+      
       availableTimestamps.data.forEach((timestamp) => {
         const option = document.createElement("option");
         option.value = timestamp;
@@ -55,21 +101,56 @@
         select.appendChild(option);
       });
     }
+    
+    const createAlert = function (msg) {
+      const alert = document.createElement("div");
+      alert.classList.add("alert");
+      alert.classList.add("alert-danger");
+      alert.classList.add("alert-dismissible");
+      alert.classList.add("fade");
+      alert.setAttribute("role", "alert");
+      // alert.innerHTML = `
+      //   <span id="my-alert-message"></span>
+      //   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      // `;
+      const alertMessageContainer = document.createElement("span");
+      const alertDismissButton = document.createElement("button");
+      alertDismissButton.type = "button";
+      alertDismissButton.classList.add("btn-close");
+      alertDismissButton.setAttribute("data-bs-dismiss", "alert");
+      alertDismissButton.setAttribute("aria-label", "Close");
+      alert.appendChild(alertMessageContainer);
+      alert.appendChild(alertDismissButton);
+
+      // show alert: add show class if not in class list
+      if (!alert.classList.contains("show")) {
+        alert.classList.add("show");
+      }
+
+      alertMessageContainer.innerText = msg;
+      document.querySelector("#alert-container").appendChild(alert);
+
+    }
 
     async function getAvailableSites() {
       const siteSubstring = document.getElementById("site-name").value;
       const timestamp = document.getElementById("select-timestamp").value;
       // make sure there are at least 3 characters
       if (siteSubstring.length < 3) {
-        const alert = document.getElementById("my-alert");
-        const alertMessage = document.getElementById("my-alert-message");
-        alertMessage.innerText = "Please enter at least 3 characters";
+        createAlert('Please enter at least 3 characters to search to search sites.')
         return;
       }
 
       const availableSites = await (
-        await fetch(`getAvailableSites?timestamp=${timestamp}&siteSubstring=${siteSubstring}`)
+        await fetch(
+          `getAvailableSites?timestamp=${timestamp}&siteSubstring=${siteSubstring}`
+        )
       ).json();
+
+      if (availableSites.data.length === 0) {
+        createAlert('No sites available. Please try a different search term.')
+        return;
+      } 
 
       const select = document.getElementById("sites");
 
@@ -86,24 +167,10 @@
       });
     }
 
-    // events
-    document
-      .getElementById("get-timestamps")
-      .addEventListener("click", () => {
-        getAvailableTimestamps();
-      });
-
-    document
-      .getElementById("search-site")
-      .addEventListener("click", () => {
-        getAvailableSites();
-      });
-
-    // function to load js file
     const loadScript = function (url, scriptClass, callback = null) {
-      let isLoaded = document.querySelectorAll('.' + scriptClass);
+      let isLoaded = document.querySelectorAll("." + scriptClass);
       if (!(isLoaded.length > 0)) {
-        let myScript = document.createElement('script');
+        let myScript = document.createElement("script");
         myScript.src = url;
         myScript.className = scriptClass;
         document.body.appendChild(myScript);
@@ -113,28 +180,168 @@
       }
     };
 
-    // function to load css file
     const loadCss = function (url, cssClass, callback = null) {
-      let isLoaded = document.querySelectorAll('.' + cssClass);
+      let isLoaded = document.querySelectorAll("." + cssClass);
       if (!(isLoaded.length > 0)) {
-        let myCss = document.createElement('link');
+        let myCss = document.createElement("link");
         myCss.href = url;
-        myCss.rel = 'stylesheet';
+        myCss.rel = "stylesheet";
         myCss.className = cssClass;
         document.head.appendChild(myCss);
         myCss.onload = function () {
           if (callback) callback();
         };
       }
-    }
+    };
 
-    document.addEventListener('DOMContentLoaded', function () {
+    const addSitesToList = function () {
+      const sites = document.getElementById("sites");
 
-      getAvailableTimestamps();
+      const selectedSites = document.getElementById("selected-sites");
+      const selectedSitesOptions = selectedSites.options;
 
+      const sitesOptions = sites.options;
+      const selectedSitesOptionsLength = selectedSitesOptions.length;
+      const sitesOptionsLength = sitesOptions.length;
 
+      for (let i = 0; i < sitesOptionsLength; i++) {
+        if (sitesOptions[i].selected) {
+          let option = document.createElement("option");
+          option.value = sitesOptions[i].value;
+          option.text = sitesOptions[i].text;
+          // check is selected site is already in the list
+          let isDuplicate = false;
+          for (let j = 0; j < selectedSitesOptionsLength; j++) {
+            if (selectedSitesOptions[j].value === option.value) {
+              isDuplicate = true;
+              break;
+            }
+          }
+          if (!isDuplicate) {
+            selectedSitesOptions.add(option);
+          }
+        }
+      }
+    };
 
-    }, false);
+    const removeSitesFromList = function () {
+      const selectedSites = document.getElementById("selected-sites");
+      const selectedSitesOptions = selectedSites.options;
+      const selectedSitesOptionsLength = selectedSitesOptions.length;
+      indexOfSitesToRemove = [];
+      for (let i = 0; i < selectedSitesOptionsLength; i++) {
+        if (selectedSitesOptions[i].selected) {
+          indexOfSitesToRemove.push(i);
+        }
+      }
+      indexOfSitesToRemove.reverse().forEach((index) => {
+        selectedSitesOptions.remove(index);
+      });
+    };
+
+    const filterSitesList = function () {
+      const filterString = document.getElementById("filter-sites").value;
+      const sites = document.getElementById("sites");
+      const sitesOptions = sites.options;
+      const sitesOptionsLength = sitesOptions.length;
+      for (let i = 0; i < sitesOptionsLength; i++) {
+        if (
+          sitesOptions[i].text
+            .toLowerCase()
+            .includes(filterString.toLowerCase())
+        ) {
+          sitesOptions[i].style.display = "block";
+        } else {
+          sitesOptions[i].style.display = "none";
+        }
+      }
+    };
+
+    const filterSelectedSitesList = function () {
+      const filterString = document.getElementById(
+        "filter-selected-sites"
+      ).value;
+      const selectedSites = document.getElementById("selected-sites");
+      const selectedSitesOptions = selectedSites.options;
+      const selectedSitesOptionsLength = selectedSitesOptions.length;
+      for (let i = 0; i < selectedSitesOptionsLength; i++) {
+        if (
+          selectedSitesOptions[i].text
+            .toLowerCase()
+            .includes(filterString.toLowerCase())
+        ) {
+          selectedSitesOptions[i].style.display = "block";
+        } else {
+          selectedSitesOptions[i].style.display = "none";
+        }
+      }
+    };
+
+    const downloadSelectedSites = async function () {
+      const selectedTimestamp =
+        document.querySelector("#select-timestamp").value;
+      const selectedSitesValues = Array.from(
+        document.querySelectorAll("#selected-sites option")
+      ).map((option) => option.value);
+      selectedSitesQueryParams = selectedSitesValues
+        .map((d) => `sites[]=${d}`)
+        .join("&");
+
+      const result = await (
+        fetch(
+          `downloadSelectedSites?timestamp=${selectedTimestamp}&${selectedSitesQueryParams}`
+        )
+      );
+    };
+
+    document.addEventListener(
+      "DOMContentLoaded",
+      function () {
+        getAvailableTimestamps();
+        // events
+        document
+          .getElementById("get-timestamps")
+          .addEventListener("click", () => {
+            getAvailableTimestamps();
+          });
+
+        document
+          .getElementById("search-site")
+          .addEventListener("click", () => {
+            getAvailableSites();
+          });
+
+        document.getElementById("add-site").addEventListener("click", () => {
+          addSitesToList();
+        });
+
+        document
+          .getElementById("remove-site")
+          .addEventListener("click", () => {
+            removeSitesFromList();
+          });
+
+        document
+          .getElementById("filter-sites")
+          .addEventListener("keyup", () => {
+            filterSitesList();
+          });
+
+        document
+          .getElementById("filter-selected-sites")
+          .addEventListener("keyup", () => {
+            filterSelectedSitesList();
+          });
+
+        document
+          .getElementById("download-selected-sites")
+          .addEventListener("click", () => {
+            downloadSelectedSites();
+          });
+
+      },
+      false
+    );
 
   </script>
 </body>
