@@ -52,7 +52,7 @@ const getMeContextFromString = (d) => {
 
 }
 
-const zipListOfFiles = function(listOfFilesToZip, zipFilename){
+const zipListOfFiles = function (listOfFilesToZip, zipFilename) {
   const AdmZip = require('adm-zip');
   const zip = new AdmZip();
   listOfFilesToZip.forEach((file) => {
@@ -66,6 +66,10 @@ const zipListOfFiles = function(listOfFilesToZip, zipFilename){
 
 router.get("/ctr-dl", function (req, res) {
   res.sendFile(path.join(appDir, "/assets/ctr-dl.html"));
+});
+
+router.get('/ctr-dl.js', function (req, res) {
+  res.sendFile(path.join(appDir, "/assets/ctr-dl.js"));
 });
 
 router.get("/getAvailableDatas", function (req, res) {
@@ -116,12 +120,16 @@ router.get("/getAvailableSites", function (req, res) {
 });
 
 
-
 router.get('/bootstrap.bundle.min.js', (req, res) => {
   res.sendFile(global.__basedir + '/node_modules/bootstrap/dist/js/bootstrap.bundle.min.js')
 });
 
+router.get('/bootstrap.bundle.min.js.map', (req, res) => {
+  res.sendFile(global.__basedir + '/node_modules/bootstrap/dist/js/bootstrap.bundle.min.js.map')
+});
+
 router.get('/bootstrap.min.css', (req, res) => res.sendFile(global.__basedir + '/node_modules/bootstrap/dist/css/bootstrap.min.css'));
+router.get('/bootstrap.min.css.map', (req, res) => res.sendFile(global.__basedir + '/node_modules/bootstrap/dist/css/bootstrap.min.css.map'));
 
 // /data4/BRF/CTR_LOGS/bot-sftp-sharepoint-service-ver1-BRF-CTR__EANKRAG__20230315165518/CTR_Files/20230315
 router.get('/downloadSelectedSites', async (req, res) => {
@@ -163,19 +171,34 @@ router.get('/downloadSelectedSites', async (req, res) => {
 
   const zipName = new Date().getTime();
   const randomChars = Math.random().toString(36).slice(-4);
-  const zipFilePath = global.__basedir + '/tmp/dl/' + randomChars + zipName + ".zip";
+  const zipFilename = randomChars + zipName + ".zip";
+  const zipFilePath = global.__basedir + '/tmp/dl/' + zipFilename;
 
   // create a zip archive and add all files to it
   zipListOfFiles(finalListOfFiles, zipFilePath);
 
+  // create a download link to the zip file
+  const downloadLink = "tmp/dl/" + zipFilename;
+
+
+
 
   res.json({
     success: true,
-    data: {zipFilePath: zipFilePath}
+    data: {
+      // zipFilePath: zipFilePath
+      downloadLink,
+      zipFilename
+    }
   });
 
 });
 
+router.get('/tmp/dl/:filename', (req, res) => {
+  const { filename } = req.params;
+  const filePath = global.__basedir + '/tmp/dl/' + filename;
+  res.download(filePath);
+});
 
 
 module.exports = router;

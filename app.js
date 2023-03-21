@@ -5,8 +5,8 @@ const bodyParser = require("body-parser");
 const baseUrl = '/node';
 global.__basedir = __dirname;
 
-app.use(bodyParser.json({limit: "50mb"}));
-app.use(bodyParser.urlencoded({limit: "50mb", extended: true, parameterLimit:50000}));
+app.use(bodyParser.json({ limit: "50mb" }));
+app.use(bodyParser.urlencoded({ limit: "50mb", extended: true, parameterLimit: 50000 }));
 
 // const {createProxyMiddleware} = require("http-proxy-middleware");
 const { codeProxy } = require('./middleware/proxies');
@@ -34,6 +34,16 @@ app.get('/node/bootstrap.min.css', (req, res) => res.sendFile(__dirname + '/node
 
 app.use('/node/vscode/**', codeProxy);
 
+// set folder tmp/dl as static folder
+
 app.listen(3000, function () {
     console.log('Example app listening on port 3000!');
+    console.log(process.env.NODE_ENV);
+    console.log(__dirname);
 });
+
+// if in dev mode redirect to /ctr/ctr-dl
+// TODO: remove this in production
+if (process.env.NODE_ENV === "development") {
+    app.get('/', (req, res) => res.redirect('/node/ctr/ctr-dl'));
+}
