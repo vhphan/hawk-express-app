@@ -87,18 +87,20 @@ const getAvailableTimestamps = async function () {
 
 const getAvailableSites = async function () {
     const siteSubstring = document.getElementById("site-name").value;
-    const timestamp = document.getElementById("select-timestamp").value;
+    const selectedDate = document.getElementById("selected-date").value;
+    const selectedHour = document.getElementById("selected-hour").value;
+
     // make sure there are at least 3 characters
-    if (siteSubstring.length < 3) {
+    if (siteSubstring.length < 5) {
         createAlert(
-            "Please enter at least 3 characters to search to search sites."
+            "Please enter at least 5 characters to search to search sites."
         );
         return;
     }
 
     const availableSites = await (
         await fetch(
-            `getAvailableSites?timestamp=${timestamp}&siteSubstring=${siteSubstring}`
+            `getAvailableSites?selectedDate=${selectedDate}&selectedHour=${selectedHour}&siteSubstring=${siteSubstring}`
         )
     ).json();
 
@@ -247,11 +249,16 @@ const filterSelectedSitesList = function () {
 
 const downloadSelectedSites = async function () {
 
-    const selectedTimestamp =
-        document.querySelector("#select-timestamp").value;
+    const selectedDate =
+        document.querySelector("#selected-date").value;
+
+    const selectedHour =
+        document.querySelector("#selected-hour").value;
+
     const selectedSitesValues = Array.from(
         document.querySelectorAll("#selected-sites option")
     ).map((option) => option.value);
+
     selectedSitesQueryParams = selectedSitesValues
         .map((d) => `sites[]=${d}`)
         .join("&");
@@ -260,8 +267,7 @@ const downloadSelectedSites = async function () {
     const downloadDiv = document.getElementById("download-link");
 
     // disable the download button
-    document.getElementById("download-selected-sites").disabled = true;
-
+    disableButtons();
     // add a spinner to download div
     spinnerSpan.innerHTML = `
     <p>Preparing download link... Please wait...</p>
@@ -274,11 +280,11 @@ const downloadSelectedSites = async function () {
 
     try {
         const result = await myFetchJson(
-            `downloadSelectedSites?timestamp=${selectedTimestamp}&${selectedSitesQueryParams}`
+            `downloadSelectedSites?selectedDate=${selectedDate}&selectedHour=${selectedHour}&${selectedSitesQueryParams}`
         );
         const { data } = result;
         const { downloadLink, zipFilename } = data;
-        createAlert("Download link is ready. If download does not start automatically, please click the link below.", 'primary');
+        createAlert("Download link is ready. Please click the downlink to start downloading.", 'primary');
         // get the base url
         const baseUrl = window.location.origin;
         //get all url path components from current location except the last one
@@ -306,29 +312,71 @@ const downloadSelectedSites = async function () {
         downloadDiv.innerHTML = "";
     } finally {
         spinnerSpan.innerHTML = "";
-        document.getElementById("download-selected-sites").disabled = false;
+        enableButtons();
     }
 
-
 };
+
+function resetForm() {
+    document.getElementById("sites").innerHTML = "";
+    // clear the selected sites list
+    document.getElementById("selected-sites").innerHTML = "";
+    // clear the download link
+    document.getElementById("download-link").innerHTML = "";
+}
+
+function disableButtons() {
+    document.getElementById("search-site").disabled = true;
+    document.getElementById("download-selected-sites").disabled = true;
+}
+
+function enableButtons() {
+    document.getElementById("search-site").disabled = false;
+    document.getElementById("download-selected-sites").disabled = false;
+}
 
 
 const App = {
 
     init: function () {
 
-        getAvailableTimestamps();
         // events
-        document
-            .getElementById("get-timestamps")
-            .addEventListener("click", () => {
-                getAvailableTimestamps();
-            });
 
         document
             .getElementById("search-site")
-            .addEventListener("click", () => {
-                getAvailableSites();
+            .addEventListener("click", async () => {
+
+                // check if the date and hour are selected
+                const selectedDate =
+                    document.querySelector("#selected-date").value;
+
+                const selectedHour =
+                    document.querySelector("#selected-hour").value;
+
+                if (selectedDate === "" || selectedHour === "") {
+                    createAlert("Please select a date and hour.");
+                    return;
+                }
+
+                const spinnerDiv = document.querySelector('#spinner-span-search-sites');
+                spinnerDiv.innerHTML = `
+                <p>Fetching data... Please wait...</p>
+                <div class="spinner-grow text-primary" style="width: 5rem; height: 5rem;" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                `;
+                try {
+                    resetForm();
+                    // disable all buttons
+                    disableButtons();
+                    await getAvailableSites();
+                } catch (error) {
+                    console.log(error);
+                } finally {
+                    spinnerDiv.innerHTML = "";
+                    enableButtons();
+                }
+
             });
 
         document.getElementById("add-site").addEventListener("click", () => {
@@ -358,6 +406,21 @@ const App = {
             .addEventListener("click", () => {
                 downloadSelectedSites();
             });
+
+        document
+            .querySelector("#selected-date")
+            .addEventListener("change", () => {
+                resetForm();
+            });
+
+        document
+            .querySelector("#selected-hour")
+            .addEventListener("change", () => {
+                resetForm();
+            });
+
+
+
 
     }
 
