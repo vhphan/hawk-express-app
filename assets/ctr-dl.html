@@ -26,15 +26,16 @@
 
       <div class="row border-primary border p-2 m-0">
         <label for="date" class="col-1 col-form-label text-end">Date</label>
-        <div class="col-5">
+        <div class="col-3">
           <div class="input-group date" id="datepicker">
             <input type="date" class="form-control" id="selected-date" />
           </div>
         </div>
 
         <!-- hour selector -->
-        <label for="hour" class="col-1 col-form-label text-end">Hour</label>
-        <div class="col-5">
+        <label for="selected-hour" class="col-2 col-form-label text-end">Start Hour</label>
+
+        <div class="col-2">
           <select class="form-select" id="selected-hour">
             <option value="00">00</option>
             <option value="01">01</option>
@@ -62,7 +63,82 @@
             <option value="23">23</option>
           </select>
         </div>
+        <label for="selected-hour-end" class="col-2 col-form-label text-end">End Hour</label>
 
+        <div class="col-2">
+          <select class="form-select" id="selected-hour-end">
+            <option value="00">00</option>
+            <option value="01">01</option>
+            <option value="02">02</option>
+            <option value="03">03</option>
+            <option value="04">04</option>
+            <option value="05">05</option>
+            <option value="06">06</option>
+            <option value="07">07</option>
+            <option value="08">08</option>
+            <option value="09">09</option>
+            <option value="10">10</option>
+            <option value="11">11</option>
+            <option value="12">12</option>
+            <option value="13">13</option>
+            <option value="14">14</option>
+            <option value="15">15</option>
+            <option value="16">16</option>
+            <option value="17">17</option>
+            <option value="18">18</option>
+            <option value="19">19</option>
+            <option value="20">20</option>
+            <option value="21">21</option>
+            <option value="22">22</option>
+            <option value="23">23</option>
+          </select>
+        </div>
+
+      </div>
+
+      <div class="mt-3 p-3 border-primary border">
+        <!-- checkboxes to multi-select type of files -->
+        <div>Please select file types to download:</div>
+        <div class="form-check form-check-inline">
+          <input
+            class="form-check-input file-type-to-download"
+            type="checkbox"
+            id="cucp0"
+            value="CUCP0"
+            checked
+          />
+          <label class="form-check-label" for="cucp0">CUCP0</label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input
+            class="form-check-input file-type-to-download"
+            type="checkbox"
+            id="cuup0"
+            value="CUUP0"
+            checked
+          />
+          <label class="form-check-label" for="cuup0">CUUP0</label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input
+            class="form-check-input file-type-to-download"
+            type="checkbox"
+            id="du0"
+            value="DU0"
+            checked
+          />
+          <label class="form-check-label" for="du0">DU0</label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input
+            class="form-check-input file-type-to-download"
+            type="checkbox"
+            id="dul1"
+            value="DUL1"
+            checked
+          />
+          <label class="form-check-label" for="dul1">DUL1</label>
+        </div>
       </div>
 
       <div class="input-group mt-3">

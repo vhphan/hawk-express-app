@@ -49,21 +49,42 @@ router.get('/bootstrap.bundle.min.js', (req, res) => {
   res.sendFile(global.__basedir + '/node_modules/bootstrap/dist/js/bootstrap.bundle.min.js')
 });
 
-
 router.get('/bootstrap.bundle.min.js.map', (req, res) => {
   res.sendFile(global.__basedir + '/node_modules/bootstrap/dist/js/bootstrap.bundle.min.js.map')
 });
 
-
 router.get('/bootstrap.min.css', (req, res) => res.sendFile(global.__basedir + '/node_modules/bootstrap/dist/css/bootstrap.min.css'));
+
 router.get('/bootstrap.min.css.map', (req, res) => res.sendFile(global.__basedir + '/node_modules/bootstrap/dist/css/bootstrap.min.css.map'));
 
 
 router.get('/downloadSelectedSites', async (req, res) => {
 
   console.log(req.query);
-  const { selectedDate, selectedHour, sites } = req.query;
-  const finalListOfFiles = searchFilesWithPatternAndMeContext('/data4', selectedDate.replaceAll('-', '') + '.' + selectedHour, sites);
+  const { selectedDate, selectedHour, selectedHourEnd, sites, fileTypes } = req.query;
+
+  // loop through all hours and get all files
+  let finalListOfFiles = [];
+
+  for (let i = parseInt(selectedHour); i <= parseInt(selectedHourEnd); i++) {
+    const hour = i < 10 ? '0' + i : i;
+    const dateHour = selectedDate.replaceAll('-', '') + '.' + hour;
+    const initialListOfFiles = searchFilesWithPatternAndMeContext('/data4', dateHour, sites);
+
+    // filter files by file type
+    const filteredListOfFiles = initialListOfFiles.filter((file) => {
+      const fileTypesChecks = fileTypes.map((fileType) => {
+        if (file.includes('_celltracefile_' + fileType)) {
+          return true;
+        }
+        return false;
+      });
+      return fileTypesChecks.includes(true);
+    });
+
+    finalListOfFiles = finalListOfFiles.concat(filteredListOfFiles);
+
+  }
 
   const zipName = new Date().getTime();
   const randomChars = Math.random().toString(36).slice(-4);
@@ -84,6 +105,7 @@ router.get('/downloadSelectedSites', async (req, res) => {
       zipFilename
     }
   });
+
 
 });
 

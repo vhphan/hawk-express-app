@@ -59,7 +59,6 @@ const myFetchJson = async function (url, options) {
 };
 
 
-
 // functions to retrieve data from server and populate the select box
 const getAvailableTimestamps = async function () {
     const availableTimestamps = await (
@@ -89,6 +88,7 @@ const getAvailableSites = async function () {
     const siteSubstring = document.getElementById("site-name").value;
     const selectedDate = document.getElementById("selected-date").value;
     const selectedHour = document.getElementById("selected-hour").value;
+    const selectedHourEnd = document.getElementById("selected-hour-end").value;
 
     // make sure there are at least 3 characters
     if (siteSubstring.length < 5) {
@@ -106,7 +106,7 @@ const getAvailableSites = async function () {
 
     if (availableSites.data.length === 0) {
         createAlert(
-            "No sites available. Please try a different search term."
+            "No sites available. Please try different search criterias."
         );
         return;
     }
@@ -255,6 +255,8 @@ const downloadSelectedSites = async function () {
     const selectedHour =
         document.querySelector("#selected-hour").value;
 
+    const selectedHourEnd = document.querySelector("#selected-hour-end").value;
+
     const selectedSitesValues = Array.from(
         document.querySelectorAll("#selected-sites option")
     ).map((option) => option.value);
@@ -278,9 +280,16 @@ const downloadSelectedSites = async function () {
     `;
     downloadDiv.innerHTML = "";
 
+    // additional parameters to be passed to the fetch function
+    // file types checkboxes
+    const fileTypes = document.querySelectorAll('.file-type-to-download');
+    const fileTypesToDownload = Array.from(fileTypes).filter((fileType) => fileType.checked).map((fileType) => fileType.value);
+    const fileTypesToDownloadQueryParams = fileTypesToDownload.map((d) => `fileTypes[]=${d}`).join("&");
+
+
     try {
         const result = await myFetchJson(
-            `downloadSelectedSites?selectedDate=${selectedDate}&selectedHour=${selectedHour}&${selectedSitesQueryParams}`
+            `downloadSelectedSites?selectedDate=${selectedDate}&selectedHour=${selectedHour}&selectedHourEnd=${selectedHourEnd}&${selectedSitesQueryParams}&${fileTypesToDownloadQueryParams}`
         );
         const { data } = result;
         const { downloadLink, zipFilename } = data;
@@ -413,12 +422,49 @@ const App = {
                 resetForm();
             });
 
+        const isSelectedHoursValid = () => {
+            const selectedHourEnd = parseInt(document.querySelector("#selected-hour-end").value);
+            const selectedHour = parseInt(document.querySelector("#selected-hour").value);
+
+            // check if the end hour is selected. if not set to the start hour
+            if (selectedHourEnd === 0) {
+                document.querySelector("#selected-hour-end").value = document.querySelector("#selected-hour").value;
+                return true;
+            }
+
+            if (selectedHourEnd < selectedHour) {
+                createAlert("Invalid hour range. End hour is set to Start hour.");
+                document.querySelector("#selected-hour-end").value = document.querySelector("#selected-hour").value;;
+                return false;
+            }
+            return true;
+        }
+
         document
             .querySelector("#selected-hour")
             .addEventListener("change", () => {
+                if (!isSelectedHoursValid()) {
+                    return;
+                }
                 resetForm();
             });
 
+        document
+            .querySelector("#selected-hour-end")
+            .addEventListener("change", () => {
+                if (!isSelectedHoursValid()) {
+                    return;
+                }
+                resetForm();
+            });
+
+
+        document.querySelectorAll('.file-type-to-download').forEach((fileType) => {
+            fileType.addEventListener('change', () => {
+                // clear the download link
+                document.getElementById("download-link").innerHTML = "";
+            })
+        });
 
 
 
