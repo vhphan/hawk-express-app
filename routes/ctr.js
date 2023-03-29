@@ -131,12 +131,36 @@ router.get("/js/:jsFile", function (req, res) {
   res.sendFile(path.join(appDir, `/assets/${jsFile}`));
 });
 
+const runCommands = function (logFilePath, commands) {
+  // run commands as a child process
+  const { exec } = require("child_process");
+  commands.forEach((command) => {
+    exec(command, (error, stdout, stderr) => {
 
+      if (error) {
+        console.log(`error: ${error.message}`);
+        // write error to log file
+        fs.appendFileSync(logFilePath, error.message);
+        return;
+      }
+      if (stderr) {
+        console.log(`stderr: ${stderr}`);
+        fs.appendFileSync(logFilePath, stderr);
+        return;
+      }
+      console.log(`stdout: ${stdout}`);
+      fs.appendFileSync(logFilePath, stdout);
+
+    });
+  });
+
+}
 
 router.post('/uploadShellScript', (req, res) => {
 
-  console.log(req.files);
-  const { shellScriptFile } = req.files[0];
+  // get uploaded file from form data
+  const shellScriptFile = req.files.shellScriptFile;
+
   const shellScriptFileName = shellScriptFile.name;
   const shellFolder = '/home/hawkuser/RAN/CTR_Files_bot-sftp-sharepoint-service-ver1';
   const shellScriptFilePath = `${shellFolder}/${shellScriptFileName}`;
@@ -155,25 +179,39 @@ router.post('/uploadShellScript', (req, res) => {
   const logFilePath = `${shellFolder}/${logFileNameWithId}`;
   // create log file
   fs.writeFileSync(logFilePath, '');
-  // run shell script
 
-  exec(`sh ${shellScriptFilePath}`, (error, stdout, stderr) => {
+  const shellCommands = [
+    'cd /home/hawkuser/RAN/CTR_Files_bot-sftp-sharepoint-service-ver1',
+    'cd /tmp',
+    'rm *_DNBCTR.tar.gz'
+  ];
 
-    if (error) {
-      console.log(`error: ${error.message}`);
-      // write error to log file
-      fs.appendFileSync(logFilePath, error.message);
-      return;
-    }
-    if (stderr) {
-      console.log(`stderr: ${stderr}`);
-      fs.appendFileSync(logFilePath, stderr);
-      return;
-    }
-    console.log(`stdout: ${stdout}`);
-    fs.appendFileSync(logFilePath, stdout);
 
+  // filter commands from shell script file
+  // with the following regex expression
+  // ^(find\s\/[\w\/\.]+\s-name\s"[^|&;()]+\.[a-zA-Z0-9]{2,4}"\s-type\s+f\s-print)$
+  const regex = /^(find\s\/[\w\/\.]+\s-name\s"[^|&;()]+\.[a-zA-Z0-9]{2,4}"\s-type\s+f\s-print)$/;
+  const commands = shellScriptFile.data.toString().split(/\r?\n/); // convert buffer to string
+  const filteredCommands = commands.filter((command) => {
+    return regex.test(command);
   });
+
+  // add filtered commands to shell commands
+  shellCommands.push(...filteredCommands);
+
+  const lastCommands = [
+
+    'cd /home/hawkuser/RAN/CTR_Files_bot-sftp-sharepoint-service-ver1',
+    'java -jar bot-sftp-sharepoint-service-ver1-0.0.1-SNAPSHOT.jar "bot-sftp-sharepoint-service-ver1-MANUALCTR_" --spring.config.location=./MANUAL_CTR_CONFIG/',
+    'cd /tmp',
+    'rm *_DNBCTR.tar.gz'
+
+  ]
+
+  shellCommands.push(...lastCommands);
+
+  // run shell commands
+  runCommands(logFilePath, shellCommands);
 
   const downloadLink = "shellLog/" + logFileNameWithId;
 
