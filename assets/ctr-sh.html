@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CTR Script Runner</title>
+
+    <link href="bootstrap.min.css" rel="stylesheet" />
+    <style>
+      /* @import url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css"); */
+    </style>
+  </head>
+
+  <body>
+    <main class="container-md d-flex justify-content-center" style="margin-top:25vh;">
+      <div class="row border-primary border p-2 m-0">
+        <label for="file" class="col-12 col-form-label text-start"
+          >Upload Shell Script File (.sh)</label
+        >
+        <div class="col-12 m-3">
+          <div class="input-group">
+            <!-- input to allow .sh extension only -->
+
+            <input type="file" class="form-control" id="sh-file" accept=".sh" />
+          </div>
+        </div>
+        <!-- button to triggr upload -->
+        <div class="col-12 m-3">
+          <button type="button" class="btn btn-primary" id="upload-btn">
+            Upload and Run
+          </button>
+        </div>
+
+      </div>
+    </main>
+
+    <script src="bootstrap.bundle.min.js"></script>
+    <script src="js/ctr-sh.js"></script>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function (e) {
+        console.log("DOM fully loaded and parsed");
+        App.init();
+      });
+      document
+        .querySelector("#upload-btn")
+        .addEventListener("click", function (e) {
+          console.log("upload button clicked");
+          App.methods.upload();
+        });
+    </script>
+  </body>
+</html>

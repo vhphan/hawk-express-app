@@ -10,6 +10,7 @@ app.use(bodyParser.urlencoded({ limit: "50mb", extended: true, parameterLimit: 5
 
 // const {createProxyMiddleware} = require("http-proxy-middleware");
 const { codeProxy } = require('./middleware/proxies');
+const { createSocketClient } = require('./ePortal');
 app.use(baseUrl + '/main', require('./routes/main'));
 app.use(baseUrl + '/ctr', require('./routes/ctr'));
 app.get('/node/', function (req, res) {
@@ -34,7 +35,8 @@ app.get('/node/bootstrap.min.css', (req, res) => res.sendFile(__dirname + '/node
 
 app.use('/node/vscode/**', codeProxy);
 
-// set folder tmp/dl as static folder
+const socketClient = createSocketClient();
+
 
 app.listen(3000, function () {
     console.log('Example app listening on port 3000!');
