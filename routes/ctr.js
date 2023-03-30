@@ -4,7 +4,9 @@ const path = require("path");
 const { dirname } = require("path");
 const AdmZip = require("adm-zip");
 const fs = require("fs");
+const multer = require('multer');
 
+const upload = multer({ dest: 'uploads/' });
 const appDir = global.__basedir;
 
 const {
@@ -156,16 +158,15 @@ const runCommands = function (logFilePath, commands) {
 
 }
 
-router.post('/uploadShellScript', (req, res) => {
+router.post('/uploadShellScript', upload.single('file'), (req, res) => {
 
   // get uploaded file from form data
-  const shellScriptFile = req.files.shellScriptFile;
+  const shellScriptFile = req.file;
 
-  const shellScriptFileName = shellScriptFile.name;
-  const shellFolder = '/home/hawkuser/RAN/CTR_Files_bot-sftp-sharepoint-service-ver1';
-  const shellScriptFilePath = `${shellFolder}/${shellScriptFileName}`;
+  const shellScriptFileName = req.file.filename;
+  const shellScriptFilePath = `${global.__basedir}/${req.file.path}`;
+  const shellFolder = shellScriptFilePath.replace(shellScriptFileName, '');
   // save shell script file to folder
-  fs.writeFileSync(shellScriptFilePath, shellScriptFile.data);
   // run shell script file
   const { exec } = require("child_process");
   // create a log file to store the output of the shell script
@@ -175,8 +176,7 @@ router.post('/uploadShellScript', (req, res) => {
   const logFileId = new Date().getTime();
   const randomChars = Math.random().toString(36).slice(-4);
   const logFileNameWithId = randomChars + logFileId + logFileName;
-
-  const logFilePath = `${shellFolder}/${logFileNameWithId}`;
+  const logFilePath = `${shellFolder}${logFileNameWithId}`;
   // create log file
   fs.writeFileSync(logFilePath, '');
 
@@ -190,14 +190,47 @@ router.post('/uploadShellScript', (req, res) => {
   // filter commands from shell script file
   // with the following regex expression
   // ^(find\s\/[\w\/\.]+\s-name\s"[^|&;()]+\.[a-zA-Z0-9]{2,4}"\s-type\s+f\s-print)$
-  const regex = /^(find\s\/[\w\/\.]+\s-name\s"[^|&;()]+\.[a-zA-Z0-9]{2,4}"\s-type\s+f\s-print)$/;
-  const commands = shellScriptFile.data.toString().split(/\r?\n/); // convert buffer to string
-  const filteredCommands = commands.filter((command) => {
-    return regex.test(command);
+  const readline = require('readline');
+  const { createInterface } = readline;
+
+  const regex = /^\s*find \/data4\/.*$/;
+  const pattern = /\*\d{4}\+\d{4}\-\d{4}\+\d{4}\_\*\w+\*CUCP\*\.gpb\.gz/g;
+
+  // read all lines in file into array lines
+  const lines = fs.readFileSync(shellScriptFilePath, 'utf-8').split(/\r?\n/);
+
+
+  const rootFolders = [];
+  const filePatterns = [];
+  const targetZipFiles = [];
+  lines.forEach((line) => {
+    // return regex.test(command);
+    if (regex.test(line)) {
+      const filePattern = line.match(pattern);
+      const rootFolder = line.match(/data4\/([a-zA-Z]+)\/CTR_LOGS/);
+      const zipFile = line.match(/[^/]*\.tar\.gz$/); // match the last word in the line
+      // return if any of the two variables is null
+      if (!filePattern || !rootFolder || !zipFile) {
+        return;
+      }
+
+      filePatterns.push(filePattern);
+      rootFolders.push(rootFolder);
+      targetZipFiles.push(zipFile);
+
+    }
+  });
+
+  const fileCommands = filePatterns.map((filePattern, index) => {
+    const rootFolder = rootFolders[index];
+    const zipFile = targetZipFiles[index];
+// find /data4/BRF/CTR_LOGS/bot-sftp-sharepoint-service-ver1-CTR__EANKRAG__20230308??????/CTR_Files/????????/ -name "*0800+0800-0815+0800_*DBPET0915_TABUNGHAJI*CUCP*.gpb.gz" -type f -print | xargs tar -czf /tmp/0800+0800-0815+0800_DBPET0915_CUCP_DNBCTR.tar.gz
+
+    return `find ${rootFolder}/bot-sftp-sharepoint-service-ver1-CTR__EANKRAG__20230308??????/CTR_Files/????????/ -name "${filePattern}" -type f -print | xargs tar -czf /tmp/${zipFile}`;
   });
 
   // add filtered commands to shell commands
-  shellCommands.push(...filteredCommands);
+  shellCommands.push(...fileCommands);
 
   const lastCommands = [
 
@@ -211,7 +244,7 @@ router.post('/uploadShellScript', (req, res) => {
   shellCommands.push(...lastCommands);
 
   // run shell commands
-  runCommands(logFilePath, shellCommands);
+  // runCommands(logFilePath, shellCommands);
 
   const downloadLink = "shellLog/" + logFileNameWithId;
 
@@ -220,6 +253,7 @@ router.post('/uploadShellScript', (req, res) => {
     data: {
       shellScriptFilePath,
       logFile: logFileNameWithId,
+      commands: shellCommands,
       downloadLink
     }
   });

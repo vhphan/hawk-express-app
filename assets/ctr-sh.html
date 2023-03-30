@@ -13,7 +13,10 @@
   </head>
 
   <body>
-    <main class="container-md d-flex justify-content-center" style="margin-top:25vh;">
+    <main
+      class="container-md d-flex justify-content-center"
+      style="margin-top: 25vh"
+    >
       <div class="row border-primary border p-2 m-0">
         <label for="file" class="col-12 col-form-label text-start"
           >Upload Shell Script File (.sh)</label
@@ -31,7 +34,11 @@
             Upload and Run
           </button>
         </div>
-
+        <!-- div to show the results and download link -->
+        <div class="col-12 m-3">
+          <div class="alert alert-primary" role="alert" id="result"></div>
+        </div>
+        
       </div>
     </main>
 

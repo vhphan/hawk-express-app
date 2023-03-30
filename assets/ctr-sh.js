@@ -39,12 +39,13 @@ const App = {
         upload: function () {
             // get file to upload from input with id 'sh-file'
             const file = document.querySelector('#sh-file').files[0];
+            console.log(file);
             if (file === undefined) {
                 this.createAlert('Please select a file to upload');
                 return;
             }
             const formData = new FormData();
-            formData.append('sh-file', file);
+            formData.append('file', file);
             // disable upload button
             document.querySelector('#upload-btn').disabled = true;
             fetch('uploadShellScript', {
@@ -54,14 +55,16 @@ const App = {
                 .then(response => response.json())
                 .then(data => {
                     console.log(data);
-                    this.shellScriptFile = null;
-                    this.shellScriptFileName = '';
-                    this.logFile = data.data.logFile;
-                    this.downloadLink = data.data.downloadLink;
+                    // append a div to body and write the data to it
+                    const div = document.createElement("div");
+                    div.innerText = data;
+                    document.body.appendChild(div);
+
                 })
                 .catch(error => {
                     console.error(error);
                     this.createAlert(error.message);
+
                 }
                 ).finally(() => {
                     // enable upload button
