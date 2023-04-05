@@ -1,6 +1,7 @@
 const express = require('express');
 const app = express();
 const bodyParser = require("body-parser");
+require('dotenv').config();
 
 
 const baseUrl = '/node';
@@ -11,7 +12,6 @@ app.use(bodyParser.urlencoded({ limit: "50mb", extended: true, parameterLimit: 5
 
 // const {createProxyMiddleware} = require("http-proxy-middleware");
 const { codeProxy } = require('./middleware/proxies');
-const { createSocketClient } = require('./ePortal');
 app.use(baseUrl + '/main', require('./routes/main'));
 app.use(baseUrl + '/ctr', require('./routes/ctr'));
 app.get('/node/', function (req, res) {
@@ -36,7 +36,6 @@ app.get('/node/bootstrap.min.css', (req, res) => res.sendFile(__dirname + '/node
 
 app.use('/node/vscode/**', codeProxy);
 
-const socketClient = createSocketClient();
 
 
 app.listen(3000, function () {
@@ -50,3 +49,6 @@ app.listen(3000, function () {
 if (process.env.NODE_ENV === "development") {
     app.get('/', (req, res) => res.redirect('/node/ctr/ctr-dl'));
 }
+
+const { createSocket } = require('./ePortal/eSocket');
+const socket = createSocket();

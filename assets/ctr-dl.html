@@ -9,6 +9,12 @@
     <link href="bootstrap.min.css" rel="stylesheet" />
     <style>
       /* @import url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css"); */
+
+      .footer {
+        position: fixed;
+        bottom: 0;
+        width: 100%;
+      }
     </style>
   </head>
 
@@ -33,7 +39,9 @@
         </div>
 
         <!-- hour selector -->
-        <label for="selected-hour" class="col-2 col-form-label text-end">Start Hour</label>
+        <label for="selected-hour" class="col-2 col-form-label text-end"
+          >Start Hour</label
+        >
 
         <div class="col-2">
           <select class="form-select" id="selected-hour">
@@ -63,7 +71,9 @@
             <option value="23">23</option>
           </select>
         </div>
-        <label for="selected-hour-end" class="col-2 col-form-label text-end">End Hour</label>
+        <label for="selected-hour-end" class="col-2 col-form-label text-end"
+          >End Hour</label
+        >
 
         <div class="col-2">
           <select class="form-select" id="selected-hour-end">
@@ -93,7 +103,6 @@
             <option value="23">23</option>
           </select>
         </div>
-
       </div>
 
       <div class="mt-3 p-3 border-primary border">
@@ -226,6 +235,20 @@
       <div id="download-link"></div>
     </main>
 
+    <!-- create a footer with about button -->
+    <footer class="footer" style="margin-bottom: 0">
+      <div class="container border border-secondary">
+        <div class="row">
+          <div class="col-md-6">
+            <p>
+              Work in Progress. Report any bugs or issues to developer at
+              vee.huen.phan@ericsson.com
+            </p>
+          </div>
+        </div>
+      </div>
+    </footer>
+
     <script src="bootstrap.bundle.min.js"></script>
     <script src="ctr-dl.js"></script>
 
@@ -236,6 +259,7 @@
         console.log("DOM fully loaded and parsed");
         App.init();
       });
+
     </script>
   </body>
 </html>

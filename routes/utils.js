@@ -67,13 +67,41 @@ const searchFilesWithPatternAndMeContext = (dir, pattern, meContext) => {
 
 
 const zipListOfFiles = function (listOfFilesToZip, zipFilename) {
-    const AdmZip = require('adm-zip');
-    const zip = new AdmZip();
-    listOfFilesToZip.forEach((file) => {
-        zip.addLocalFile(file);
-    });
-    fs.writeFileSync(zipFilename, zip.toBuffer());
-    console.log("zip created" + zipFilename);
+
+    const filesSuccessfullyAdded = [];
+    const filesFailedToAdd = [];
+
+    try {
+        const AdmZip = require('adm-zip');
+        const zip = new AdmZip();
+
+
+        listOfFilesToZip.forEach((file) => {
+
+            try {
+                zip.addLocalFile(file);
+                filesSuccessfullyAdded.push(file);
+
+            } catch (error) {
+                filesFailedToAdd.push({file, error});
+            }
+
+        });
+        fs.writeFileSync(zipFilename, zip.toBuffer());
+        // zip.writeZip(zipFilename);
+        console.log("zip created" + zipFilename);
+
+    } catch (error) {
+        console.log("error creating zip" + error);
+
+    } finally {
+
+        return {
+            filesSuccessfullyAdded,
+            filesFailedToAdd
+        };
+
+    }
 }
 
 

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CTR Downloader Version 2</title>
+
+    <link href="bootstrap.min.css" rel="stylesheet" />
+    <style>
+      /* @import url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css"); */
+      .footer {
+        border: 2px solid #0000FF;
+        position: fixed;
+        bottom: 10px;
+        width: 100%;
+      }
+    </style>
+  </head>
+
+  <body>
+    <main
+      class="container-md "
+      style="margin-top: 150px;"
+    >
+
+    <!-- make div .row on top of another div .row -->
+    <div class="row">
+        <div class="col-12 text-center p2 m2">
+          <h3>CTR Files Downloader Version 2</h5>
+          <p>
+            In this version, user uploads a csv file that contains details of
+            the trace file to download
+          </p>
+          <a class="btn btn-secondary" href="assets/sample-ctr-dl-v2.csv">Sample csv file</a>
+        </div>
+      </div>
+
+      <div class="row border-primary border p-2 m-2">
+        <label for="file" class="col-12 col-form-label text-start"
+          >Upload CSV File (.csv)</label
+        >
+        <div class="col-12 m-3">
+          <div class="input-group">
+            <input
+              type="file"
+              class="form-control"
+              id="csv-file"
+              accept=".csv"
+            />
+          </div>
+        </div>
+        <!-- button to triggr upload -->
+        <div class="col-12 m-3">
+          <button type="button" class="btn btn-primary" id="upload-btn">
+            Upload and Run
+          </button>
+          <button id="spinner" class="btn btn-border border-primary d-none text-primary type="button" disabled>
+            <span class="spinner-border spinner-border-sm text-primary" role="status" aria-hidden="true"></span>
+            Getting your files...
+          </button>
+        </div>
+        <!-- div to show the results and download link -->
+        <div class="col-12 m-3">
+          <div class="alert alert-primary" role="alert" id="result"></div>
+        </div>
+      </div>
+
+
+    </main>
+        <!-- create a footer with about button -->
+        <footer class="footer d-none fade" style="margin-bottom: 0">
+          <div class="container">
+            <div class="row">
+              <div class="col-12">
+                <p>
+                  Work in Progress. Report any bugs or issues to developer at
+                  <strong class="text-primary">vee.huen.phan@ericsson.com</strong>
+                </p>
+              </div>
+            </div>
+          </div>
+        </footer>
+
+    <script src="bootstrap.bundle.min.js"></script>
+    <script src="js/ctr-dl-v2.js"></script>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function (e) {
+        console.log("DOM fully loaded and parsed");
+        App.init();
+        document.querySelector('footer').classList.remove('d-none');
+        App.methods.fadeIn(document.querySelector('footer'));
+        setTimeout(function () {
+          App.methods.fadeOut(document.querySelector('footer'), 500);
+        }, 3000);
+      });
+      document
+        .querySelector("#upload-btn")
+        .addEventListener("click", function (e) {
+          console.log("upload button clicked");
+          App.methods.upload();
+
+        });
+    </script>
+  </body>
+</html>

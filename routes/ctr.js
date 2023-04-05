@@ -14,6 +14,7 @@ const {
   getMeContextFromString,
   zipListOfFiles } = require("./utils");
 const { fstat } = require("fs");
+const { logger } = require("../middleware/logger");
 
 
 
@@ -128,34 +129,37 @@ router.get("/ctr-sh", function (req, res) {
   res.sendFile(path.join(appDir, `/assets/ctr-sh.html`));
 });
 
+router.get("/ctr-dl-v2", function (req, res) {
+  res.sendFile(path.join(appDir, `/assets/ctr-dl-v2.html`));
+});
+
 router.get("/js/:jsFile", function (req, res) {
   const { jsFile } = req.params;
   res.sendFile(path.join(appDir, `/assets/${jsFile}`));
 });
 
+// set assets folder as static folder for this route
+router.use('/assets', express.static(path.join(appDir, '/assets')));
+
+
+
 const runCommands = function (logFilePath, commands) {
   // run commands as a child process
-  const { exec } = require("child_process");
+  const { execSync } = require("child_process");
+  const shellSuccessfullOutputs = [];
+  const shellErrorOutputs = [];
   commands.forEach((command) => {
-    exec(command, (error, stdout, stderr) => {
-
-      if (error) {
-        console.log(`error: ${error.message}`);
-        // write error to log file
-        fs.appendFileSync(logFilePath, error.message);
-        return;
-      }
-      if (stderr) {
-        console.log(`stderr: ${stderr}`);
-        fs.appendFileSync(logFilePath, stderr);
-        return;
-      }
-      console.log(`stdout: ${stdout}`);
-      fs.appendFileSync(logFilePath, stdout);
-
-    });
+    try {
+      const out = execSync(command);
+      shellSuccessfullOutputs.push(out.toString().replace('\n', ''));
+    } catch (error) {
+      shellErrorOutputs.push(error.message);
+    }
   });
-
+  return {
+    shellSuccessfullOutputs,
+    shellErrorOutputs,
+  };
 }
 
 router.post('/uploadShellScript', upload.single('file'), (req, res) => {
@@ -224,7 +228,7 @@ router.post('/uploadShellScript', upload.single('file'), (req, res) => {
   const fileCommands = filePatterns.map((filePattern, index) => {
     const rootFolder = rootFolders[index];
     const zipFile = targetZipFiles[index];
-// find /data4/BRF/CTR_LOGS/bot-sftp-sharepoint-service-ver1-CTR__EANKRAG__20230308??????/CTR_Files/????????/ -name "*0800+0800-0815+0800_*DBPET0915_TABUNGHAJI*CUCP*.gpb.gz" -type f -print | xargs tar -czf /tmp/0800+0800-0815+0800_DBPET0915_CUCP_DNBCTR.tar.gz
+    // find /data4/BRF/CTR_LOGS/bot-sftp-sharepoint-service-ver1-CTR__EANKRAG__20230308??????/CTR_Files/????????/ -name "*0800+0800-0815+0800_*DBPET0915_TABUNGHAJI*CUCP*.gpb.gz" -type f -print | xargs tar -czf /tmp/0800+0800-0815+0800_DBPET0915_CUCP_DNBCTR.tar.gz
 
     return `find ${rootFolder}/bot-sftp-sharepoint-service-ver1-CTR__EANKRAG__20230308??????/CTR_Files/????????/ -name "${filePattern}" -type f -print | xargs tar -czf /tmp/${zipFile}`;
   });
@@ -270,6 +274,149 @@ router.get('/shellLog/:logFile', (req, res) => {
   res.download(filePath);
 
 });
+
+
+router.post('/uploadCsvFile', upload.single('file'), async (req, res) => {
+
+  const csvFileName = req.file.filename;
+  const csvFilePath = `${global.__basedir}/${req.file.path}`;
+
+  // read the sample csv file into a JSON array
+  const csv = require('csvtojson');
+  const sampleCsvFilePath = `${global.__basedir}/assets/sample-ctr-dl-v2.csv`;
+  const sampleFileJson = await csv().fromFile(sampleCsvFilePath);
+
+  // read the csv file into a JSON array
+  const csvFileJson = await csv().fromFile(csvFilePath);
+
+  // compare the two JSON keys
+  const sampleKeys = Object.keys(sampleFileJson[0]);
+  const csvKeys = Object.keys(csvFileJson[0]);
+  // check if keys are equal and disregard the order
+  const isEqual = sampleKeys.length === csvKeys.length && sampleKeys.sort().every((value, index) => value === csvKeys.sort()[index]);
+
+  if (!isEqual) {
+    return res.json({
+      success: false,
+      message: 'Invalid CSV file format. Please download and use the sample CSV file as reference.'
+    });
+  }
+
+  // use glob to find file
+  // const rootFolders = ['/data4/BRF/', '/data4/KVDC/'];
+  const glob = require('glob');
+  const shellCommands = [];
+  const filesResults = csvFileJson.map((row) => {
+    const siteName = row['Site name'];
+    const dateString = row['Date'];
+    const timeString = row['Time'];
+    const fileType = row['Type'];
+
+    const siteId = siteName.split('_')[0];
+
+    const globPattern = `/data4/*/CTR_LOGS/bot-*${dateString}*/CTR_Files/${dateString}/*${siteId}*/*${dateString}*${timeString}*${fileType}*`;
+    // construct shell command to find file
+    const shellCommand = `find ${globPattern} -type f -print`;
+    shellCommands.push(shellCommand);
+    logger.info(shellCommand);
+
+
+  });
+
+  logger.info(filesResults);
+  // create log file with timestamp
+  const logFileName = 'shell-log-' + Date.now() + '.txt';
+  const logFilePath = `${global.__basedir}/logs/${logFileName}`;
+  const { shellSuccessfullOutputs, shellErrorOutputs } = runCommands(logFilePath, shellCommands);
+
+
+
+  // create zip file with timestamp and random prefix of 5 characters
+  const zipFileName = 'CTR-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7) + '.zip';
+  const zipFilePath = `${global.__basedir}/tmp/dl/${zipFileName}`;
+
+  // create download link
+  const downloadLink = "tmp/dl/" + zipFileName;
+
+  const {
+    filesSuccessfullyAdded,
+    filesFailedToAdd
+  } = zipListOfFiles(shellSuccessfullOutputs, zipFilePath);
+
+  const filesFailedToFind = shellErrorOutputs.map(
+    (errorOutput) => {
+      if (errorOutput.includes('Command failed: find ')) {
+        return errorOutput.replace('Command failed: find ', '').split(' -type f -print')[0];
+      }
+      return errorOutput;
+    }
+  );
+
+  let csvString = 'File name,Status,Error message\n';
+  filesSuccessfullyAdded.forEach(f => csvString += `"${f.split('/').at(-1)}",Success,\n`);
+  filesFailedToAdd.forEach(f => csvString += `"${f.file.split('/').at(-1)}",Failed, "${f.error}"\n`);
+  filesFailedToFind.forEach(f => csvString += `"${f.split('/').at(-1)}",Failed, File not found\n`);
+
+  // create a csv file with the results
+  const csvFileNameWithId = 'results-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7) + '.csv';
+  const csvFilePathWithId = `${global.__basedir}/tmp/dl/${csvFileNameWithId}`;
+  // write to csv file using appendFileSync
+  fs.appendFileSync(csvFilePathWithId, csvString);
+
+  const csvFileDownloadLink = "tmp/dl/" + csvFileNameWithId;
+
+  // upload zip file to sharepoint
+  uploadFileToSharepoint(zipFilePath);
+
+  res.json({
+    success: true,
+    data: {
+      shellSuccessfullOutputs,
+      shellErrorOutputs,
+      numberOfFilesNotFound: filesFailedToFind.length,
+      numberOfFilesZipped: filesSuccessfullyAdded.length,
+      numberOfFilesFailedToZip: filesFailedToAdd.length,
+      logFile: logFileName,
+      downloadLink,
+      csvFileDownloadLink,
+      zipFileName,
+    },
+  });
+
+});
+
+function uploadFileToSharepoint(filePath) {
+
+  const { spsave } = require("spsave");
+  const spClientId = process.env.SP_CLIENT_ID;
+  const spClientSecret = process.env.SP_CLIENT_SECRET;
+  const spSiteUrl = process.env.SP_SITE_URL;
+  const spFolder = process.env.SP_FOLDER;
+  const spFileName = filePath.split('/').at(-1);
+
+  const coreOptions = {
+    siteUrl: spSiteUrl,
+  };
+
+  const creds = {
+    clientId: spClientId,
+    clientSecret: spClientSecret,
+  };
+
+  const fileOptions = {
+    folder: spFolder,
+    fileName: spFileName,
+    fileContent: fs.readFileSync(filePath)
+  };
+
+  spsave(coreOptions, creds, fileOptions).then(() => {
+    logger.info('File uploaded to SharePoint');
+  }).catch((error) => {
+    logger.error(error);
+  });
+
+}
+
 
 module.exports = router;
 

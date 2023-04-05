@@ -1,0 +1,5 @@
+kill $(lsof -t -i:3000)
+kill -9 $(pgrep -f nodemon)
+
+
+'/data4/*/CTR_LOGS/bot-*20230402*/CTR_Files/20230402/*DNSBN0312*/*20230402*2245+0800-2300+0800*CUCP*'
