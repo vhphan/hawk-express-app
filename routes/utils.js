@@ -46,13 +46,15 @@ const getMeContextFromString = (d) => {
 
     const splittedString = d.split(",");
     const meContext = splittedString.find((s) => s.includes("MeContext="));
+    if (!meContext) return "#NA";
     return meContext.split("=")[1];
 
 }
 
 const searchFilesWithPatternAndMeContext = (dir, pattern, meContext) => {
+    logger.info(`searching for files with pattern ${pattern} and meContext ${meContext} in ${dir}`);
     const searchPredicate = (entity) => entity.isFile() && entity.name.includes(pattern) && getMeContextFromString(entity.name).includes(meContext);
-    return fs
+    const results = fs
         .readdirSync(dir, { withFileTypes: true })
         .reduce((files, entity) => {
             if (entity.isDirectory()) {
@@ -63,7 +65,18 @@ const searchFilesWithPatternAndMeContext = (dir, pattern, meContext) => {
             }
             return files;
         }, []);
+    logger.info(`found ${results.length} files with pattern ${pattern} and meContext ${meContext} in ${dir}`)
+    return results;
 };
+
+const searchFilesUsingGlob = (dateString, dateTimeString, meContext, fileType = '') => {
+
+    const globPattern = `/data4/*/CTR_LOGS/bot-*${dateString}*/CTR_Files/${dateString}/*${meContext}*/*${dateTimeString}*${fileType}*`;
+    const glob = require("glob");
+    const files = glob.sync(globPattern);
+    return files;
+
+}
 
 
 const zipListOfFiles = function (listOfFilesToZip, zipFilename) {
@@ -79,11 +92,23 @@ const zipListOfFiles = function (listOfFilesToZip, zipFilename) {
         listOfFilesToZip.forEach((file) => {
 
             try {
+                // check if multiple values are passed separated by new line character
+                if (file.includes('\n')) {
+                    const files = file.split('\n');
+                    // get the file with latest timestamp and add it to zip
+                    const latestFile = files.reduce((a, b) => {
+                        return fs.statSync(a).mtime.getTime() > fs.statSync(b).mtime.getTime() ? a : b
+                    });
+                    zip.addLocalFile(latestFile);
+                    filesSuccessfullyAdded.push(latestFile);
+                    return;
+                }
+
                 zip.addLocalFile(file);
                 filesSuccessfullyAdded.push(file);
 
             } catch (error) {
-                filesFailedToAdd.push({file, error});
+                filesFailedToAdd.push({ file, error });
             }
 
         });
@@ -92,7 +117,7 @@ const zipListOfFiles = function (listOfFilesToZip, zipFilename) {
         console.log("zip created" + zipFilename);
 
     } catch (error) {
-        console.log("error creating zip" + error);
+        logger.error("error creating zip" + error);
 
     } finally {
 
@@ -104,6 +129,47 @@ const zipListOfFiles = function (listOfFilesToZip, zipFilename) {
     }
 }
 
+// function to delete files in a folder with timestamps older than n number of days
+const deleteFilesOlderThanNDays = (dir, days) => {
+
+    logger.info(`deleting files older than ${days} days in ${dir}`);
+
+    // get all files with zip extension in the directory
+    const files = fs.readdirSync(dir).filter((entity) => entity.endsWith(".zip"));
+
+    // get the current time
+    const now = new Date().getTime();
+
+    // get files in folder older than n days
+    const filesToDelete = files.filter((file) => {
+        const fileStats = fs.statSync(path.join(dir, file));
+        const fileCreationTime = fileStats.ctime.getTime();
+        const diff = now - fileCreationTime;
+        return diff > days * 24 * 60 * 60 * 1000;
+    });
+
+    // delete files
+    filesToDelete.forEach((file) => {
+        const filePath = path.join(dir, file);
+        // delete file
+        logger.info(`deleting file ${filePath}`);
+        fs.unlinkSync(filePath);
+    });
+
+}
+
+const cron = require('node-cron');
+const { logger } = require("../middleware/logger");
+
+const createCronToDeleteFilesOlderThanNDays = (dir, days) => {
+    logger.info(`creating cron job to delete files older than ${days} days in ${dir}`);
+    // run cron job to delete files older than n days
+    cron.schedule('30 9 * * *', () => {
+        deleteFilesOlderThanNDays(dir, days);
+    });
+
+}
+
 
 module.exports = {
     getFoldersOrFiles,
@@ -111,5 +177,7 @@ module.exports = {
     searchFiles,
     getMeContextFromString,
     zipListOfFiles,
-    searchFilesWithPatternAndMeContext
+    searchFilesWithPatternAndMeContext,
+    createCronToDeleteFilesOlderThanNDays,
+    searchFilesUsingGlob
 };

@@ -12,8 +12,12 @@ app.use(bodyParser.urlencoded({ limit: "50mb", extended: true, parameterLimit: 5
 
 // const {createProxyMiddleware} = require("http-proxy-middleware");
 const { codeProxy } = require('./middleware/proxies');
+const errorHandler = require('./middleware/error');
+
+app.use(errorHandler);
 app.use(baseUrl + '/main', require('./routes/main'));
 app.use(baseUrl + '/ctr', require('./routes/ctr'));
+
 app.get('/node/', function (req, res) {
     res.send('Hello World!');
 });
@@ -37,9 +41,11 @@ app.get('/node/bootstrap.min.css', (req, res) => res.sendFile(__dirname + '/node
 app.use('/node/vscode/**', codeProxy);
 
 
+// const { sendEmail } = require('./utils');
 
 app.listen(3000, function () {
     console.log('Example app listening on port 3000!');
+    // sendEmail(process.env.EMAIL_RECIPIENT, 'Server Started', 'Server Started');
     console.log(process.env.NODE_ENV);
     console.log(__dirname);
 });
@@ -51,4 +57,8 @@ if (process.env.NODE_ENV === "development") {
 }
 
 const { createSocket } = require('./ePortal/eSocket');
+const { createCronToDeleteFilesOlderThanNDays } = require('./routes/utils');
+
 const socket = createSocket();
+
+createCronToDeleteFilesOlderThanNDays(__dirname + '/tmp/dl', 2);

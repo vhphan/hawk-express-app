@@ -1,27 +1,33 @@
+const { logger } = require("../../middleware/logger");
+const fs = require('fs');
+const path = require('path');
 
-const getMeContextFromString = (d) => {
+const deleteFilesOlderThanNDays = (dir, days) => {
 
-    const splittedString = d.split(",");
-    const meContext = splittedString.find((s) => s.includes("MeContext="));
-    return meContext.split("=")[1];
+    logger.info(`deleting files older than ${days} days in ${dir}`);
+
+    // get all files with zip extension in the directory
+    const files = fs.readdirSync(dir).filter((entity)=> entity.endsWith(".zip"));
+
+    // get the current time
+    const now = new Date().getTime();
+
+    // get files in folder older than n days
+    const filesToDelete = files.filter((file) => {
+        const fileStats = fs.statSync(path.join(dir, file));
+        const fileCreationTime = fileStats.ctime.getTime();
+        const diff = now - fileCreationTime;
+        return diff > days * 24 * 60 * 60 * 1000;
+    });
+
+    // delete files
+    filesToDelete.forEach((file) => {
+        const filePath = path.join(dir, file);
+        // delete file
+        logger.info(`deleting file ${filePath}`);
+        fs.unlinkSync(filePath);
+    });
 
 }
 
-const searchFilesWithPatternAndMeContext = (dir, pattern, meContext) => {
-    const searchPredicate = (entity) => entity.isFile() && entity.name.includes(pattern) && getMeContextFromString(entity.name).includes(meContext);
-    return fs
-        .readdirSync(dir, { withFileTypes: true })
-        .reduce((files, entity) => {
-            if (entity.isDirectory()) {
-                files.push(...searchFilesWithPatternAndMeContext(path.join(dir, entity.name), pattern, meContext));
-            }
-            if (entity.isFile() && searchPredicate(entity)) {
-                files.push(path.join(dir, entity.name));
-            }
-            return files;
-        }, []);
-};
-
-const files = searchFilesWithPatternAndMeContext('/data4', '20230321.03', 'DTKTG0317_JLNKGALORATASTOL');
-
-console.log(files);
+deleteFilesOlderThanNDays('/data2/var/www/hawk-express-app/tmp/dl', 2);

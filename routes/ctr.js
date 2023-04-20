@@ -12,9 +12,12 @@ const appDir = global.__basedir;
 const {
   searchFilesWithPatternAndMeContext,
   getMeContextFromString,
-  zipListOfFiles } = require("./utils");
+  zipListOfFiles,
+  searchFilesUsingGlob,
+} = require("./utils");
 const { fstat } = require("fs");
 const { logger } = require("../middleware/logger");
+// const { sendEmail } = require("../utils");
 
 
 
@@ -33,14 +36,22 @@ router.get('/ctr-dl.js', function (req, res) {
 
 router.get("/getAvailableSites", function (req, res) {
   const { selectedDate, selectedHour, siteSubstring } = req.query;
-  console.log(selectedDate, selectedHour, siteSubstring);
 
-  const files = searchFilesWithPatternAndMeContext('/data4', selectedDate.replaceAll('-', '') + '.' + selectedHour, siteSubstring);
+  logger.info(`getAvailableSites: ${selectedDate}, ${selectedHour}, ${siteSubstring}`);
+
+  // const files = searchFilesWithPatternAndMeContext('/data4', selectedDate.replaceAll('-', '') + '.' + selectedHour, siteSubstring);
+
+  const files = searchFilesUsingGlob(selectedDate.replaceAll('-', ''), selectedDate.replaceAll('-', '') + '.' + selectedHour, siteSubstring);
+
+
+  logger.info(`found ${files.length} files for ${selectedDate}, ${selectedHour}, ${siteSubstring}`)
 
   const meContextValues = files.map((file) => {
     return getMeContextFromString(file);
   });
   const uniqueMeContextValues = [...new Set(meContextValues)];
+
+  logger.info(`found ${uniqueMeContextValues.length} sites for ${selectedDate}, ${selectedHour}, ${siteSubstring}`)
 
   res.json({
     success: true,
@@ -65,51 +76,68 @@ router.get('/bootstrap.min.css.map', (req, res) => res.sendFile(global.__basedir
 
 router.get('/downloadSelectedSites', async (req, res) => {
 
-  console.log(req.query);
-  const { selectedDate, selectedHour, selectedHourEnd, sites, fileTypes } = req.query;
+  try {
+    logger.info('downloadSelectedSites');
+    logger.info(req.query);
+    const { selectedDate, selectedHour, selectedHourEnd, sites, fileTypes } = req.query;
 
-  // loop through all hours and get all files
-  let finalListOfFiles = [];
+    // loop through all hours and get all files
+    let finalListOfFiles = [];
 
-  for (let i = parseInt(selectedHour); i <= parseInt(selectedHourEnd); i++) {
-    const hour = i < 10 ? '0' + i : i;
-    const dateHour = selectedDate.replaceAll('-', '') + '.' + hour;
-    const initialListOfFiles = searchFilesWithPatternAndMeContext('/data4', dateHour, sites);
+    for (let i = parseInt(selectedHour); i <= parseInt(selectedHourEnd); i++) {
+      const hour = i < 10 ? '0' + i : i;
+      const dateHour = selectedDate.replaceAll('-', '') + '.' + hour;
+      // const initialListOfFiles = searchFilesWithPatternAndMeContext('/data4', dateHour, sites);
 
-    // filter files by file type
-    const filteredListOfFiles = initialListOfFiles.filter((file) => {
-      const fileTypesChecks = fileTypes.map((fileType) => {
-        if (file.includes('_celltracefile_' + fileType)) {
-          return true;
-        }
-        return false;
+      const initialListOfFiles = sites.reduce((acc, site) => {
+        const files = searchFilesUsingGlob(selectedDate.replaceAll('-', ''), dateHour, site);
+        return acc.concat(files);
+      }, []);
+
+      // filter files by file type
+      const filteredListOfFiles = initialListOfFiles.filter((file) => {
+        const fileTypesChecks = fileTypes.map((fileType) => {
+          if (file.includes('_celltracefile_' + fileType)) {
+            return true;
+          }
+          return false;
+        });
+        return fileTypesChecks.includes(true);
       });
-      return fileTypesChecks.includes(true);
+
+      finalListOfFiles = finalListOfFiles.concat(filteredListOfFiles);
+
+    }
+
+    const zipName = new Date().getTime();
+    const randomChars = Math.random().toString(36).slice(-4);
+    const zipFilename = randomChars + zipName + ".zip";
+    const zipFilePath = global.__basedir + '/tmp/dl/' + zipFilename;
+
+    // create a zip archive and add all files to it
+    zipListOfFiles(finalListOfFiles, zipFilePath);
+
+    // create a download link to the zip file
+    const downloadLink = "tmp/dl/" + zipFilename;
+
+    res.json({
+      success: true,
+      data: {
+        // zipFilePath: zipFilePath
+        downloadLink,
+        zipFilename
+      }
     });
 
-    finalListOfFiles = finalListOfFiles.concat(filteredListOfFiles);
+  } catch (error) {
+
+    logger.error(error);
+    res.json({
+      success: false,
+      message: error.message || 'Error while downloading selected sites'
+    });
 
   }
-
-  const zipName = new Date().getTime();
-  const randomChars = Math.random().toString(36).slice(-4);
-  const zipFilename = randomChars + zipName + ".zip";
-  const zipFilePath = global.__basedir + '/tmp/dl/' + zipFilename;
-
-  // create a zip archive and add all files to it
-  zipListOfFiles(finalListOfFiles, zipFilePath);
-
-  // create a download link to the zip file
-  const downloadLink = "tmp/dl/" + zipFilename;
-
-  res.json({
-    success: true,
-    data: {
-      // zipFilePath: zipFilePath
-      downloadLink,
-      zipFilename
-    }
-  });
 
 
 });
@@ -150,8 +178,10 @@ const runCommands = function (logFilePath, commands) {
   const shellErrorOutputs = [];
   commands.forEach((command) => {
     try {
-      const out = execSync(command);
-      shellSuccessfullOutputs.push(out.toString().replace('\n', ''));
+      let out = execSync(command);
+      //ONLY replace new line character if it is at the end of the line
+      out = out.toString().replace(/\n$/, "");
+      shellSuccessfullOutputs.push(out.toString());
     } catch (error) {
       shellErrorOutputs.push(error.message);
     }
@@ -366,7 +396,8 @@ router.post('/uploadCsvFile', upload.single('file'), async (req, res) => {
   const csvFileDownloadLink = "tmp/dl/" + csvFileNameWithId;
 
   // upload zip file to sharepoint
-  uploadFileToSharepoint(zipFilePath);
+  // uploadFileToSharepoint(zipFilePath);
+  uploadFileToSharepointUsingPython(zipFileName);
 
   res.json({
     success: true,
@@ -384,6 +415,31 @@ router.post('/uploadCsvFile', upload.single('file'), async (req, res) => {
   });
 
 });
+
+
+function uploadFileToSharepointUsingPython(fileName) {
+
+  logger.info('uploadFileToSharepointUsingPython started')
+
+  const { spawn } = require('child_process');
+  const pythonScriptPath = '/data2/var/www/hawk-express-app/pyscript/upload_sp.py';
+  const pythonInterpreter = '/data2/var/www/hawk-express-app/pyscript/venv/bin/python';
+  const pythonProcess = spawn(pythonInterpreter, [pythonScriptPath, fileName]);
+
+  pythonProcess.stdout.on('data', (data) => {
+    logger.info(`stdout: ${data}`);
+  });
+
+  pythonProcess.stderr.on('data', (data) => {
+    logger.info(`stderr: ${data}`);
+  });
+
+  pythonProcess.on('close', (code) => {
+    logger.info(`child process exited with code ${code}`);
+  });
+
+}
+
 
 function uploadFileToSharepoint(filePath) {
 
@@ -409,8 +465,12 @@ function uploadFileToSharepoint(filePath) {
     fileContent: fs.readFileSync(filePath)
   };
 
+  // sendEmail('vee.huen.phan@ericsson.com', 'File uploaded to SharePoint', 'Uploading file to SharePoint starts: ' + new Date().toISOString());
+
   spsave(coreOptions, creds, fileOptions).then(() => {
     logger.info('File uploaded to SharePoint');
+    const msg = `File: ${fileOptions.fileName} uploaded to SharePoint`;
+    // sendEmail('vee.huen.phan@ericsson.com', 'File uploaded to SharePoint', msg);
   }).catch((error) => {
     logger.error(error);
   });

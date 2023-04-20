@@ -7,3 +7,10 @@ alter database dnb owner to dnb;
 alter schema stats owner to dnb;
 
 select version();
+
+-- create schema hourly_stats
+
+
+create schema hourly_stats;
+
+alter schema hourly_stats owner to dnb;

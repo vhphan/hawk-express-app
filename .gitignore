@@ -131,3 +131,5 @@ dist
 
 tmp/dl/*
 Logs
+logs
+pyscripts/venv

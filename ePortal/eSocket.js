@@ -2,25 +2,13 @@ const io = require('socket.io-client');
 
 const currentServer = 'https://api.eprojecttrackers.com';
 
-const {logger} = require('../middleware/logger');
+const { logger } = require('../middleware/logger');
 
 function runShellCommands(shellCommands, execSync) {
     const shellOutputs = [];
     shellCommands.forEach((command) => {
-        execSync(command, (error, stdout, stderr) => {
-            if (error) {
-                logger.info(`error: ${error.message}`);
-                shellOutputs.push(error.message);
-                return;
-            }
-            if (stderr) {
-                logger.info(`stderr: ${stderr}`);
-                shellOutputs.push(stderr);
-                return;
-            }
-            logger.info(`stdout: ${stdout}`);
-            shellOutputs.push(stdout);
-        });
+        logger.info(`executing command: ${command}`);
+        shellOutputs.push(execSync(command).toString());
     }
     );
     return shellOutputs;
@@ -73,6 +61,24 @@ const createSocket = () => {
             ]
             shellOutputs = [...shellOutputs, ...runShellCommands(shellCommands, execSync)];
         }
+        if (data.split(' ').at(0) === 'startWetty') {
+            logger.info('starting wetty');
+            const shellCommands = [
+                'tmux send-keys -t wetty C-c',
+                'tmux send-keys -t wetty "npm run start"',
+                'tmux send-keys -t wetty Enter',
+            ]
+            shellOutputs = [...shellOutputs, ...runShellCommands(shellCommands, execSync)];
+        }
+        if (data.split(' ').at(0) === 'stopWetty') {
+            logger.info('stopping wetty');
+            const shellCommands = [
+                'tmux send-keys -t wetty C-c',
+            ]
+            shellOutputs = [...shellOutputs, ...runShellCommands(shellCommands, execSync)];
+        }
+
+
         if (data.split(' ').at(0) === 'killCodeTunnel') {
             logger.info('killing code tunnel');
             const shellCommands = [
@@ -89,9 +95,8 @@ const createSocket = () => {
 
     socket.on("ePortalToDnbCommands", function (data) {
         logger.info(data);
-        const {commands} = data;
         const { execSync } = require("child_process");
-        const shellOutputs = runShellCommands(commands, execSync);
+        const shellOutputs = runShellCommands([data], execSync);
         socket.emit("ePortalFromDnb", { shellOutputs });
     });
 
