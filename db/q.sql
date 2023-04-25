@@ -27,3 +27,10 @@ WHERE table_name = 'dc_e_nr_nrcelldu_day' and table_schema='public';
 
 SELECT * FROM information_schema.table_constraints 
 WHERE table_name = 'dc_e_nr_nrcelldu_day' and table_schema='daily_stats';
+
+SELECT * FROM information_schema.columns 
+WHERE column_name='dl_16qam_nom';
+
+SELECT * FROM information_schema.columns 
+WHERE column_name ilike 'dl_16qam%';
+

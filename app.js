@@ -17,6 +17,7 @@ const errorHandler = require('./middleware/error');
 app.use(errorHandler);
 app.use(baseUrl + '/main', require('./routes/main'));
 app.use(baseUrl + '/ctr', require('./routes/ctr'));
+app.use(baseUrl + '/kpi/v1', require('./routes/kpi'));
 
 app.get('/node/', function (req, res) {
     res.send('Hello World!');

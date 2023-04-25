@@ -87,10 +87,7 @@ class EPDB:
         self.cursor.execute(sql, params or ())
 
     def connect(self):
-        if self.db_type == 'mysql':
-            self._conn = MySQLdb.connect(**self.dbc, charset='utf8')
-        else:
-            self._conn = psycopg2.connect(**self.dbc)
+        self._conn = psycopg2.connect(**self.dbc)
         self._cursor = self._conn.cursor()
 
     @retry(tries=5, delay=10, backoff=2)
@@ -136,7 +133,7 @@ class EPDB:
 
     @retry(OperationalError, tries=3, delay=10, logger=logger)
     def query_df(self, sql, **kwargs) -> pd.DataFrame:
-        return pd.read_sql(text(sql), self.engine, **kwargs)
+        return pd.read_sql(text(sql), self.engine.connect(), **kwargs)
 
     def vacuum_table(self, table_name):
         logger.info(f'Vacuuming table {self.schema}.{table_name}')
@@ -226,3 +223,19 @@ class EPDB:
         if self.db_type == 'postgres':
             return self.query('SELECT VERSION()')[0][0]
 
+def get_db_config():
+    return dict(
+        host='localhost',
+        port=5432,
+        user=os.getenv('PGDB_USER'),
+        password=os.getenv('PGDB_PASSWORD'),
+    )
+
+def postgres_db(schema, db_name) -> EPDB:
+    dbc = dict(dbname=db_name, **get_db_config())
+    print(f'schema is {schema}', f'port is {dbc["port"]}', f'database is {db_name}')
+
+    return EPDB(dbc=dbc, db_type='postgres', schema=schema)
+
+if __name__ == '__main__':
+    db = postgres_db('dnb', 'dnb')
