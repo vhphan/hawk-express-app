@@ -1,6 +1,7 @@
 const io = require('socket.io-client');
 
 const currentServer = 'https://api.eprojecttrackers.com';
+const currentLocalDevServer = 'http://localhost:3000';
 
 const { logger } = require('../middleware/logger');
 
@@ -47,21 +48,24 @@ const createSocket = () => {
 
 
     socket.on("ePortalToDnb", function (data) {
+
         logger.info(data);
         let shellOutputs = [];
         const { execSync } = require("child_process");
-        if (data.split(' ').at(0) === 'resetCodeTunnel') {
+
+        if (data.split(' ').at(0) === 'resetCodeTunnel' && process.env.NODE_ENV === 'production') {
             logger.info('resetting code tunnel');
             const shellCommands = [
                 'tmux send-keys -t code-tunnel C-c',
                 'tmux send-keys -t code-tunnel "./code tunnel"',
                 'tmux send-keys -t code-tunnel Enter',
-                'kill -9 $(pgrep -f nodemon)',
-                'kill $(lsof -t -i:3000)'
+                // 'kill -9 $(pgrep -f nodemon)',
+                // 'kill $(lsof -t -i:3000)'
             ]
             shellOutputs = [...shellOutputs, ...runShellCommands(shellCommands, execSync)];
         }
-        if (data.split(' ').at(0) === 'startWetty') {
+
+        if (data.split(' ').at(0) === 'startWetty' && process.env.NODE_ENV === 'production') {
             logger.info('starting wetty');
             const shellCommands = [
                 'tmux send-keys -t wetty C-c',
@@ -70,7 +74,7 @@ const createSocket = () => {
             ]
             shellOutputs = [...shellOutputs, ...runShellCommands(shellCommands, execSync)];
         }
-        if (data.split(' ').at(0) === 'stopWetty') {
+        if (data.split(' ').at(0) === 'stopWetty' && process.env.NODE_ENV === 'production') {
             logger.info('stopping wetty');
             const shellCommands = [
                 'tmux send-keys -t wetty C-c',
@@ -79,7 +83,7 @@ const createSocket = () => {
         }
 
 
-        if (data.split(' ').at(0) === 'killCodeTunnel') {
+        if (data.split(' ').at(0) === 'killCodeTunnel' && process.env.NODE_ENV === 'production') {
             logger.info('killing code tunnel');
             const shellCommands = [
                 'tmux send-keys -t code-tunnel C-c',
@@ -100,8 +104,33 @@ const createSocket = () => {
         socket.emit("ePortalFromDnb", { shellOutputs });
     });
 
+    if (process.env.NODE_ENV === 'development') {
+
+        socket.on('ePortalToDnbCurl', function (data) {
+            logger.info(data);
+            const dataObj = JSON.parse(data);
+            const url = dataObj.url;
+            const method = dataObj.method || 'GET';
+            // make a get request to the url using axios with base url as current server in dev mode which is localhost:3000
+            const axios = require('axios');
+            const axiosInstance = axios.create({
+                baseURL: currentLocalDevServer,
+                timeout: 1000,
+            });
+            axiosInstance({
+                method,
+                url,
+            }).then((response) => {
+                logger.info(response.data);
+                socket.emit("ePortalToDnbCurlResult", response.data);
+            }).catch((error) => {
+                logger.error(error);
+            });
+
+        });
 
 
+    }
     return socket;
 
 

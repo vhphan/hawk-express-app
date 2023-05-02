@@ -167,7 +167,6 @@ const createCronToDeleteFilesOlderThanNDays = (dir, days) => {
     cron.schedule('30 9 * * *', () => {
         deleteFilesOlderThanNDays(dir, days);
     });
-
 }
 
 
