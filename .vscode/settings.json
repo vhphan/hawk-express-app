@@ -1,3 +1,15 @@
 {
     "editor.mouseWheelZoom": true,
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 5432,
+            "driver": "PostgreSQL",
+            "name": "dnb-pg",
+            "database": "dnb",
+            "username": "dnb",
+            "password": "dnb6366"
+        }
+    ],
 }

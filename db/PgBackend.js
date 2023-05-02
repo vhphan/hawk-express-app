@@ -1,6 +1,7 @@
 // postgres backend using postgres.js
 
 const postgres = require('postgres');
+require('dotenv').config();
 
 const sql = postgres({
     host: 'localhost',

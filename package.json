@@ -4,7 +4,7 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "dev": "export NODE_ENV=development && nodemon app.js",
+    "dev": "export NODE_ENV=development && nodemon --ignore 'tmp/' --ignore 'logs/' app.js",
     "start": "export NODE_ENV=production && node app.js",
     "dfdpm": "node ./controllers/dnb.js"
   },

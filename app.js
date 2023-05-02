@@ -2,6 +2,7 @@ const express = require('express');
 const app = express();
 const bodyParser = require("body-parser");
 require('dotenv').config();
+const { logger } = require('./middleware/logger');
 
 
 const baseUrl = '/node';
@@ -14,7 +15,7 @@ app.use(bodyParser.urlencoded({ limit: "50mb", extended: true, parameterLimit: 5
 const { codeProxy } = require('./middleware/proxies');
 const errorHandler = require('./middleware/error');
 
-app.use(errorHandler);
+
 app.use(baseUrl + '/main', require('./routes/main'));
 app.use(baseUrl + '/ctr', require('./routes/ctr'));
 app.use(baseUrl + '/kpi/v1', require('./routes/kpi'));
@@ -41,6 +42,7 @@ app.get('/node/bootstrap.min.css', (req, res) => res.sendFile(__dirname + '/node
 
 app.use('/node/vscode/**', codeProxy);
 
+app.use(errorHandler);
 
 // const { sendEmail } = require('./utils');
 
@@ -48,6 +50,7 @@ app.listen(3000, function () {
     console.log('Example app listening on port 3000!');
     // sendEmail(process.env.EMAIL_RECIPIENT, 'Server Started', 'Server Started');
     console.log(process.env.NODE_ENV);
+    logger.info(`Server Started in ${process.env.NODE_ENV} mode`)
     console.log(__dirname);
 });
 
@@ -59,7 +62,10 @@ if (process.env.NODE_ENV === "development") {
 
 const { createSocket } = require('./ePortal/eSocket');
 const { createCronToDeleteFilesOlderThanNDays } = require('./routes/utils');
+const {createCronToRunMainDPM, createCronToRunMainCellMapping} = require('./controllers/dnb');
 
 const socket = createSocket();
 
 createCronToDeleteFilesOlderThanNDays(__dirname + '/tmp/dl', 2);
+createCronToRunMainDPM();
+createCronToRunMainCellMapping();
