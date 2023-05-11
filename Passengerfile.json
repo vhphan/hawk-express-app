@@ -4,5 +4,6 @@
   "environment": "production",
   "port": 4000,
   "daemonize": true,
-  "user": "hawkuser"
+  "user": "hawkuser",
+  "nginx_config_template": "nginx.conf.erb"
 }

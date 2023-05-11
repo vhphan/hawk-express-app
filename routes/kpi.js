@@ -4,8 +4,9 @@ const router = express.Router();
 
 const { testQuery } = require("../db/dailyKpiQueries");
 const { getCellDailyStatsNR, getRegionDailyStatsNR } = require("../controllers/kpi");
+const { getRegionHourlyStatsNR, getCellHourlyStatsNR } = require("../controllers/kpiHourly");
 const asyncHandler = require("../middleware/async");
-const { kpiList } = require("./configs/kpiList");
+const { kpiList } = require("../configs/kpiList");
 
 
 const tables = {
@@ -13,6 +14,23 @@ const tables = {
     nr: [
         'dc_e_nr_nrcelldu_day',
         'dc_e_nr_nrcellcu_day',
+        'dc_e_nr_nrcelldu_v_day',
+        'dc_e_erbsg2_mpprocessingresource_v_day',
+        'dc_e_vpp_rpuserplanelink_v_day',
+
+    ],
+    lte: [
+
+    ]
+}
+
+const tablesHourly = {
+    nr: [
+        'dc_e_nr_nrcelldu_raw',
+        'dc_e_nr_nrcellcu_raw',
+        'dc_e_nr_nrcelldu_v_raw',
+        'dc_e_erbsg2_mpprocessingresource_v_raw',
+        'dc_e_vpp_rpuserplanelink_v_raw',
     ],
     lte: [
 
@@ -20,17 +38,16 @@ const tables = {
 }
 
 
+
 router.get("/test", testQuery);
 
 router.get('/dailyStats', asyncHandler(async (req, res) => {
 
     const { tech, cellId } = req.query;
-
     const promises = tables[tech].map((table) =>
         getCellDailyStatsNR(cellId, table)
     )
-
-    const results = await compileResults(promises, tech, res);
+    const results = await compileResultsKpiArrays(promises, tech, null, 'cell');
 
     res.json({
         success: true,
@@ -51,13 +68,13 @@ router.get('/dailyStatsRegion', asyncHandler(async (req, res) => {
 
     if (!region) { region = 'all' }
 
-    const results = await compileResultsKpiArrays(promises, tech, region);
+    const results = await compileResultsKpiArrays(promises, tech, region, 'region');
 
     res.json({
         success: true,
         data: results,
-        time: new Date(),
-        params: {
+        meta: {
+            time: new Date(),
             region,
             tech,
         }
@@ -65,6 +82,32 @@ router.get('/dailyStatsRegion', asyncHandler(async (req, res) => {
 
 }));
 
+
+router.get('/hourlyStatsRegion', asyncHandler(async (req, res) => {
+
+    const { tech } = req.query;
+    let { region } = req.query;
+
+    const promises = tablesHourly[tech].map((table) =>
+        getRegionHourlyStatsNR(table)
+    );
+
+    if (!region) { region = 'all' }
+
+    const results = await compileResultsKpiArrays(promises, tech, region, 'region');
+
+    res.json({
+        success: true,
+        data: results,
+        meta: {
+            time: new Date(),
+            region,
+            tech,
+        }
+    });
+
+
+}));
 
 module.exports = router;
 
@@ -83,20 +126,12 @@ async function compileResults(promises, tech) {
     return zipped;
 }
 
-async function compileResultsKpiArrays(promises, tech, region) {
 
-    const byKpiResultsArrays = {};
+async function compileResultsKpiArrays(promises, tech, region, level = 'region') {
+
     const kpiListTech = kpiList[tech];
     const results = await Promise.all(promises);
-
-    // filter by region
-    const regionResults = results.map(result => result.filter(d => {
-        if (region.toLowerCase() === 'all') return d.region === null;
-        return d.region === region
-    }));
-
-    const flattenedResults = regionResults.flat();
-
+    const flattenedResults = getFlattenedResults(level, results, region);
     const finalResults = {};
 
     kpiListTech.forEach(kpi => {
@@ -105,12 +140,22 @@ async function compileResultsKpiArrays(promises, tech, region) {
                 d.date_id,
                 d[kpi],
             ]
-
-
         ));
     });
 
     return finalResults;
 
+}
+
+function getFlattenedResults(level, results, region) {
+    if (level === 'region') {
+        const regionResults = results.map(result => result.filter(d => {
+            if (region.toLowerCase() === 'all')
+                return d.region === null;
+            return d.region === region.toUpperCase();
+        }));
+        return regionResults.flat();
+    }
+    return results.flat();
 }
 

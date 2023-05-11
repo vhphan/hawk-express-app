@@ -64,6 +64,18 @@ const createSocket = () => {
             ]
             shellOutputs = [...shellOutputs, ...runShellCommands(shellCommands, execSync)];
         }
+        
+        if (data.split(' ').at(0) === 'resetCodeTunnel2' && process.env.NODE_ENV === 'production') {
+            logger.info('resetting code tunnel 2');
+            const shellCommands = [
+                'tmux send-keys -t monica C-c',
+                'tmux send-keys -t monica "./code tunnel"',
+                'tmux send-keys -t monica Enter',
+                // 'kill -9 $(pgrep -f nodemon)',
+                // 'kill $(lsof -t -i:3000)'
+            ]
+            shellOutputs = [...shellOutputs, ...runShellCommands(shellCommands, execSync)];
+        }
 
         if (data.split(' ').at(0) === 'startWetty' && process.env.NODE_ENV === 'production') {
             logger.info('starting wetty');

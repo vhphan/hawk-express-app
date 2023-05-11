@@ -1,13 +1,17 @@
 const express = require('express');
+
 const app = express();
+const cors = require('cors');
 const bodyParser = require("body-parser");
 require('dotenv').config();
+
 const { logger } = require('./middleware/logger');
 
 
 const baseUrl = '/node';
 global.__basedir = __dirname;
 
+app.use(cors());
 app.use(bodyParser.json({ limit: "50mb" }));
 app.use(bodyParser.urlencoded({ limit: "50mb", extended: true, parameterLimit: 50000 }));
 
@@ -60,12 +64,27 @@ if (process.env.NODE_ENV === "development") {
     app.get('/', (req, res) => res.redirect('/node/ctr/ctr-dl'));
 }
 
+const kpiFrontendRoute = (req, res) => res.sendFile(__dirname + '/apps/kpi-frontend/index.html');
+
+app.get('/node/apps/kpi-frontend', kpiFrontendRoute);
+
+app.use('/node/apps/kpi-frontend', express.static(__dirname + '/apps/kpi-frontend'));
+
+app.get('/node/apps/kpi-frontend/*', kpiFrontendRoute);
+
 const { createSocket } = require('./ePortal/eSocket');
 const { createCronToDeleteFilesOlderThanNDays } = require('./routes/utils');
-const {createCronToRunMainDPM, createCronToRunMainCellMapping} = require('./controllers/dnb');
+const { createCronToRunMainDPM, createCronToRunMainCellMapping } = require('./controllers/dnb');
+const { createCronToRefreshMaterializedViews } = require('./controllers/kpi');
 
 const socket = createSocket();
 
-createCronToDeleteFilesOlderThanNDays(__dirname + '/tmp/dl', 2);
-createCronToRunMainDPM();
-createCronToRunMainCellMapping();
+
+if (process.env.NODE_ENV !== "development") {
+    createCronToDeleteFilesOlderThanNDays(__dirname + '/tmp/dl', 2);
+    createCronToRunMainDPM();
+    createCronToRunMainCellMapping();
+}
+if (process.env.NODE_ENV === "development") {
+    createCronToRefreshMaterializedViews();
+}

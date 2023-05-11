@@ -134,3 +134,10 @@ Logs
 logs
 pyscripts/venv
 db/df_dpm/*
+uploads/*
+
+*.pyc
+kill.txt
+*.log
+*.zip
+*.gz

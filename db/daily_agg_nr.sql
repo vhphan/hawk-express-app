@@ -34,7 +34,7 @@ create operator ||| (procedure = daily_stats.division, leftarg = anyelement, rig
 
 drop materialized view daily_stats.kpi_nr_nrcelldu;
 
-drop materialized view daily_stats.kpi_nr_nrcelldu;
+-- drop materialized view daily_stats.kpi_nr_nrcelldu;
 create materialized view daily_stats.kpi_nr_nrcelldu as
 select
 date_id,
@@ -59,7 +59,7 @@ sum("dl_mac_vol_as_scell_nom")|||sum("dl_mac_vol_as_scell_den")  as  "dl_mac_vol
 sum("dl_mac_vol_to_scell_ext_nom")|||sum("dl_mac_vol_to_scell_ext_den")  as  "dl_mac_vol_to_scell_ext" ,
 sum("dl_mac_vol_as_scell_ext_nom")|||sum("dl_mac_vol_as_scell_ext_den")  as  "dl_mac_vol_as_scell_ext" ,
 sum("cell_availability_nom")|||sum("cell_availability_den")  as  "cell_availability" ,
-sum("e-rab_block_rate_nom")|||sum("e-rab_block_rate_den")  as  "e-rab_block_rate" ,
+-- sum("e-rab_block_rate_nom")|||sum("e-rab_block_rate_den")  as  "e-rab_block_rate" ,
 sum("resource_block_utilizing_rate_dl_nom")|||sum("resource_block_utilizing_rate_dl_den")  as  "resource_block_utilizing_rate_dl" ,
 sum("resource_block_utilizing_rate_ul_nom")|||sum("resource_block_utilizing_rate_ul_den")  as  "resource_block_utilizing_rate_ul" ,
 sum("ul_bler_nom")|||sum("ul_bler_den")  as  "ul_bler"
@@ -84,7 +84,8 @@ sum("intra-sgnb_pscell_change_success_rate_nom")|||sum("intra-sgnb_pscell_change
 sum("inter-sgnb_pscell_change_success_rate_nom")|||sum("inter-sgnb_pscell_change_success_rate_den")  as  "inter-sgnb_pscell_change_success_rate" ,
 sum("rrc_setup_success_rate_signaling_nom")|||sum("rrc_setup_success_rate_signaling_den")  as  "rrc_setup_success_rate_signaling" ,
 sum("endc_ca_configuration_sr_nom")|||sum("endc_ca_configuration_sr_den")  as  "endc_ca_configuration_sr" ,
-sum("endc_ca_deconfiguration_sr_nom")|||sum("endc_ca_deconfiguration_sr_den")  as  "endc_ca_deconfiguration_sr"
+sum("endc_ca_deconfiguration_sr_nom")|||sum("endc_ca_deconfiguration_sr_den")  as  "endc_ca_deconfiguration_sr",
+sum("e-rab_block_rate_nom")|||sum("e-rab_block_rate_den")  as  "e-rab_block_rate" 
 from
 dnb.daily_stats.dc_e_nr_nrcellcu_day as dt
 LEFT JOIN dnb.daily_stats.cell_mapping as cm on cm."Cellname" = dt."nrcellcu"
@@ -94,6 +95,9 @@ LEFT JOIN dnb.daily_stats.cell_mapping as cm on cm."Cellname" = dt."nrcellcu"
                             on obs.time = dt."date_id" and cm."SITEID" = obs.site_id
     WHERE "Region" is not null
     GROUP BY date_id, rollup("Region");
+
+-- check indexes on all tables
+select * from pg_indexes where schemaname ilike 'hourly%' and tablename ilike 'dc_e%';
 
 set search_path to daily_stats, public;
 
@@ -281,4 +285,203 @@ LEFT JOIN dnb.daily_stats.cell_mapping as cm on cm."Cellname" = dt."nrcelldu"
                             on obs.time = dt."date_id" and cm."SITEID" = obs.site_id
     WHERE nrcelldu='DKKMD0206_N3_0310'
     GROUP BY date_id, nrcelldu;
+
+
+
+/*markdown
+## dc_e_nr_nrcelldu_v_day
+*/
+
+
+alter table daily_stats.dc_e_nr_nrcelldu_v_day alter column nrcelldu type varchar(100);
+alter table daily_stats.dc_e_nr_nrcelldu_v_day alter column nr_name type varchar(100);
+
+
+
+
+create index dc_e_nr_nrcelldu_v_day_idx on daily_stats.dc_e_nr_nrcelldu_v_day (nrcelldu);
+
+drop materialized view daily_stats.kpi_nr_nrcelldu_v_day;
+create materialized view daily_stats.kpi_nr_nrcelldu_v as
+select
+date_id,
+"Region" as region,
+sum("latency_only_radio_interface_nom")|||sum("latency_only_radio_interface_den")  as  "latency_only_radio_interface" ,
+sum("average_cqi_nom")|||sum("average_cqi_den")  as  "average_cqi" ,
+sum("avg_pusch_ul_rssi_nom")|||sum("avg_pusch_ul_rssi_den")  as  "avg_pusch_ul_rssi"
+from
+dnb.daily_stats.dc_e_nr_nrcelldu_v_day as dt
+LEFT JOIN dnb.daily_stats.cell_mapping as cm on cm."Cellname" = dt."nrcelldu"
+    INNER JOIN (SELECT site_id, on_board_date::date, time::date
+            FROM dnb.daily_stats.df_dpm,
+                generate_series(on_board_date::date, now(), '1 day') as time) as obs
+                            on obs.time = dt."date_id" and cm."SITEID" = obs.site_id
+    WHERE "Region" is not null
+    GROUP BY date_id, rollup("Region");
+
+
+alter table daily_stats.dc_e_vpp_rpuserplanelink_v_day alter column ne_name type varchar(100);
+
+create index on daily_stats.dc_e_vpp_rpuserplanelink_v_day (ne_name);
+
+select * from daily_stats.dc_e_vpp_rpuserplanelink_v_day limit 3;
+
+select * from daily_stats.cell_mapping limit 3;
+
+
+drop materialized view daily_stats.kpi_vpp_rpuserplanelink_v;
+create materialized view daily_stats.kpi_vpp_rpuserplanelink_v as
+select
+date_id,
+"Region" as region,
+sum("packet_loss_dl_nom")|||sum("packet_loss_dl_den")  as  "packet_loss_dl" ,
+sum("packet_loss_ul_nom")|||sum("packet_loss_ul_den")  as  "packet_loss_ul" 
+from
+dnb.daily_stats.dc_e_vpp_rpuserplanelink_v_day as dt
+LEFT JOIN dnb.daily_stats.cell_mapping as cm on cm."Sitename" = dt."ne_name"
+    INNER JOIN (SELECT site_id, on_board_date::date, time::date
+            FROM dnb.daily_stats.df_dpm,
+                generate_series(on_board_date::date, now(), '1 day') as time) as obs
+                            on obs.time = dt."date_id" and cm."SITEID" = obs.site_id
+    WHERE "Region" is not null
+    GROUP BY date_id::date, rollup("Region");
+
+
+
+select count( distinct date_id ) from daily_stats.dc_e_vpp_rpuserplanelink_v_day;
+
+select count(distinct date_id) from daily_stats.dc_e_erbsg2_mpprocessingresource_v_day;
+
+
+drop materialized view daily_stats.kpi_erbsg2_mpprocessingresource_v;
+
+
+
+-- drop materialized view daily_stats.kpi_erbsg2_mpprocessingresource_v;
+create materialized view daily_stats.kpi_erbsg2_mpprocessingresource_v as
+select
+date_id,
+"Region" as region,
+sum("gnodeb_cpu_load_nom")|||sum("gnodeb_cpu_load_den")  as  "gnodeb_cpu_load"
+from
+dnb.daily_stats.dc_e_erbsg2_mpprocessingresource_v_day as dt
+LEFT JOIN dnb.daily_stats.cell_mapping as cm on cm."Sitename" = dt."erbs"
+    INNER JOIN (SELECT site_id, on_board_date::date, time::date
+            FROM dnb.daily_stats.df_dpm,
+                generate_series(on_board_date::date, now(), '1 day') as time) as obs
+                            on obs.time = dt."date_id" and cm."SITEID" = obs.site_id
+    WHERE "Region" is not null
+    GROUP BY date_id::date, rollup("Region");
+
+
+alter table daily_stats.dc_e_erbsg2_mpprocessingresource_v_day alter column erbs type varchar(100);
+
+create index on daily_stats.dc_e_erbsg2_mpprocessingresource_v_day (erbs);
+
+alter table daily_stats.dc_e_erbsg2_mpprocessingresource_v_day rename column gnobeb_cpu_load_nom to gnodeb_cpu_load_nom;
+
+alter table daily_stats.dc_e_erbsg2_mpprocessingresource_v_day rename column gnobeb_cpu_load_den to gnodeb_cpu_load_den;
+
+
+
+
+
+select
+date_id,
+sum("packet_loss_dl_nom")|||sum("packet_loss_dl_den")  as  "packet_loss_dl" ,
+sum("packet_loss_ul_nom")|||sum("packet_loss_ul_den")  as  "packet_loss_ul" 
+from
+dnb.daily_stats.dc_e_vpp_rpuserplanelink_v_day as dt
+LEFT JOIN dnb.daily_stats.cell_mapping as cm on cm."Sitename" = dt."ne_name"
+    INNER JOIN (SELECT site_id, on_board_date::date, time::date
+            FROM dnb.daily_stats.df_dpm,
+                generate_series(on_board_date::date, now(), '1 day') as time) as obs
+                            on obs.time = dt."date_id" and cm."SITEID" = obs.site_id
+    WHERE ne_name like 'DKKMD0206_%'
+    GROUP BY date_id
+    order by date_id
+    
+    ;
+
+
+
+select
+date_id,
+sum("gnodeb_cpu_load_nom")|||sum("gnodeb_cpu_load_den")  as  "gnodeb_cpu_load"
+from
+dnb.daily_stats.dc_e_erbsg2_mpprocessingresource_v_day as dt
+LEFT JOIN dnb.daily_stats.cell_mapping as cm on cm."Sitename" = dt."erbs"
+    INNER JOIN (SELECT site_id, on_board_date::date, time::date
+            FROM dnb.daily_stats.df_dpm,
+                generate_series(on_board_date::date, now(), '1 day') as time) as obs
+                            on obs.time = dt."date_id" and cm."SITEID" = obs.site_id
+    WHERE erbs like 'DKKMD0206' || '_%'
+    GROUP BY date_id
+    order by date_id
+    LIMIT 3
+    ;
+
+select
+date_id,
+sum("latency_only_radio_interface_nom")|||sum("latency_only_radio_interface_den")  as  "latency_only_radio_interface" ,
+sum("average_cqi_nom")|||sum("average_cqi_den")  as  "average_cqi" ,
+sum("avg_pusch_ul_rssi_nom")|||sum("avg_pusch_ul_rssi_den")  as  "avg_pusch_ul_rssi"
+from
+dnb.daily_stats.dc_e_nr_nrcelldu_v_day as dt
+LEFT JOIN dnb.daily_stats.cell_mapping as cm on cm."Cellname" = dt."nrcelldu"
+    INNER JOIN (SELECT site_id, on_board_date::date, time::date
+            FROM dnb.daily_stats.df_dpm,
+                generate_series(on_board_date::date, now(), '1 day') as time) as obs
+                            on obs.time = dt."date_id" and cm."SITEID" = obs.site_id
+    WHERE nrcelldu = 'DKKMD0206_N3_0310'
+    GROUP BY date_id;
+
+select nrcelldu from daily_stats.dc_e_nr_nrcelldu_v_day where nrcelldu like 'DKKMD0206_%' group by nrcelldu;
+
+
+
+select
+date_id,
+sum("packet_loss_dl_nom")|||sum("packet_loss_dl_den")  as  "packet_loss_dl" ,
+sum("packet_loss_ul_nom")|||sum("packet_loss_ul_den")  as  "packet_loss_ul" 
+from
+dnb.daily_stats.dc_e_vpp_rpuserplanelink_v_day as dt
+LEFT JOIN dnb.daily_stats.cell_mapping as cm on cm."Sitename" = dt."ne_name"
+    INNER JOIN (SELECT site_id, on_board_date::date, time::date
+            FROM dnb.daily_stats.df_dpm,
+                generate_series(on_board_date::date, now(), '1 day') as time) as obs
+                            on obs.time = dt."date_id" and cm."SITEID" = obs.site_id
+    WHERE ne_name like 'DKKMD0206' || '_%'
+    GROUP BY date_id;
+
+select ne_name from daily_stats.dc_e_vpp_rpuserplanelink_v_day where ne_name like 'DKKMD0206_%' group by ne_name;
+
+
+
+
+
+
+
+select * from daily_stats.dc_e_erbsg2_mpprocessingresource_v_day where erbs like 'DKKMD0206' || '_%';
+
+select * from daily_stats.kpi_nr_nrcellcu;
+
+
+
+create unique index on daily_stats.kpi_nr_nrcellcu (date_id, region);
+create unique index on daily_stats.kpi_nr_nrcelldu (date_id, region);
+create unique index on daily_stats.kpi_nr_nrcelldu_v (date_id, region);
+create unique index on daily_stats.kpi_erbsg2_mpprocessingresource_v (date_id, region);
+create unique index on daily_stats.kpi_vpp_rpuserplanelink_v (date_id, region);
+
+
+REFRESH MATERIALIZED VIEW CONCURRENTLY dnb.daily_stats.kpi_nr_nrcelldu;
+REFRESH MATERIALIZED VIEW CONCURRENTLY dnb.daily_stats.kpi_nr_nrcellcu;
+REFRESH MATERIALIZED VIEW CONCURRENTLY dnb.daily_stats.kpi_nr_nrcelldu_v;
+REFRESH MATERIALIZED VIEW CONCURRENTLY dnb.daily_stats.kpi_erbsg2_mpprocessingresource_v;
+REFRESH MATERIALIZED VIEW CONCURRENTLY dnb.daily_stats.kpi_vpp_rpuserplanelink_v;
+
+select distinct region from daily_stats.kpi_nr_nrcelldu_v;
+
+
 

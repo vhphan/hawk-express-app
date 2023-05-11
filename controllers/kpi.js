@@ -1,4 +1,5 @@
 const sql = require('../db/PgBackend');
+const { logger } = require('../middleware/logger');
 
 
 
@@ -29,12 +30,16 @@ const getCellDailyStatsNR = async (cellId, tableName) => {
         sum("dl_mac_vol_to_scell_ext_nom")|||sum("dl_mac_vol_to_scell_ext_den")  as  "dl_mac_vol_to_scell_ext" ,
         sum("dl_mac_vol_as_scell_ext_nom")|||sum("dl_mac_vol_as_scell_ext_den")  as  "dl_mac_vol_as_scell_ext" ,
         sum("cell_availability_nom")|||sum("cell_availability_den")  as  "cell_availability" ,
-        sum("e-rab_block_rate_nom")|||sum("e-rab_block_rate_den")  as  "e-rab_block_rate" ,
         sum("resource_block_utilizing_rate_dl_nom")|||sum("resource_block_utilizing_rate_dl_den")  as  "resource_block_utilizing_rate_dl" ,
         sum("resource_block_utilizing_rate_ul_nom")|||sum("resource_block_utilizing_rate_ul_den")  as  "resource_block_utilizing_rate_ul" ,
         sum("ul_bler_nom")|||sum("ul_bler_den")  as  "ul_bler"
     from
     dnb.daily_stats.dc_e_nr_nrcelldu_day as dt
+    LEFT JOIN dnb.daily_stats.cell_mapping as cm on cm."Cellname" = dt."nrcelldu"
+                INNER JOIN (SELECT site_id, on_board_date::date, time::date
+                        FROM dnb.daily_stats.df_dpm,
+                            generate_series(on_board_date::date, now(), '1 day') as time) as obs
+                                        on obs.time = dt."date_id" and cm."SITEID" = obs.site_id
     WHERE nrcelldu=${cellId}
     GROUP BY date_id, nrcelldu;
         `;
@@ -51,18 +56,80 @@ const getCellDailyStatsNR = async (cellId, tableName) => {
             sum("inter-sgnb_pscell_change_success_rate_nom")|||sum("inter-sgnb_pscell_change_success_rate_den")  as  "inter-sgnb_pscell_change_success_rate" ,
             sum("rrc_setup_success_rate_signaling_nom")|||sum("rrc_setup_success_rate_signaling_den")  as  "rrc_setup_success_rate_signaling" ,
             sum("endc_ca_configuration_sr_nom")|||sum("endc_ca_configuration_sr_den")  as  "endc_ca_configuration_sr" ,
-            sum("endc_ca_deconfiguration_sr_nom")|||sum("endc_ca_deconfiguration_sr_den")  as  "endc_ca_deconfiguration_sr"
+            sum("endc_ca_deconfiguration_sr_nom")|||sum("endc_ca_deconfiguration_sr_den")  as  "endc_ca_deconfiguration_sr",
+            sum("e-rab_block_rate_nom")|||sum("e-rab_block_rate_den")  as  "e-rab_block_rate"
         from
         dnb.daily_stats.dc_e_nr_nrcellcu_day as dt
+        LEFT JOIN dnb.daily_stats.cell_mapping as cm on cm."Cellname" = dt."nrcelldu"
+                INNER JOIN (SELECT site_id, on_board_date::date, time::date
+                        FROM dnb.daily_stats.df_dpm,
+                            generate_series(on_board_date::date, now(), '1 day') as time) as obs
+                                        on obs.time = dt."date_id" and cm."SITEID" = obs.site_id
         WHERE nrcellcu=${cellId}
         GROUP BY date_id, nrcellcu;
-
-
-
         `;
     }
 
 
+    if (tableName === 'dc_e_nr_nrcelldu_v_day') {
+        return await sql`
+        select
+            date_id,
+            sum("latency_only_radio_interface_nom")|||sum("latency_only_radio_interface_den")  as  "latency_only_radio_interface" ,
+            sum("average_cqi_nom")|||sum("average_cqi_den")  as  "average_cqi" ,
+            sum("avg_pusch_ul_rssi_nom")|||sum("avg_pusch_ul_rssi_den")  as  "avg_pusch_ul_rssi"
+            from
+            dnb.daily_stats.dc_e_nr_nrcelldu_v_day as dt
+            LEFT JOIN dnb.daily_stats.cell_mapping as cm on cm."Cellname" = dt."nrcelldu"
+                INNER JOIN (SELECT site_id, on_board_date::date, time::date
+                        FROM dnb.daily_stats.df_dpm,
+                            generate_series(on_board_date::date, now(), '1 day') as time) as obs
+                                        on obs.time = dt."date_id" and cm."SITEID" = obs.site_id
+                WHERE nrcelldu = ${cellId}
+                GROUP BY date_id;
+        `;
+    }
+
+    if (tableName === 'dc_e_erbsg2_mpprocessingresource_v_day') {
+        const siteId = cellId.split('_')[0];
+        return await sql`
+        select
+            date_id,
+            sum("gnodeb_cpu_load_nom")|||sum("gnodeb_cpu_load_den")  as  "gnodeb_cpu_load"
+            from
+            dnb.daily_stats.dc_e_erbsg2_mpprocessingresource_v_day as dt
+            LEFT JOIN dnb.daily_stats.cell_mapping as cm on cm."Sitename" = dt."erbs"
+                INNER JOIN (SELECT site_id, on_board_date::date, time::date
+                        FROM dnb.daily_stats.df_dpm,
+                            generate_series(on_board_date::date, now(), '1 day') as time) as obs
+                                        on obs.time = dt."date_id" and cm."SITEID" = obs.site_id
+                WHERE erbs like ${siteId} || '_%'
+                GROUP BY date_id
+                order by date_id
+                ;
+
+        `;
+    }
+
+    if (tableName === 'dc_e_vpp_rpuserplanelink_v_day') {
+        const siteId = cellId.split('_')[0];
+        return await sql`
+        select
+            date_id,
+            sum("packet_loss_dl_nom")|||sum("packet_loss_dl_den")  as  "packet_loss_dl" ,
+            sum("packet_loss_ul_nom")|||sum("packet_loss_ul_den")  as  "packet_loss_ul"
+            from
+            dnb.daily_stats.dc_e_vpp_rpuserplanelink_v_day as dt
+            LEFT JOIN dnb.daily_stats.cell_mapping as cm on cm."Sitename" = dt."ne_name"
+                INNER JOIN (SELECT site_id, on_board_date::date, time::date
+                        FROM dnb.daily_stats.df_dpm,
+                            generate_series(on_board_date::date, now(), '1 day') as time) as obs
+                                        on obs.time = dt."date_id" and cm."SITEID" = obs.site_id
+                WHERE ne_name like ${siteId} || '_%'
+                GROUP BY date_id
+                ;
+        `;
+    }
 }
 
 const getRegionDailyStatsLTE = async (tableName) => {
@@ -72,6 +139,12 @@ const getRegionDailyStatsLTE = async (tableName) => {
 
 
 const getRegionDailyStatsNR = async (tableName) => {
+
+    // 'dc_e_nr_nrcelldu_day',
+    // 'dc_e_nr_nrcellcu_day',
+    // 'dc_e_nr_nrcelldu_v_day',
+    // 'dc_e_erbsg2_mpprocessingresource_v_day',
+    // 'dc_e_vpp_rpuserplanelink_v_day',
 
     if (tableName === 'dc_e_nr_nrcelldu_day') {
         return await sql`
@@ -85,14 +158,60 @@ const getRegionDailyStatsNR = async (tableName) => {
         `;
     }
 
+    if (tableName === 'dc_e_nr_nrcelldu_v_day') {
+        return await sql`
+            select * from dnb.daily_stats.kpi_nr_nrcelldu_v as dt order by date_id
+        `;
+    }
+
+    if (tableName === 'dc_e_erbsg2_mpprocessingresource_v_day') {
+        return await sql`
+            select * from dnb.daily_stats.kpi_erbsg2_mpprocessingresource_v as dt order by date_id
+        `;
+    }
+
+    if (tableName === 'dc_e_vpp_rpuserplanelink_v_day') {
+        return await sql`
+            select * from dnb.daily_stats.kpi_vpp_rpuserplanelink_v as dt order by date_id
+        `;
+    }
+
     throw new Error('Invalid table name for NR region daily stats; ' + tableName);
 
 }
 
-    
+const refreshMaterializedViews = async () => {
+    await sql`
+    REFRESH MATERIALIZED VIEW CONCURRENTLY dnb.daily_stats.kpi_nr_nrcelldu;
+    `;
+    await sql`
+    REFRESH MATERIALIZED VIEW CONCURRENTLY dnb.daily_stats.kpi_nr_nrcellcu;
+    `;
+    await sql`
+    REFRESH MATERIALIZED VIEW CONCURRENTLY dnb.daily_stats.kpi_nr_nrcelldu_v;
+    `;
+    await sql`
+    REFRESH MATERIALIZED VIEW CONCURRENTLY dnb.daily_stats.kpi_erbsg2_mpprocessingresource_v;
+    `;
+    await sql`
+    REFRESH MATERIALIZED VIEW CONCURRENTLY dnb.daily_stats.kpi_vpp_rpuserplanelink_v;
+    `;
+};
+
+const createCronToRefreshMaterializedViews = async () => {
+    logger.info('Creating cron to refresh materialized views');
+    await refreshMaterializedViews();
+    const cron = require('node-cron');
+    cron.schedule('30 3 * * *', async () => {
+        await refreshMaterializedViews();
+    });
+}
+
+
 
 
 module.exports = {
     getCellDailyStatsNR,
-    getRegionDailyStatsNR
+    getRegionDailyStatsNR,
+    createCronToRefreshMaterializedViews
 }

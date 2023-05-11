@@ -344,7 +344,7 @@ router.post('/uploadCsvFile', upload.single('file'), async (req, res) => {
 
     const siteId = siteName.split('_')[0];
 
-    const globPattern = `/data4/*/CTR_LOGS/bot-*${dateString}*/CTR_Files/${dateString}/*${siteId}*/*${dateString}*${timeString}*${fileType}*`;
+    const globPattern = `/data4/*/CTR_LOGS/bot-*/CTR_Files/${dateString}/*${siteId}*/*${dateString}*${timeString}*${fileType}*`;
     // construct shell command to find file
     const shellCommand = `find ${globPattern} -type f -print`;
     shellCommands.push(shellCommand);
@@ -385,7 +385,7 @@ router.post('/uploadCsvFile', upload.single('file'), async (req, res) => {
   let csvString = 'File name,Status,Error message\n';
   filesSuccessfullyAdded.forEach(f => csvString += `"${f.split('/').at(-1)}",Success,\n`);
   filesFailedToAdd.forEach(f => csvString += `"${f.file.split('/').at(-1)}",Failed, "${f.error}"\n`);
-  filesFailedToFind.forEach(f => csvString += `"${f.split('/').at(-1)}",Failed, File not found\n`);
+  filesFailedToFind.forEach(f => csvString += `"${f}",Failed, File not found\n`);
 
   // create a csv file with the results
   const csvFileNameWithId = 'results-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7) + '.csv';
@@ -397,7 +397,14 @@ router.post('/uploadCsvFile', upload.single('file'), async (req, res) => {
 
   // upload zip file to sharepoint
   // uploadFileToSharepoint(zipFilePath);
-  uploadFileToSharepointUsingPython(zipFileName);
+
+  try{
+    
+    uploadFileToSharepointUsingPython(zipFileName);
+  } catch (err){
+    logger.error(err);
+  }
+
 
   res.json({
     success: true,
@@ -423,7 +430,7 @@ function uploadFileToSharepointUsingPython(fileName) {
 
   const { spawn } = require('child_process');
   const pythonScriptPath = '/data2/var/www/hawk-express-app/pyscript/upload_sp.py';
-  const pythonInterpreter = '/data2/var/www/hawk-express-app/pyscript/venv/bin/python';
+  const pythonInterpreter = '/home/hawkuser/miniconda3/envs/hawk-ctr/bin/python';
   const pythonProcess = spawn(pythonInterpreter, [pythonScriptPath, fileName]);
 
   pythonProcess.stdout.on('data', (data) => {
@@ -436,6 +443,12 @@ function uploadFileToSharepointUsingPython(fileName) {
 
   pythonProcess.on('close', (code) => {
     logger.info(`child process exited with code ${code}`);
+  });
+
+  // on error
+  pythonProcess.on('error', (err) => {
+    logger.error('Eror on Python script.');
+    logger.error(err);
   });
 
 }
