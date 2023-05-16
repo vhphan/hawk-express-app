@@ -3,8 +3,14 @@ const router = express.Router();
 
 
 const { testQuery } = require("../db/dailyKpiQueries");
-const { getCellDailyStatsNR, getRegionDailyStatsNR } = require("../controllers/kpi");
-const { getRegionHourlyStatsNR, getCellHourlyStatsNR } = require("../controllers/kpiHourly");
+const { 
+    getCellDailyStatsNR, 
+    getCellDailyStatsLTE,
+    getRegionDailyStatsNR,
+    getRegionDailyStatsLTE,
+
+} = require("../controllers/kpi");
+const { getRegionHourlyStatsNR, getCellHourlyStatsN } = require("../controllers/kpiHourly");
 const asyncHandler = require("../middleware/async");
 const { kpiList } = require("../configs/kpiList");
 
@@ -20,7 +26,9 @@ const tables = {
 
     ],
     lte: [
-
+        'dc_e_erbs_eutrancellfdd_day',
+        'dc_e_erbs_eutrancellrelation_day',
+        'dc_e_erbs_eutrancellfdd_v_day'
     ]
 }
 
@@ -33,6 +41,7 @@ const tablesHourly = {
         'dc_e_vpp_rpuserplanelink_v_raw',
     ],
     lte: [
+
 
     ]
 }
@@ -62,9 +71,14 @@ router.get('/dailyStatsRegion', asyncHandler(async (req, res) => {
     const { tech } = req.query;
     let { region } = req.query;
 
-    const promises = tables[tech].map((table) =>
-        getRegionDailyStatsNR(table)
-    )
+    const promises = tables[tech].map((table) =>{
+        if (tech==='nr'){
+            return getRegionDailyStatsNR(table);
+        }
+        if (tech ==='lte'){
+            return getRegionDailyStatsLTE(table);
+        }
+    })
 
     if (!region) { region = 'all' }
 

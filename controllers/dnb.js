@@ -2,23 +2,61 @@
 const sql = require('../db/PgBackend');
 const axios = require('axios');
 const { logger } = require('../middleware/logger');
+
+
+
 require('dotenv').config('../.env');
+
+
+const getSortersForTable = (tableName) => {
+    let sorters = [];
+    switch (tableName) {
+        case 'df_dpm':
+            sorters = [
+                {
+                    "field": "dnb_index",
+                    "dir": "asc"
+                }
+            ];
+            break;
+        case 'cell_mapping':
+            sorters = [
+                {
+                    "field": "Cellname",
+                    "dir": "asc"
+                }
+            ];
+            break;
+        };
+    return sorters;
+}
+
+
 
 const getTableDataFromPortal = async (tableName, schema = 'rfdb') => {
 
     const url = new URL('https://api.eprojecttrackers.com/node/dnb/tabulatorData');
 
+    let sorters = getSortersForTable(tableName);
+
     const params = {
         table: tableName,
         page: 1,
         size: 1000,
-        schema: schema
+        schema: schema,
     }
 
     url.searchParams.append('table', params.table);
     url.searchParams.append('page', params.page);
     url.searchParams.append('size', params.size);
     url.searchParams.append('schema', params.schema);
+
+    // sorters[0][field]=WorkPlanID&sorters[0][dir]=asc
+    sorters.forEach((sorter, index) => {
+        url.searchParams.append(`sorters[${index}][field]`, sorter.field);
+        url.searchParams.append(`sorters[${index}][dir]`, sorter.dir);
+    });
+
 
     const api = process.env.EPORTAL_API_KEY;
 
@@ -36,6 +74,7 @@ const getTableDataFromPortal = async (tableName, schema = 'rfdb') => {
         console.log('Error in fetching data from ePortal');
         throw new Error('Error in fetching data from ePortal');
     }
+    logger.info(`Fetched ${data.length} rows from ${tableName} table`);
 
     const allData = data;
     const promises = [];
@@ -45,7 +84,11 @@ const getTableDataFromPortal = async (tableName, schema = 'rfdb') => {
         url.searchParams.append('page', i);
         url.searchParams.append('size', params.size);
         url.searchParams.append('schema', params.schema);
-
+        sorters.forEach((sorter, index) => {
+            url.searchParams.append(`sorters[${index}][field]`, sorter.field);
+            url.searchParams.append(`sorters[${index}][dir]`, sorter.dir);
+        });
+        
         promises.push(axios.get(url.href, {
             headers: {
                 api: api
@@ -56,6 +99,7 @@ const getTableDataFromPortal = async (tableName, schema = 'rfdb') => {
     const responseArray = await Promise.all(promises);
     responseArray.forEach((response) => {
         allData.push(...response.data.data);
+        logger.info(`Fetched ${response.data.data.length} rows from ${tableName} table`);
     });
 
     // save allData to json file
@@ -69,7 +113,7 @@ const getTableDataFromPortal = async (tableName, schema = 'rfdb') => {
 
 }
 
-async function insertRow(sql_, rowData, tableName) {
+async function insertRow(sql_, rowData, tableName, schemaName) {
     /*
     sql`
     insert into users ${
@@ -81,12 +125,12 @@ async function insertRow(sql_, rowData, tableName) {
     switch (tableName) {
         case 'df_dpm':
             result = await sql_`
-        insert into daily_stats.df_dpm ${sql(rowData, 'dnb_index', 'nominal_id', '_id', "Nominal_ID", "Site_Name", "Latitude", "Longitude", 'site_id', "Nominal_Latitude", "Nominal_Longitude", "Candidate_Latitude", "Candidate_Longitude", 'on_board_date', 'api_call_date', 'added', "Acceptance_Cluster", "Sub_Cluster", "CBOClusterName")}
+        insert into ${sql(schemaName)}.df_dpm ${sql(rowData, 'dnb_index', 'nominal_id', '_id', "Nominal_ID", "Site_Name", "Latitude", "Longitude", 'site_id', "Nominal_Latitude", "Nominal_Longitude", "Candidate_Latitude", "Candidate_Longitude", 'on_board_date', 'api_call_date', 'added', "Acceptance_Cluster", "Sub_Cluster", "CBOClusterName")}
         `;
             break;
         case 'cell_mapping':
             result = await sql_`
-        insert into daily_stats.cell_mapping ${sql(rowData, "Cellname", "Region", "Cluster_ID", "DISTRICT", "MCMC_State", "geom", "SITEID", "Sitename")}
+        insert into ${sql(schemaName)}.cell_mapping ${sql(rowData, "Cellname", "Region", "Cluster_ID", "DISTRICT", "MCMC_State", "geom", "SITEID", "Sitename")}
         `;
             break;
 
@@ -98,11 +142,11 @@ async function insertRow(sql_, rowData, tableName) {
 }
 
 
-async function insertMultipleRows(rows, tableName) {
+async function insertMultipleRows(rows, tableName, schemaName) {
 
     const result = await sql.begin(async sql => {
         rows.map(async (row) => {
-            await insertRow(sql, row, tableName);
+            await insertRow(sql, row, tableName, schemaName);
         });
     })
 
@@ -110,9 +154,9 @@ async function insertMultipleRows(rows, tableName) {
 
 }
 
-const deleteAllRows = async (tableName) => {
+const deleteAllRows = async (tableName, schemaName) => {
     const result = await sql`
-    delete from daily_stats.${sql(tableName)}
+    delete from ${sql(schemaName)}.${sql(tableName)}
         where true
     `;
     logger.info(`Deleted all rows from ${tableName} table`);
@@ -120,17 +164,17 @@ const deleteAllRows = async (tableName) => {
 };
 
 const insertDfDpmTable = async () => {
-    deleteAllRows('df_dpm');
+    deleteAllRows('df_dpm', 'rfdb');
     const data = await getTableDataFromPortal('df_dpm');
-    const result = await insertMultipleRows(data, 'df_dpm');
+    const result = await insertMultipleRows(data, 'df_dpm', 'rfdb');
     console.log(result);
     return result;
 };
 
 const insertCellMappingTable = async () => {
-    deleteAllRows('cell_mapping');
+    deleteAllRows('cell_mapping', 'rfdb');
     const data = await getTableDataFromPortal('cell_mapping');
-    const result = await insertMultipleRows(data, 'cell_mapping');
+    const result = await insertMultipleRows(data, 'cell_mapping', 'rfdb');
     console.log(result);
     return result;
 };

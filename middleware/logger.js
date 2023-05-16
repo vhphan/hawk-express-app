@@ -11,7 +11,7 @@ const transport = new transports.DailyRotateFile({
     filename: 'logs/%DATE%.log',
     datePattern: 'YYYY-MM-DD',
     zippedArchive: true,
-    maxSize: '2m',
+    maxSize: '5m',
 });
 
 const logger = createLogger({
@@ -34,24 +34,36 @@ const logger = createLogger({
 // `${info.level}: ${info.message} JSON.stringify({ ...rest }) `
 //
 if (process.env.NODE_ENV !== 'production') {
-    console.log('adding console transport');
-        logger.add(new transports.Console({
+    logger.add(new transports.Console({
         format: myFormat,
     }));
 }
 
 function logRequest(req, res, next) {
-    logger.info(req.url)
-    next()
+    logger.info(req.url);
+    next();
 }
 
 function logError(err, req, res, next) {
-    logger.error(err)
-    next()
+    logger.error(err);
+    next();
+}
+
+function createMyLogger(logFileName) {
+    return createLogger({
+            level: 'info',
+            format: myFormat,
+            transports: [
+                new transports.File({filename: `logs/${logFileName}.log`}),
+            ],
+
+        }
+    );
 }
 
 module.exports = {
     logger,
     logRequest,
     logError,
-}
+    createMyLogger
+};

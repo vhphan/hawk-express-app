@@ -132,11 +132,31 @@ const getCellDailyStatsNR = async (cellId, tableName) => {
     }
 }
 
-const getRegionDailyStatsLTE = async (tableName) => {
-
+const getCellDailyStatsLTE = async (tableName) => {
+    throw new Error('Not implemented');
 }
 
+const getRegionDailyStatsLTE = async (tableName) => {
 
+    if (tableName === 'dc_e_erbs_eutrancellfdd_day') {
+        return await sql`
+            select * from dnb.daily_stats.kpi_erbs_eutrancellfdd as dt order by date_id
+        `;
+    }
+
+    if (tableName === 'dc_e_erbs_eutrancellfdd_v_day') {
+        return await sql`
+            select * from dnb.daily_stats.kpi_erbs_eutrancellfdd_v as dt order by date_id
+        `;
+    }
+
+    if (tableName === 'dc_e_erbs_eutrancellrelation_day') {
+        return await sql`
+            select * from dnb.daily_stats.kpi_erbs_eutrancellrelation as dt order by date_id
+        `;
+    }
+
+}
 
 const getRegionDailyStatsNR = async (tableName) => {
 
@@ -176,11 +196,13 @@ const getRegionDailyStatsNR = async (tableName) => {
         `;
     }
 
+
     throw new Error('Invalid table name for NR region daily stats; ' + tableName);
 
 }
 
 const refreshMaterializedViews = async () => {
+    // NR
     await sql`
     REFRESH MATERIALIZED VIEW CONCURRENTLY dnb.daily_stats.kpi_nr_nrcelldu;
     `;
@@ -196,15 +218,79 @@ const refreshMaterializedViews = async () => {
     await sql`
     REFRESH MATERIALIZED VIEW CONCURRENTLY dnb.daily_stats.kpi_vpp_rpuserplanelink_v;
     `;
+
+    // FLEX
+    await sql`
+    refresh materialized view concurrently daily_stats.kpi_eutrancellfdd_flex;
+    `;
+    await sql`
+    refresh materialized view concurrently daily_stats.kpi_nrcellcu_flex;
+    `;
+    await sql`
+    refresh materialized view concurrently daily_stats.kpi_nrcelldu_flex;
+    `;
+
+    // LTE
+    await sql`
+    refresh materialized view concurrently dnb.daily_stats.kpi_erbs_eutrancellfdd;
+    `;
+    await sql`
+    refresh materialized view concurrently dnb.daily_stats.kpi_erbs_eutrancellrelation;
+    `;
+    await sql`
+    refresh materialized view concurrently dnb.daily_stats.kpi_erbs_eutrancellfdd_v;
+    `;
+
+
 };
 
+const refreshMaterializedViewsHourly = async () => {
+    await sql`
+    REFRESH MATERIALIZED VIEW CONCURRENTLY dnb.hourly_stats.kpi_nr_nrcelldu;
+    `;
+    await sql`
+    REFRESH MATERIALIZED VIEW CONCURRENTLY dnb.hourly_stats.kpi_nr_nrcellcu;
+    `;
+    await sql`
+    REFRESH MATERIALIZED VIEW CONCURRENTLY dnb.hourly_stats.kpi_nr_nrcelldu_v;
+    `;
+    await sql`
+    REFRESH MATERIALIZED VIEW CONCURRENTLY dnb.hourly_stats.kpi_erbsg2_mpprocessingresource_v;
+    `;
+    await sql`
+    REFRESH MATERIALIZED VIEW CONCURRENTLY dnb.hourly_stats.kpi_vpp_rpuserplanelink_v;
+    `;
+};
+
+
 const createCronToRefreshMaterializedViews = async () => {
+
     logger.info('Creating cron to refresh materialized views');
     await refreshMaterializedViews();
+    await refreshMaterializedViewsHourly();
     const cron = require('node-cron');
+
     cron.schedule('30 3 * * *', async () => {
         await refreshMaterializedViews();
     });
+
+    cron.schedule('30 4 * * *', async () => {
+        await refreshMaterializedViewsHourly();
+    });
+
+    cron.schedule('30 9 * * *', async () => {
+        await refreshMaterializedViewsHourly();
+    });
+
+    cron.schedule('30 13 * * *', async () => {
+        await refreshMaterializedViewsHourly();
+    });
+
+    cron.schedule('30 16 * * *', async () => {
+        await refreshMaterializedViewsHourly();
+    });
+
+
 }
 
 
@@ -212,6 +298,8 @@ const createCronToRefreshMaterializedViews = async () => {
 
 module.exports = {
     getCellDailyStatsNR,
+    getCellDailyStatsLTE,
     getRegionDailyStatsNR,
+    getRegionDailyStatsLTE,
     createCronToRefreshMaterializedViews
 }

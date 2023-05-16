@@ -130,6 +130,10 @@ const getCellHourlyStatsNR = async (cellId, tableName) => {
     }
 }
 
+const getCellHourlyStatsLTE = async (tableName) => {
+    throw new Error('Not implemented');
+}
+
 
 const getRegionHourlyStatsNR = async (tableName) => {
 
@@ -167,9 +171,32 @@ const getRegionHourlyStatsNR = async (tableName) => {
 
 }
 
+const getRegionHourlyStatsLTE = async (tableName) => {
+    
+    if (tableName === 'dc_e_erbs_eutrancellfdd_day') {
+        return await sql`
+            select * from dnb.hourly_stats.kpi_erbs_eutrancellfdd as dt order by date_id
+        `;
+    }
+
+    if (tableName === 'dc_e_erbs_eutrancellfdd_v_day') {
+        return await sql`
+            select * from dnb.hourly_stats.kpi_erbs_eutrancellfdd_v as dt order by date_id
+        `;
+    }
+
+    if (tableName === 'dc_e_erbs_eutrancellrelation_day') {
+        return await sql`
+            select * from dnb.hourly_stats.kpi_erbs_eutrancellrelation as dt order by date_id
+        `;
+    }
+
+}
 
 
 module.exports = {
     getCellHourlyStatsNR,
-    getRegionHourlyStatsNR
+    getCellHourlyStatsLTE,
+    getRegionHourlyStatsNR,
+    getRegionHourlyStatsLTE
 };
