@@ -3,27 +3,33 @@ const router = express.Router();
 
 
 const { testQuery } = require("../db/dailyKpiQueries");
-const { 
-    getCellDailyStatsNR, 
+const {
+    getCellDailyStatsNR,
     getCellDailyStatsLTE,
     getRegionDailyStatsNR,
     getRegionDailyStatsLTE,
+    getRegionDailyStatsNRFlex,
+    getRegionDailyStatsLTEFlex,
 
 } = require("../controllers/kpi");
-const { getRegionHourlyStatsNR, getCellHourlyStatsN } = require("../controllers/kpiHourly");
+const {
+    getRegionHourlyStatsNR,
+    getRegionHourlyStatsLTE,
+    getCellHourlyStatsNR,
+    getCellHourlyStatsLTE,
+
+} = require("../controllers/kpiHourly");
 const asyncHandler = require("../middleware/async");
-const { kpiList } = require("../configs/kpiList");
+const { kpiList, kpiListFlex, mobileOperators } = require("../configs/kpiList");
 
 
 const tables = {
-
     nr: [
         'dc_e_nr_nrcelldu_day',
         'dc_e_nr_nrcellcu_day',
         'dc_e_nr_nrcelldu_v_day',
         'dc_e_erbsg2_mpprocessingresource_v_day',
         'dc_e_vpp_rpuserplanelink_v_day',
-
     ],
     lte: [
         'dc_e_erbs_eutrancellfdd_day',
@@ -31,6 +37,16 @@ const tables = {
         'dc_e_erbs_eutrancellfdd_v_day'
     ]
 }
+
+const flexTables = {
+    nr: [
+        'dc_e_nr_events_nrcellcu_flex_day',
+        'dc_e_nr_events_nrcelldu_flex_day',
+    ],
+    lte: [
+        'dc_e_erbs_eutrancellfdd_flex_day',
+    ]
+};
 
 const tablesHourly = {
     nr: [
@@ -46,7 +62,15 @@ const tablesHourly = {
     ]
 }
 
-
+const flexTablesHourly = {
+    nr: [
+        'dc_e_nr_events_nrcellcu_flex_raw',
+        'dc_e_nr_events_nrcelldu_flex_raw',
+    ],
+    lte: [
+        'dc_e_erbs_eutrancellfdd_flex_raw',
+    ]
+};
 
 router.get("/test", testQuery);
 
@@ -69,18 +93,16 @@ router.get('/dailyStats', asyncHandler(async (req, res) => {
 router.get('/dailyStatsRegion', asyncHandler(async (req, res) => {
 
     const { tech } = req.query;
-    let { region } = req.query;
+    const region = req.query.region || 'all';
 
-    const promises = tables[tech].map((table) =>{
-        if (tech==='nr'){
+    const promises = tables[tech].map((table) => {
+        if (tech === 'nr') {
             return getRegionDailyStatsNR(table);
         }
-        if (tech ==='lte'){
+        if (tech === 'lte') {
             return getRegionDailyStatsLTE(table);
         }
     })
-
-    if (!region) { region = 'all' }
 
     const results = await compileResultsKpiArrays(promises, tech, region, 'region');
 
@@ -100,13 +122,15 @@ router.get('/dailyStatsRegion', asyncHandler(async (req, res) => {
 router.get('/hourlyStatsRegion', asyncHandler(async (req, res) => {
 
     const { tech } = req.query;
-    let { region } = req.query;
+    const region = req.query.region || 'all';
 
-    const promises = tablesHourly[tech].map((table) =>
-        getRegionHourlyStatsNR(table)
-    );
+    const promises = tablesHourly[tech].map((table) => {
 
-    if (!region) { region = 'all' }
+        if (tech === 'nr') return getRegionHourlyStatsNR(table);
+        if (tech === 'lte') return getRegionHourlyStatsLTE(table);
+
+    });
+
 
     const results = await compileResultsKpiArrays(promises, tech, region, 'region');
 
@@ -122,6 +146,32 @@ router.get('/hourlyStatsRegion', asyncHandler(async (req, res) => {
 
 
 }));
+
+router.get('/dailyStatsRegionFlex', asyncHandler(async (req, res) => {
+
+    const { tech } = req.query;
+    const region = req.query.region || 'all';
+
+    const promises = flexTables[tech].map((table) => {
+        if (tech === 'nr') return getRegionDailyStatsNRFlex(table)
+        if (tech === 'lte') return getRegionDailyStatsLTEFlex(table)
+    });
+
+    const results = await compileResultsKpiArraysFlex(promises, tech, region, 'region');
+
+    res.json({
+        success: true,
+        data: results,
+        meta: {
+            time: new Date(),
+            region,
+            tech,
+        }
+    });
+
+}));
+
+
 
 module.exports = router;
 
@@ -161,6 +211,42 @@ async function compileResultsKpiArrays(promises, tech, region, level = 'region')
 
 }
 
+async function compileResultsKpiArraysFlex(promises, tech, region, level = 'region') {
+
+    const kpiListTech = kpiListFlex[tech];
+    const results = await Promise.all(promises);
+    const flattenedResults = getFlattenedResults(level, results, region);
+    const finalResults = {};
+
+    kpiListTech.forEach(kpi => {
+
+        mobileOperators.forEach(operator => {
+
+            const seriesData = flattenedResults
+                .filter(d => Object.keys(d).includes(kpi))
+                .filter(d => d['mobile_operator'] === operator)
+                .map(d => (
+                    [
+                        d.date_id,
+                        d[kpi],
+                    ]
+                ));
+            if (!finalResults[kpi]) finalResults[kpi] = [];
+            finalResults[kpi].push({
+                name: operator,
+                data: seriesData,
+            })
+            
+        });
+
+    });
+
+    return finalResults;
+
+}
+
+
+
 function getFlattenedResults(level, results, region) {
     if (level === 'region') {
         const regionResults = results.map(result => result.filter(d => {
@@ -172,4 +258,7 @@ function getFlattenedResults(level, results, region) {
     }
     return results.flat();
 }
+
+
+
 

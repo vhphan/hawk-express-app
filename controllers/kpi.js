@@ -35,11 +35,6 @@ const getCellDailyStatsNR = async (cellId, tableName) => {
         sum("ul_bler_nom")|||sum("ul_bler_den")  as  "ul_bler"
     from
     dnb.daily_stats.dc_e_nr_nrcelldu_day as dt
-    LEFT JOIN dnb.daily_stats.cell_mapping as cm on cm."Cellname" = dt."nrcelldu"
-                INNER JOIN (SELECT site_id, on_board_date::date, time::date
-                        FROM dnb.daily_stats.df_dpm,
-                            generate_series(on_board_date::date, now(), '1 day') as time) as obs
-                                        on obs.time = dt."date_id" and cm."SITEID" = obs.site_id
     WHERE nrcelldu=${cellId}
     GROUP BY date_id, nrcelldu;
         `;
@@ -60,11 +55,6 @@ const getCellDailyStatsNR = async (cellId, tableName) => {
             sum("e-rab_block_rate_nom")|||sum("e-rab_block_rate_den")  as  "e-rab_block_rate"
         from
         dnb.daily_stats.dc_e_nr_nrcellcu_day as dt
-        LEFT JOIN dnb.daily_stats.cell_mapping as cm on cm."Cellname" = dt."nrcelldu"
-                INNER JOIN (SELECT site_id, on_board_date::date, time::date
-                        FROM dnb.daily_stats.df_dpm,
-                            generate_series(on_board_date::date, now(), '1 day') as time) as obs
-                                        on obs.time = dt."date_id" and cm."SITEID" = obs.site_id
         WHERE nrcellcu=${cellId}
         GROUP BY date_id, nrcellcu;
         `;
@@ -80,11 +70,6 @@ const getCellDailyStatsNR = async (cellId, tableName) => {
             sum("avg_pusch_ul_rssi_nom")|||sum("avg_pusch_ul_rssi_den")  as  "avg_pusch_ul_rssi"
             from
             dnb.daily_stats.dc_e_nr_nrcelldu_v_day as dt
-            LEFT JOIN dnb.daily_stats.cell_mapping as cm on cm."Cellname" = dt."nrcelldu"
-                INNER JOIN (SELECT site_id, on_board_date::date, time::date
-                        FROM dnb.daily_stats.df_dpm,
-                            generate_series(on_board_date::date, now(), '1 day') as time) as obs
-                                        on obs.time = dt."date_id" and cm."SITEID" = obs.site_id
                 WHERE nrcelldu = ${cellId}
                 GROUP BY date_id;
         `;
@@ -98,11 +83,6 @@ const getCellDailyStatsNR = async (cellId, tableName) => {
             sum("gnodeb_cpu_load_nom")|||sum("gnodeb_cpu_load_den")  as  "gnodeb_cpu_load"
             from
             dnb.daily_stats.dc_e_erbsg2_mpprocessingresource_v_day as dt
-            LEFT JOIN dnb.daily_stats.cell_mapping as cm on cm."Sitename" = dt."erbs"
-                INNER JOIN (SELECT site_id, on_board_date::date, time::date
-                        FROM dnb.daily_stats.df_dpm,
-                            generate_series(on_board_date::date, now(), '1 day') as time) as obs
-                                        on obs.time = dt."date_id" and cm."SITEID" = obs.site_id
                 WHERE erbs like ${siteId} || '_%'
                 GROUP BY date_id
                 order by date_id
@@ -120,11 +100,6 @@ const getCellDailyStatsNR = async (cellId, tableName) => {
             sum("packet_loss_ul_nom")|||sum("packet_loss_ul_den")  as  "packet_loss_ul"
             from
             dnb.daily_stats.dc_e_vpp_rpuserplanelink_v_day as dt
-            LEFT JOIN dnb.daily_stats.cell_mapping as cm on cm."Sitename" = dt."ne_name"
-                INNER JOIN (SELECT site_id, on_board_date::date, time::date
-                        FROM dnb.daily_stats.df_dpm,
-                            generate_series(on_board_date::date, now(), '1 day') as time) as obs
-                                        on obs.time = dt."date_id" and cm."SITEID" = obs.site_id
                 WHERE ne_name like ${siteId} || '_%'
                 GROUP BY date_id
                 ;
@@ -136,35 +111,8 @@ const getCellDailyStatsLTE = async (tableName) => {
     throw new Error('Not implemented');
 }
 
-const getRegionDailyStatsLTE = async (tableName) => {
-
-    if (tableName === 'dc_e_erbs_eutrancellfdd_day') {
-        return await sql`
-            select * from dnb.daily_stats.kpi_erbs_eutrancellfdd as dt order by date_id
-        `;
-    }
-
-    if (tableName === 'dc_e_erbs_eutrancellfdd_v_day') {
-        return await sql`
-            select * from dnb.daily_stats.kpi_erbs_eutrancellfdd_v as dt order by date_id
-        `;
-    }
-
-    if (tableName === 'dc_e_erbs_eutrancellrelation_day') {
-        return await sql`
-            select * from dnb.daily_stats.kpi_erbs_eutrancellrelation as dt order by date_id
-        `;
-    }
-
-}
 
 const getRegionDailyStatsNR = async (tableName) => {
-
-    // 'dc_e_nr_nrcelldu_day',
-    // 'dc_e_nr_nrcellcu_day',
-    // 'dc_e_nr_nrcelldu_v_day',
-    // 'dc_e_erbsg2_mpprocessingresource_v_day',
-    // 'dc_e_vpp_rpuserplanelink_v_day',
 
     if (tableName === 'dc_e_nr_nrcelldu_day') {
         return await sql`
@@ -201,7 +149,59 @@ const getRegionDailyStatsNR = async (tableName) => {
 
 }
 
+const getRegionDailyStatsLTE = async (tableName) => {
+
+    if (tableName === 'dc_e_erbs_eutrancellfdd_day') {
+        return await sql`
+            select * from dnb.daily_stats.kpi_erbs_eutrancellfdd as dt order by date_id
+        `;
+    }
+
+    if (tableName === 'dc_e_erbs_eutrancellfdd_v_day') {
+        return await sql`
+            select * from dnb.daily_stats.kpi_erbs_eutrancellfdd_v as dt order by date_id
+        `;
+    }
+
+    if (tableName === 'dc_e_erbs_eutrancellrelation_day') {
+        return await sql`
+            select * from dnb.daily_stats.kpi_erbs_eutrancellrelation as dt order by date_id
+        `;
+    }
+
+}
+
+const getRegionDailyStatsNRFlex = async (tableName) => {
+
+    if (tableName === 'dc_e_nr_events_nrcellcu_flex_day') {
+        return await sql`
+            select * from dnb.daily_stats.kpi_nrcellcu_flex as dt order by date_id
+        `;
+    }
+
+    if (tableName === 'dc_e_nr_events_nrcelldu_flex_day') {
+        return await sql`
+            select * from dnb.daily_stats.kpi_nrcelldu_flex as dt order by date_id
+        `;
+    }
+
+
+    throw new Error('Invalid table name for NR region daily stats; ' + tableName);
+
+}
+
+const getRegionDailyStatsLTEFlex = async (tableName) => {
+    if (tableName === 'dc_e_erbs_eutrancellfdd_flex_day') {
+        return await sql`
+            select * from dnb.daily_stats.kpi_eutrancellfdd_flex as dt order by date_id
+        `;
+    }
+
+    throw new Error('Invalid table name for NR region daily stats; ' + tableName);
+};
+
 const refreshMaterializedViews = async () => {
+    logger.info('Refreshing materialized views');
     // NR
     await sql`
     REFRESH MATERIALIZED VIEW CONCURRENTLY dnb.daily_stats.kpi_nr_nrcelldu;
@@ -221,13 +221,13 @@ const refreshMaterializedViews = async () => {
 
     // FLEX
     await sql`
-    refresh materialized view concurrently daily_stats.kpi_eutrancellfdd_flex;
+    refresh materialized view concurrently dnb.daily_stats.kpi_eutrancellfdd_flex;
     `;
     await sql`
-    refresh materialized view concurrently daily_stats.kpi_nrcellcu_flex;
+    refresh materialized view concurrently dnb.daily_stats.kpi_nrcellcu_flex;
     `;
     await sql`
-    refresh materialized view concurrently daily_stats.kpi_nrcelldu_flex;
+    refresh materialized view concurrently dnb.daily_stats.kpi_nrcelldu_flex;
     `;
 
     // LTE
@@ -240,11 +240,13 @@ const refreshMaterializedViews = async () => {
     await sql`
     refresh materialized view concurrently dnb.daily_stats.kpi_erbs_eutrancellfdd_v;
     `;
-
+    logger.info('Finished refreshing materialized views');
 
 };
 
 const refreshMaterializedViewsHourly = async () => {
+    logger.info('Refreshing hourly materialized views');
+    // NR
     await sql`
     REFRESH MATERIALIZED VIEW CONCURRENTLY dnb.hourly_stats.kpi_nr_nrcelldu;
     `;
@@ -260,6 +262,31 @@ const refreshMaterializedViewsHourly = async () => {
     await sql`
     REFRESH MATERIALIZED VIEW CONCURRENTLY dnb.hourly_stats.kpi_vpp_rpuserplanelink_v;
     `;
+
+    // LTE
+    await sql`
+    refresh materialized view concurrently dnb.hourly_stats.kpi_erbs_eutrancellfdd;
+    `;
+    await sql`
+    refresh materialized view concurrently dnb.hourly_stats.kpi_erbs_eutrancellrelation;
+    `;
+    await sql`
+    refresh materialized view concurrently dnb.hourly_stats.kpi_erbs_eutrancellfdd_v;
+    `;
+
+    
+    // FLEX
+    await sql`
+    refresh materialized view concurrently dnb.hourly_stats.kpi_eutrancellfdd_flex;
+    `;
+    await sql`
+    refresh materialized view concurrently dnb.hourly_stats.kpi_nrcellcu_flex;
+    `;
+    await sql`
+    refresh materialized view concurrently dnb.hourly_stats.kpi_nrcelldu_flex;
+    `;
+    logger.info('Finished refreshing hourly materialized views');
+
 };
 
 
@@ -295,11 +322,16 @@ const createCronToRefreshMaterializedViews = async () => {
 
 
 
-
 module.exports = {
     getCellDailyStatsNR,
     getCellDailyStatsLTE,
     getRegionDailyStatsNR,
     getRegionDailyStatsLTE,
-    createCronToRefreshMaterializedViews
+
+    getRegionDailyStatsNRFlex,
+    getRegionDailyStatsLTEFlex,
+
+    createCronToRefreshMaterializedViews,
+    refreshMaterializedViews,
+    refreshMaterializedViewsHourly
 }

@@ -54,3 +54,29 @@ and schemaname='daily_stats';
 select * from pg_indexes where indexdef like '%UNIQUE%' and tablename ilike 'dc_e%'
 and schemaname='hourly_stats';
 
+select * from information_schema.tables
+where
+table_schema='hourly_stats' and table_name ilike 'dc_e%';
+;
+
+
+
+
+
+select * from dnb.daily_stats.kpi_nrcelldu_flex as dt order by date_id limit 5;
+
+select mobile_operator from dnb.rfdb.flex_filters group by mobile_operator;
+
+
+
+
+
+
+
+select 
+"5g_ho_success_rate_dnb_5g_to_dnb_nom",
+"5g_ho_success_rate_dnb_5g_to_dnb_den",
+"inter_rat_ho_success_rate_dnb_5g_to_mno_4g_nom",
+"inter_rat_ho_success_rate_dnb_5g_to_mno_4g_den"
+from dnb.daily_stats.dc_e_nr_events_nrcellcu_flex_day as dt order by random() limit 5;
+

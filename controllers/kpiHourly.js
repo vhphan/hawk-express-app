@@ -33,11 +33,6 @@ const getCellHourlyStatsNR = async (cellId, tableName) => {
             sum("ul_bler_nom")|||sum("ul_bler_den")  as  "ul_bler"
         from
         dnb.hourly_stats.dc_e_nr_nrcelldu_raw as dt
-        LEFT JOIN dnb.daily_stats.cell_mapping as cm on cm."Cellname" = dt."nrcelldu"
-                    INNER JOIN (SELECT site_id, on_board_date::date, time
-                            FROM dnb.daily_stats.df_dpm,
-                                generate_series(on_board_date::date, now(), '1 hour') as time) as obs
-                                            on obs.time = dt."date_id" and cm."SITEID" = obs.site_id
         WHERE nrcelldu=${cellId}
         GROUP BY date_id, nrcelldu;
             `;
@@ -58,11 +53,6 @@ const getCellHourlyStatsNR = async (cellId, tableName) => {
             sum("e-rab_block_rate_nom")|||sum("e-rab_block_rate_den")  as  "e-rab_block_rate"
         from
         dnb.hourly_stats.dc_e_nr_nrcellcu_raw as dt
-        LEFT JOIN dnb.daily_stats.cell_mapping as cm on cm."Cellname" = dt."nrcelldu"
-                INNER JOIN (SELECT site_id, on_board_date::date, time
-                        FROM dnb.daily_stats.df_dpm,
-                            generate_series(on_board_date::date, now(), '1 hour') as time) as obs
-                                        on obs.time = dt."date_id" and cm."SITEID" = obs.site_id
         WHERE nrcellcu=${cellId}
         GROUP BY date_id, nrcellcu;
         `;
@@ -78,11 +68,6 @@ const getCellHourlyStatsNR = async (cellId, tableName) => {
             sum("avg_pusch_ul_rssi_nom")|||sum("avg_pusch_ul_rssi_den")  as  "avg_pusch_ul_rssi"
             from
             dnb.hourly_stats.dc_e_nr_nrcelldu_v_raw as dt
-            LEFT JOIN dnb.daily_stats.cell_mapping as cm on cm."Cellname" = dt."nrcelldu"
-                INNER JOIN (SELECT site_id, on_board_date::date, time
-                        FROM dnb.daily_stats.df_dpm,
-                            generate_series(on_board_date::date, now(), '1 hour') as time) as obs
-                                        on obs.time = dt."date_id" and cm."SITEID" = obs.site_id
                 WHERE nrcelldu = ${cellId}
                 GROUP BY date_id;
         `;
@@ -96,11 +81,6 @@ const getCellHourlyStatsNR = async (cellId, tableName) => {
             sum("gnodeb_cpu_load_nom")|||sum("gnodeb_cpu_load_den")  as  "gnodeb_cpu_load"
             from
             dnb.hourly_stats.dc_e_erbsg2_mpprocessingresource_v_raw as dt
-            LEFT JOIN dnb.daily_stats.cell_mapping as cm on cm."Sitename" = dt."erbs"
-                INNER JOIN (SELECT site_id, on_board_date::date, time
-                        FROM dnb.daily_stats.df_dpm,
-                            generate_series(on_board_date::date, now(), '1 hour') as time) as obs
-                                        on obs.time = dt."date_id" and cm."SITEID" = obs.site_id
                 WHERE erbs like ${siteId} || '_%'
                 GROUP BY date_id
                 order by date_id
@@ -118,11 +98,6 @@ const getCellHourlyStatsNR = async (cellId, tableName) => {
             sum("packet_loss_ul_nom")|||sum("packet_loss_ul_den")  as  "packet_loss_ul"
             from
             dnb.hourly_stats.dc_e_vpp_rpuserplanelink_v_raw as dt
-            LEFT JOIN dnb.daily_stats.cell_mapping as cm on cm."Sitename" = dt."ne_name"
-                INNER JOIN (SELECT site_id, on_board_date::date, time
-                        FROM dnb.daily_stats.df_dpm,
-                            generate_series(on_board_date::date, now(), '1 hour') as time) as obs
-                                        on obs.time = dt."date_id" and cm."SITEID" = obs.site_id
                 WHERE ne_name like ${siteId} || '_%'
                 GROUP BY date_id
                 ;

@@ -178,3 +178,7 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY dnb.hourly_stats.kpi_nr_nrcelldu_v;
 REFRESH MATERIALIZED VIEW CONCURRENTLY dnb.hourly_stats.kpi_erbsg2_mpprocessingresource_v;
 REFRESH MATERIALIZED VIEW CONCURRENTLY dnb.hourly_stats.kpi_vpp_rpuserplanelink_v;
 
+
+
+select date_id, count(*) from dnb.hourly_stats.dc_e_nr_nrcelldu_raw group by date_id order by date_id desc;
+

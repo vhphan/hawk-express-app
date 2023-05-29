@@ -52,7 +52,8 @@ class EPDB:
                     dbc['options'] = f"-c search_path={schema},public"
                     con_string += f'?options=-csearch_path%3D{schema},public'
 
-                self.engine = create_engine(con_string, echo=False, pool_pre_ping=True)
+                self.engine = create_engine(con_string, echo=False, pool_pre_ping=True,
+                                            pool_size=20, max_overflow=0)
                 self._conn = psycopg2.connect(**dbc)
                 self._cursor = self._conn.cursor()
 
@@ -148,7 +149,7 @@ class EPDB:
         try:
             df.to_sql(**kwargs, con=self.engine)
         except Exception as e:
-            df.to_csv(f"/home2/eproject/dnb/debug/csv/{kwargs['name']}", index=False)
+            df.to_csv(f"logs/{kwargs['name']}", index=False)
             raise e
 
     def df_to_db_replace(self, df: pd.DataFrame, name: str, unique_keys: list[str], **kwargs):

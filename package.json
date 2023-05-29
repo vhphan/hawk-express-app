@@ -7,7 +7,8 @@
     "dev": "export NODE_ENV=development && nodemon --ignore 'tmp/' --ignore 'logs/' app.js",
     "start": "export NODE_ENV=production && node app.js",
     "cellmapping": "node ./controllers/cellmapping.js",
-    "dfdpm": "node ./controllers/df_dpm.js"
+    "dfdpm": "node ./controllers/df_dpm.js",
+    "refreshViews": "node ./controllers/refreshViews.js"
   },
   "author": "",
   "license": "ISC",

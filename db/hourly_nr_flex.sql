@@ -22,38 +22,94 @@ from dt
 group by date_id, mobile_operator, rollup("Region")
 order by region, date_id;
 
+create unique index on hourly_stats.kpi_nrcelldu_flex(date_id, region, mobile_operator);
+
 SELECT * FROM pg_indexes WHERE tablename = 'dc_e_nr_events_nrcellcu_flex_raw';
 
+drop materialized view if exists hourly_stats.kpi_nrcelldu_flex cascade;
+create materialized view hourly_stats.kpi_nrcelldu_flex as
+with dt as (
+    select * from dnb.hourly_stats.dc_e_nr_events_nrcelldu_flex_raw as t1
+        INNER JOIN dnb.rfdb.cell_mapping as cm 
+            on cm."Cellname" = t1."nrcelldu"
+        INNER JOIN dnb.rfdb.df_dpm
+            on cm."SITEID" = df_dpm.site_id
+        INNER JOIN dnb.rfdb.flex_filters as ff 
+            on ff.flex_filtername_nrcelldu = t1.flex_filtername
+    WHERE "Region" is not null
+    AND t1."date_id" >= df_dpm.on_board_date::timestamp
+)
+SELECT
+date_id,
+"Region" as region,
+mobile_operator,
+sum("ul_traffic_volume_nom")|||(1024*1024*1024)  as  "ul_traffic_volume" ,
+sum("dl_qpsk_nom")  as  "dl_qpsk"  ,
+sum("dl_16qam_nom")  as  "dl_16qam"  ,
+sum("dl_64qam_nom")  as  "dl_64qam"  ,
+sum("dl_256qam_nom")  as  "dl_256qam"  ,
+sum("ul_qpsk_nom")  as  "ul_qpsk"  ,
+sum("ul_16qam_nom")  as  "ul_16qam"  ,
+sum("ul_64qam_nom")  as  "ul_64qam"  ,
+sum("dl_user_throughput_nom")|||1000  as  "dl_user_throughput" ,
+sum("ul_user_throughput_nom")|||1000  as  "ul_user_throughput" 
+from dt
+group by date_id, mobile_operator, rollup("Region")
+order by region, date_id;
 
-create index on dnb.daily_stats.dc_e_nr_events_nrcellcu_flex_day (flex_filtername);
+create unique index on hourly_stats.kpi_nrcellcu_flex(date_id, region, mobile_operator);
 
--- drop index using index name
-drop index if exists dnb.daily_stats.dc_e_nr_events_nrcellcu_flex_day_nrcellcu_idx1;
+drop materialized view if exists hourly_stats.kpi_nrcellfdd_flex;
+
+drop materialized view if exists hourly_stats.kpi_nrcellfdd_flex cascade;
+create materialized view hourly_stats.kpi_eutrancellfdd_flex as
+with dt as (
+    select * from dnb.hourly_stats.dc_e_erbs_eutrancellfdd_flex_raw as t1
+        INNER JOIN dnb.rfdb.cell_mapping as cm 
+            on cm."Cellname" = t1."eutrancellfdd"
+        INNER JOIN dnb.rfdb.df_dpm
+            on cm."SITEID" = df_dpm.site_id
+        INNER JOIN dnb.rfdb.flex_filters as ff 
+            on ff.flex_filtername_eutrancellfdd2 = t1.flex_filtername
+    WHERE "Region" is not null
+    AND t1."date_id" >= df_dpm.on_board_date::timestamp
+)
+SELECT
+date_id,
+"Region" as region,
+mobile_operator,
+sum("ul_qpsk_nom")  as  "ul_qpsk"  ,
+sum("ul_16qam_nom")  as  "ul_16qam"  ,
+sum("ul_64qam_nom")  as  "ul_64qam"  ,
+sum("ul_256qam_nom")  as  "ul_256qam"  ,
+sum("packet_loss_(dl)_nom")|||sum("packet_loss_(dl)_den")  as  "packet_loss_(dl)" ,
+sum("packet_loss_(ul)_nom")|||sum("packet_loss_(ul)_den")  as  "packet_loss_(ul)" ,
+sum("e-rab_setup_success_rate_nom")|||sum("e-rab_setup_success_rate_den")  as  "e-rab_setup_success_rate" ,
+sum("erab_drop_call_rate_nom")|||sum("erab_drop_call_rate_den")  as  "erab_drop_call_rate" ,
+sum("intrafreq_hosr_nom")|||sum("intrafreq_hosr_den")  as  "intrafreq_hosr" ,
+sum("ul_bler_nom")|||sum("ul_bler_den")  as  "ul_bler" ,
+sum("dl_user_throughput_nom")|||sum("dl_user_throughput_den")  as  "dl_user_throughput" ,
+sum("ul_user_throughput_nom")|||sum("ul_user_throughput_den")  as  "ul_user_throughput" ,
+sum("dl_cell_throughput_nom")|||sum("dl_cell_throughput_den")  as  "dl_cell_throughput" ,
+sum("ul_cell_throughput_nom")|||sum("ul_cell_throughput_den")  as  "ul_cell_throughput" ,
+sum("dl_data_volume_nom")|||(1024*1024*1024)  as  "dl_data_volume" ,
+sum("ul_data_volume_nom")|||(1024*1024*1024)  as  "ul_data_volume" ,
+sum("dl_qpsk_nom")  as  "dl_qpsk"  ,
+sum("dl_16qam_nom")  as  "dl_16qam"  ,
+sum("dl_64qam_nom")  as  "dl_64qam"  ,
+sum("dl_256qam_nom")  as  "dl_256qam" 
+from dt
+group by date_id, mobile_operator, rollup("Region")
+order by region, date_id;
 
 
-select * from pg_indexes where tablename = 'dc_e_nr_events_nrcelldu_flex_day';
+create unique index on hourly_stats.kpi_eutrancellfdd_flex(date_id, region, mobile_operator);
 
+refresh materialized view concurrently hourly_stats.kpi_nrcelldu_flex;
+refresh materialized view concurrently hourly_stats.kpi_nrcellcu_flex;
+-- refresh materialized view concurrently hourly_stats.kpi_eutrancellfdd_flex;
 
-
-
-
-
-
-select date_id, nrcelldu, flex_filtername, count(*) 
-from dnb.daily_stats.dc_e_nr_events_nrcelldu_flex_day 
-where flex_filtername is not null
-group by date_id, nrcelldu, flex_filtername 
-having count(*) > 1 order by random() limit 5;
-
-select date_id, count(*) from dnb.daily_stats.dc_e_nr_events_nrcelldu_flex_day group by date_id order by date_id;
-
-
-select * from dnb.daily_stats.dc_e_nr_events_nrcelldu_flex_day where nrcelldu = 'DWKUL0421_N3_0310'
-and date_id = '2023-04-26'
-and flex_filtername = 'UeGrpId5'
-order by nrcelldu, flex_filtername
-
-;
+select * from pg_indexes where tablename = 'kpi_nrcelldu_flex';
 
 
 

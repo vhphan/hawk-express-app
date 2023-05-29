@@ -27,7 +27,7 @@ const getSortersForTable = (tableName) => {
                 }
             ];
             break;
-        };
+    };
     return sorters;
 }
 
@@ -88,7 +88,7 @@ const getTableDataFromPortal = async (tableName, schema = 'rfdb') => {
             url.searchParams.append(`sorters[${index}][field]`, sorter.field);
             url.searchParams.append(`sorters[${index}][dir]`, sorter.dir);
         });
-        
+
         promises.push(axios.get(url.href, {
             headers: {
                 api: api
@@ -216,9 +216,7 @@ const mainCellMapping = () => {
 
 const createCronToRunMainCellMapping = () => {
     const cron = require('node-cron');
-    cron.schedule('0 0 3 * * *', () => {
-        mainCellMapping();
-    });
+    cron.schedule('0 0 5 * * *', mainCellMapping);
 }
 
 

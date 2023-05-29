@@ -1,3 +1,6 @@
+select * from  dnb.hourly_stats.dc_e_erbs_eutrancellfdd_raw
+order by random() limit 5;
+
 drop materialized view if exists dnb.hourly_stats.kpi_erbs_eutrancellfdd;
 create materialized view dnb.hourly_stats.kpi_erbs_eutrancellfdd as
 with dt as (
@@ -22,9 +25,9 @@ sum("dl_user_throughput_nom")|||sum("dl_user_throughput_den")  as  "dl_user_thro
 sum("ul_user_throughput_nom")|||sum("ul_user_throughput_den")  as  "ul_user_throughput" ,
 sum("dl_cell_throughput_nom")|||sum("dl_cell_throughput_den")  as  "dl_cell_throughput" ,
 sum("ul_cell_throughput_nom")|||sum("ul_cell_throughput_den")  as  "ul_cell_throughput" ,
-sum("dl_data_volume_nom")|||sum("dl_data_volume_den")  as  "dl_data_volume" ,
-sum("ul_data_volume_nom")|||sum("ul_data_volume_den")  as  "ul_data_volume" ,
-sum("total_traffic_nom")|||sum("total_traffic_den")  as  "total_traffic" ,
+sum("dl_data_volume_nom")|||(1024*1024*1024)  as  "dl_data_volume" ,
+sum("ul_data_volume_nom")|||(1024*1024*1024)  as  "ul_data_volume" ,
+sum("total_traffic_nom")|||(1024*1024*1024)  as  "total_traffic" ,
 sum("packet_loss_(dl)_nom")|||sum("packet_loss_(dl)_den")  as  "packet_loss_(dl)" ,
 sum("packet_loss_(ul)_nom")|||sum("packet_loss_(ul)_den")  as  "packet_loss_(ul)" ,
 sum("latency_(only_radio_interface)_nom")|||sum("latency_(only_radio_interface)_den")  as  "latency_(only_radio_interface)" ,
@@ -45,13 +48,60 @@ group by "date_id", rollup("Region")
 ;
 
 
-select count(*) from dnb.hourly_stats.dc_e_erbs_eutrancellfdd_raw;
+select date_id, count(*) from dnb.hourly_stats.dc_e_erbs_eutrancellrelation_raw
+group by date_id
+;
+
+
+
+select * from dnb.rfdb.cell_mapping;
+
+drop materialized view if exists dnb.hourly_stats.kpi_erbs_eutrancellrelation;
+create materialized view dnb.hourly_stats.kpi_erbs_eutrancellrelation as
+with dt as (
+    select * from dnb.hourly_stats.dc_e_erbs_eutrancellrelation_raw as t1
+        INNER JOIN dnb.rfdb.cell_mapping as cm on cm."Cellname" = t1."eutrancellfdd"
+        INNER JOIN dnb.rfdb.df_dpm
+        on cm."SITEID" = df_dpm.site_id
+    WHERE "Region" is not null
+    AND t1."date_id" >= df_dpm.on_board_date::timestamp
+)
+select
+date_id,
+"Region" as region,
+sum("interfreq_hosr_nom")|||sum("interfreq_hosr_den")  as  "interfreq_hosr"  ,
+sum("ifo_success_rate_nom")|||sum("ifo_success_rate_den")  as  "ifo_success_rate"
+from dt
+group by "date_id", rollup("Region")
+;
 
 
 
 
 
+drop materialized view if exists dnb.hourly_stats.kpi_erbs_eutrancellfdd_v;
+create materialized view dnb.hourly_stats.kpi_erbs_eutrancellfdd_v as
+with dt as (
+    select * from dnb.hourly_stats.dc_e_erbs_eutrancellfdd_v_raw as t1
+        INNER JOIN dnb.rfdb.cell_mapping as cm on cm."Cellname" = t1."eutrancellfdd"
+        INNER JOIN dnb.rfdb.df_dpm
+        on cm."SITEID" = df_dpm.site_id
+    WHERE "Region" is not null
+    AND t1."date_id" >= df_dpm.on_board_date::timestamp
+)
+select date_id, "Region" as region,
+sum("resource_block_utilizing_rate(dl)_nom")|||sum("resource_block_utilizing_rate(dl)_den")  as  "resource_block_utilizing_rate(dl)" ,
+sum("resource_block_utilizing_rate(ul)_nom")|||sum("resource_block_utilizing_rate(ul)_den")  as  "resource_block_utilizing_rate(ul)" ,
+sum("average_cqi_nom")|||sum("average_cqi_den")  as  "average_cqi" ,
+sum("avg_pusch_ul_rssi_nom")|||sum("avg_pusch_ul_rssi_den")  as  "avg_pusch_ul_rssi"from dt
+group by "date_id", rollup("Region")
+;
 
+create unique index on hourly_stats.kpi_erbs_eutrancellfdd(date_id, region);
+create unique index on hourly_stats.kpi_erbs_eutrancellrelation(date_id, region);
+create unique index on hourly_stats.kpi_erbs_eutrancellfdd_v(date_id, region);
 
-
+refresh materialized view concurrently dnb.hourly_stats.kpi_erbs_eutrancellfdd;
+refresh materialized view concurrently dnb.hourly_stats.kpi_erbs_eutrancellrelation;
+refresh materialized view concurrently dnb.hourly_stats.kpi_erbs_eutrancellfdd_v;
 

@@ -82,6 +82,62 @@ const kpiList = {
 
 }
 
+const kpiListFlex = {
+
+    nr: [
+        "5g_ho_success_rate_dnb_5g_to_dnb",
+        "dl_16qam",
+        "dl_64qam",
+        "dl_256qam",
+        "dl_qpsk",
+        "dl_user_throughput",
+        "inter-sgnb_pscell_change_success",
+        "inter_rat_ho_success_rate_dnb_5g_to_mno_4g",
+        "intra-sgnb_pscell_change_success",
+        "ul_16qam",
+        "ul_64qam",
+        "ul_qpsk",
+        "ul_traffic_volume",
+        "ul_user_throughput"
+    ],
+
+    lte: [
+        "dl_16qam", 
+        "dl_64qam", 
+        "dl_256qam", 
+        "dl_cell_throughput", 
+        "dl_data_volume", 
+        "dl_qpsk", 
+        "dl_user_throughput", 
+        "e-rab_setup_success_rate", 
+        "erab_drop_call_rate", 
+        "intrafreq_hosr", 
+        "packet_loss_(dl)", 
+        "packet_loss_(ul)", 
+        "ul_16qam", 
+        "ul_64qam", 
+        "ul_256qam", 
+        "ul_bler", 
+        "ul_cell_throughput", 
+        "ul_data_volume", 
+        "ul_qpsk", 
+        "ul_user_throughput"
+    ]
+}
+
+mobileOperators = [
+    
+    'Celcom',
+    'Digi',
+    'Maxis',
+    'TM',
+    'Umobile',
+    'YTL',
+
+]
+
 module.exports = {
-    kpiList
+    kpiList,
+    kpiListFlex,
+    mobileOperators
 };

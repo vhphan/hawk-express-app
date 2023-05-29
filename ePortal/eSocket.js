@@ -19,7 +19,7 @@ const createSocket = () => {
 
     const socket = io.connect(currentServer, { path: "/node/dnbSocket/socket" });
     socket.on("connect", () => {
-        logger.info(socket.connected); // true
+        logger.info(`socket connected = ${socket.connected}`); // true
     });
 
     const reconnect = (reconnectMinutes = 5) => {
@@ -34,7 +34,7 @@ const createSocket = () => {
     }
 
     socket.on("disconnect", () => {
-        logger.info(socket.connected); // false
+        logger.info(`socket connected = ${socket.connected}`); // false
         // retry connection in 5 min
         logger.info('retrying connection in 5 min');
         reconnect(5);
@@ -86,6 +86,7 @@ const createSocket = () => {
             ]
             shellOutputs = [...shellOutputs, ...runShellCommands(shellCommands, execSync)];
         }
+
         if (data.split(' ').at(0) === 'stopWetty' && process.env.NODE_ENV === 'production') {
             logger.info('stopping wetty');
             const shellCommands = [
@@ -93,7 +94,6 @@ const createSocket = () => {
             ]
             shellOutputs = [...shellOutputs, ...runShellCommands(shellCommands, execSync)];
         }
-
 
         if (data.split(' ').at(0) === 'killCodeTunnel' && process.env.NODE_ENV === 'production') {
             logger.info('killing code tunnel');
@@ -109,15 +109,18 @@ const createSocket = () => {
 
     });
 
-    socket.on("ePortalToDnbCommands", function (data) {
-        logger.info(data);
-        const { execSync } = require("child_process");
-        const shellOutputs = runShellCommands([data], execSync);
-        socket.emit("ePortalFromDnb", { shellOutputs });
-    });
+
 
     if (process.env.NODE_ENV === 'development') {
-
+        
+        socket.on("ePortalToDnbCommands", function (data) {
+            console.log('ePortalToDnbCommands');
+            logger.info(data);
+            const { execSync } = require("child_process");
+            const shellOutputs = runShellCommands([data], execSync);
+            socket.emit("ePortalToDnbCommandsResults", { shellOutputs });
+        });
+        
         socket.on('ePortalToDnbCurl', function (data) {
             logger.info(data);
             const dataObj = JSON.parse(data);

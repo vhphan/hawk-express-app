@@ -135,3 +135,6 @@ refresh materialized view concurrently daily_stats.kpi_eutrancellfdd_flex;
 refresh materialized view concurrently daily_stats.kpi_nrcellcu_flex;
 refresh materialized view concurrently daily_stats.kpi_nrcelldu_flex;
 
+
+
+select * from daily_stats.kpi_eutrancellfdd_flex limit 5;

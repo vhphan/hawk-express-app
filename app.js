@@ -53,7 +53,7 @@ app.use(errorHandler);
 app.listen(3000, function () {
     console.log('Example app listening on port 3000!');
     // sendEmail(process.env.EMAIL_RECIPIENT, 'Server Started', 'Server Started');
-    console.log(process.env.NODE_ENV);
+    console.log('process.env.NODE_ENV', process.env.NODE_ENV);
     logger.info(`Server Started in ${process.env.NODE_ENV} mode`)
     console.log(__dirname);
 });
@@ -84,7 +84,9 @@ if (process.env.NODE_ENV !== "development") {
     createCronToDeleteFilesOlderThanNDays(__dirname + '/tmp/dl', 2);
     createCronToRunMainDPM();
     createCronToRunMainCellMapping();
+
 }
+
 if (process.env.NODE_ENV === "development") {
     createCronToRefreshMaterializedViews();
 }
