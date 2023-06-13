@@ -58,7 +58,6 @@ const getCellHourlyStatsNR = async (cellId, tableName) => {
         `;
     }
 
-
     if (tableName === 'dc_e_nr_nrcelldu_v_raw') {
         return await sql`
         select
@@ -103,12 +102,17 @@ const getCellHourlyStatsNR = async (cellId, tableName) => {
                 ;
         `;
     }
+
 }
 
 const getCellHourlyStatsLTE = async (tableName) => {
-    throw new Error('Not implemented');
-}
 
+    if (tableName == 'dc_e_erbs_eutrancellfdd_day'){
+
+    }
+
+
+}
 
 const getRegionHourlyStatsNR = async (tableName) => {
 
@@ -147,31 +151,65 @@ const getRegionHourlyStatsNR = async (tableName) => {
 }
 
 const getRegionHourlyStatsLTE = async (tableName) => {
-    
-    if (tableName === 'dc_e_erbs_eutrancellfdd_day') {
+
+    if (tableName === 'dc_e_erbs_eutrancellfdd_raw') {
         return await sql`
             select * from dnb.hourly_stats.kpi_erbs_eutrancellfdd as dt order by date_id
         `;
     }
 
-    if (tableName === 'dc_e_erbs_eutrancellfdd_v_day') {
+    if (tableName === 'dc_e_erbs_eutrancellfdd_v_raw') {
         return await sql`
             select * from dnb.hourly_stats.kpi_erbs_eutrancellfdd_v as dt order by date_id
         `;
     }
 
-    if (tableName === 'dc_e_erbs_eutrancellrelation_day') {
+    if (tableName === 'dc_e_erbs_eutrancellrelation_raw') {
         return await sql`
             select * from dnb.hourly_stats.kpi_erbs_eutrancellrelation as dt order by date_id
         `;
     }
 
+    throw new Error('Invalid table name for LTE region hourly stats; ' + tableName);
+
 }
+
+const getRegionHourlyStatsNRFlex = async (tableName) => {
+
+    if (tableName === 'dc_e_nr_events_nrcellcu_flex_raw') {
+        return await sql`
+            select * from dnb.hourly_stats.kpi_nrcellcu_flex as dt order by date_id
+        `;
+    }
+
+    if (tableName === 'dc_e_nr_events_nrcelldu_flex_raw') {
+        return await sql`
+            select * from dnb.hourly_stats.kpi_nrcelldu_flex as dt order by date_id
+        `;
+    }
+
+
+    throw new Error('Invalid table name for NR region hourly stats; ' + tableName);
+
+}
+
+
+const getRegionHourlyStatsLTEFlex = async (tableName) => {
+    if (tableName === 'dc_e_erbs_eutrancellfdd_flex_raw') {
+        return await sql`
+            select * from dnb.hourly_stats.kpi_eutrancellfdd_flex as dt order by date_id
+        `;
+    }
+
+    throw new Error('Invalid table name for LTE region daily stats; ' + tableName);
+};
 
 
 module.exports = {
     getCellHourlyStatsNR,
     getCellHourlyStatsLTE,
     getRegionHourlyStatsNR,
-    getRegionHourlyStatsLTE
+    getRegionHourlyStatsLTE,
+    getRegionHourlyStatsNRFlex,
+    getRegionHourlyStatsLTEFlex
 };

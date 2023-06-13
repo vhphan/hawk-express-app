@@ -4,7 +4,7 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "dev": "export NODE_ENV=development && nodemon --ignore 'tmp/' --ignore 'logs/' app.js",
+    "dev": "export NODE_ENV=development && nodemon --ignore 'tmp/' --ignore 'logs/' --delay 3 app.js",
     "start": "export NODE_ENV=production && node app.js",
     "cellmapping": "node ./controllers/cellmapping.js",
     "dfdpm": "node ./controllers/df_dpm.js",

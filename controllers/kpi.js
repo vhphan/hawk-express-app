@@ -107,8 +107,87 @@ const getCellDailyStatsNR = async (cellId, tableName) => {
     }
 }
 
-const getCellDailyStatsLTE = async (tableName) => {
-    throw new Error('Not implemented');
+const getCellDailyStatsLTE = async (cellId, tableName) => {
+
+    if (tableName === 'dc_e_erbs_eutrancellfdd_day') {
+
+        return await sql`
+        with dt as (
+            select * from dnb.daily_stats.dc_e_erbs_eutrancellfdd_day as t1
+                where eutrancellfdd = ${cellId}
+        )
+        select
+        date_id,
+        sum("cell_availability_nom")|||sum("cell_availability_den")  as  "cell_availability" ,
+        sum("rrc_setup_success_rate_(service)_nom")|||sum("rrc_setup_success_rate_(service)_den")  as  "rrc_setup_success_rate_(service)" ,
+        sum("rrc_setup_success_rate_(signaling)_nom")|||sum("rrc_setup_success_rate_(signaling)_den")  as  "rrc_setup_success_rate_(signaling)" ,
+        sum("e-rab_setup_success_rate_nom")|||sum("e-rab_setup_success_rate_den")  as  "e-rab_setup_success_rate" ,
+        sum("erab_drop_call_rate_nom")|||sum("erab_drop_call_rate_den")  as  "erab_drop_call_rate" ,
+        sum("handover_in_success_rate_nom")|||sum("handover_in_success_rate_den")  as  "handover_in_success_rate" ,
+        sum("ul_bler_nom")|||sum("ul_bler_den")  as  "ul_bler" ,
+        sum("dl_user_throughput_nom")|||sum("dl_user_throughput_den")  as  "dl_user_throughput" ,
+        sum("ul_user_throughput_nom")|||sum("ul_user_throughput_den")  as  "ul_user_throughput" ,
+        sum("dl_cell_throughput_nom")|||sum("dl_cell_throughput_den")  as  "dl_cell_throughput" ,
+        sum("ul_cell_throughput_nom")|||sum("ul_cell_throughput_den")  as  "ul_cell_throughput" ,
+        sum("dl_data_volume_nom")|||sum("dl_data_volume_den")  as  "dl_data_volume" ,
+        sum("ul_data_volume_nom")|||sum("ul_data_volume_den")  as  "ul_data_volume" ,
+        sum("total_traffic_nom")|||sum("total_traffic_den")  as  "total_traffic" ,
+        sum("packet_loss_(dl)_nom")|||sum("packet_loss_(dl)_den")  as  "packet_loss_(dl)" ,
+        sum("packet_loss_(ul)_nom")|||sum("packet_loss_(ul)_den")  as  "packet_loss_(ul)" ,
+        sum("latency_(only_radio_interface)_nom")|||sum("latency_(only_radio_interface)_den")  as  "latency_(only_radio_interface)" ,
+        sum("dl_qpsk_nom")  as  "dl_qpsk"  ,
+        sum("dl_16qam_nom")  as  "dl_16qam"  ,
+        sum("dl_64qam_nom")  as  "dl_64qam"  ,
+        sum("dl_256qam_nom")  as  "dl_256qam"  ,
+        sum("ul_qpsk_nom")  as  "ul_qpsk"  ,
+        sum("ul_16qam_nom")  as  "ul_16qam"  ,
+        sum("ul_64qam_nom")  as  "ul_64qam"  ,
+        sum("ul_256qam_nom")  as  "ul_256qam"  ,
+        sum("call_setup_success_rate_nom")|||sum("call_setup_success_rate_den")  as  "call_setup_success_rate" ,
+        sum("e-rab_setup_success_rate_non_gbr_nom")|||sum("e-rab_setup_success_rate_non_gbr_den")  as  "e-rab_setup_success_rate_non_gbr" ,
+        sum("intrafreq_hosr_nom")|||sum("intrafreq_hosr_den")  as  "intrafreq_hosr" ,
+        sum("volte_redirection_success_rate_nom")|||sum("volte_redirection_success_rate_den")  as  "volte_redirection_success_rate"
+        from dt group by "date_id"
+        ; `;
+
+    }
+
+    if (tableName === 'dc_e_erbs_eutrancellrelation_day') {
+
+        return await sql`
+        with dt as (
+            select * from dnb.daily_stats.dc_e_erbs_eutrancellrelation_day as t1
+                where eutrancellfdd = ${cellId}
+        )
+        select
+        date_id,
+        sum("interfreq_hosr_nom")|||sum("interfreq_hosr_den")  as  "interfreq_hosr"  ,
+        sum("ifo_success_rate_nom")|||sum("ifo_success_rate_den")  as  "ifo_success_rate"
+        from dt
+        group by "date_id"
+        ;
+    `
+
+    }
+
+    if (tableName === 'dc_e_erbs_eutrancellfdd_v_day') {
+
+        return await sql`
+            with dt as (
+                select * from dnb.daily_stats.dc_e_erbs_eutrancellfdd_v_day as t1
+                    where eutrancellfdd = ${cellId}
+            )
+            select date_id,
+            sum("resource_block_utilizing_rate(dl)_nom")|||sum("resource_block_utilizing_rate(dl)_den")  as  "resource_block_utilizing_rate(dl)" ,
+            sum("resource_block_utilizing_rate(ul)_nom")|||sum("resource_block_utilizing_rate(ul)_den")  as  "resource_block_utilizing_rate(ul)" ,
+            sum("average_cqi_nom")|||sum("average_cqi_den")  as  "average_cqi" ,
+            sum("avg_pusch_ul_rssi_nom")|||sum("avg_pusch_ul_rssi_den")  as  "avg_pusch_ul_rssi"from dt
+            group by "date_id"
+            ;
+        `
+
+    }
+
 }
 
 
@@ -197,11 +276,40 @@ const getRegionDailyStatsLTEFlex = async (tableName) => {
         `;
     }
 
-    throw new Error('Invalid table name for NR region daily stats; ' + tableName);
+    throw new Error('Invalid table name for LTE region daily stats; ' + tableName);
 };
+
+const getCellsList = async (tech, region, cellPartial) => {
+
+    const cellSubstring = cellPartial === '' ? '%' : '%' + cellPartial + '%'
+
+    if (region === 'all') {
+        return await sql`
+                select cell_id from dnb.daily_stats.cells_list
+                where cell_id ilike ${cellSubstring} and tech = ${tech}
+                order by cell_id
+                `;
+    }
+    return await sql`
+            select cell_id from dnb.daily_stats.cells_list
+            where region ilike ${region} AND cell_id ilike ${cellSubstring} and tech = ${tech}
+            ORDER BY cell_id;
+            `;
+
+
+}
+
+
 
 const refreshMaterializedViews = async () => {
     logger.info('Refreshing materialized views');
+
+    // cells list
+
+    await sql`
+    refresh materialized view concurrently dnb.daily_stats.cells_list;
+    `;
+
     // NR
     await sql`
     REFRESH MATERIALIZED VIEW CONCURRENTLY dnb.daily_stats.kpi_nr_nrcelldu;
@@ -274,7 +382,7 @@ const refreshMaterializedViewsHourly = async () => {
     refresh materialized view concurrently dnb.hourly_stats.kpi_erbs_eutrancellfdd_v;
     `;
 
-    
+
     // FLEX
     await sql`
     refresh materialized view concurrently dnb.hourly_stats.kpi_eutrancellfdd_flex;
@@ -333,5 +441,7 @@ module.exports = {
 
     createCronToRefreshMaterializedViews,
     refreshMaterializedViews,
-    refreshMaterializedViewsHourly
+    refreshMaterializedViewsHourly,
+
+    getCellsList
 }

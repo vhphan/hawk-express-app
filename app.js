@@ -46,17 +46,6 @@ app.get('/node/bootstrap.min.css', (req, res) => res.sendFile(__dirname + '/node
 
 app.use('/node/vscode/**', codeProxy);
 
-app.use(errorHandler);
-
-// const { sendEmail } = require('./utils');
-
-app.listen(3000, function () {
-    console.log('Example app listening on port 3000!');
-    // sendEmail(process.env.EMAIL_RECIPIENT, 'Server Started', 'Server Started');
-    console.log('process.env.NODE_ENV', process.env.NODE_ENV);
-    logger.info(`Server Started in ${process.env.NODE_ENV} mode`)
-    console.log(__dirname);
-});
 
 // if in dev mode redirect to /ctr/ctr-dl
 // TODO: remove this in production
@@ -84,9 +73,22 @@ if (process.env.NODE_ENV !== "development") {
     createCronToDeleteFilesOlderThanNDays(__dirname + '/tmp/dl', 2);
     createCronToRunMainDPM();
     createCronToRunMainCellMapping();
+    createCronToRefreshMaterializedViews();
 
 }
 
 if (process.env.NODE_ENV === "development") {
-    createCronToRefreshMaterializedViews();
 }
+
+
+app.use(errorHandler);
+
+// const { sendEmail } = require('./utils');
+
+app.listen(3000, function () {
+    console.log('Example app listening on port 3000!');
+    // sendEmail(process.env.EMAIL_RECIPIENT, 'Server Started', 'Server Started');
+    console.log('process.env.NODE_ENV', process.env.NODE_ENV);
+    logger.info(`Server Started in ${process.env.NODE_ENV} mode`)
+    console.log(__dirname);
+});

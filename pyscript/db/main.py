@@ -18,6 +18,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
 class Singleton:
 
     def __init__(self, cls):
@@ -68,7 +69,9 @@ class EPDB:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.commit()
+        self.cursor.close()
         self.connection.close()
+        self.engine.dispose()
 
     def __str__(self):
         return repr(self._conn)
@@ -114,7 +117,8 @@ class EPDB:
     def query(self, sql, params=None, return_dict=False) -> Union[list[dict], list[tuple], None]:
         try:
             if self._conn is None:
-                self.__init__(dbc=self.dbc, db_type=self.db_type, schema=self.schema)
+                self.__init__(dbc=self.dbc, db_type=self.db_type,
+                              schema=self.schema)
             elif self.db_type == 'mysql':
                 self._conn.ping(True)
             self.cursor.execute(sql, params or ())
@@ -134,7 +138,9 @@ class EPDB:
 
     @retry(OperationalError, tries=3, delay=10, logger=logger)
     def query_df(self, sql, **kwargs) -> pd.DataFrame:
-        return pd.read_sql(text(sql), self.engine.connect(), **kwargs)
+        with self.engine.connect() as connected_con:
+            results_df = pd.read_sql(text(sql), connected_con, **kwargs)
+        return results_df
 
     def vacuum_table(self, table_name):
         logger.info(f'Vacuuming table {self.schema}.{table_name}')
@@ -146,18 +152,20 @@ class EPDB:
 
     @retry(OperationalError, tries=3, delay=10, logger=logger)
     def df_to_db(self, df, **kwargs):
-        try:
-            df.to_sql(**kwargs, con=self.engine)
-        except Exception as e:
-            df.to_csv(f"logs/{kwargs['name']}", index=False)
-            raise e
+        with self.engine.connect() as connected_con:
+            try:
+                df.to_sql(**kwargs, con=connected_con)
+            except Exception as e:
+                df.to_csv(f"logs/{kwargs['name']}", index=False)
+                raise e
 
     def df_to_db_replace(self, df: pd.DataFrame, name: str, unique_keys: list[str], **kwargs):
         try:
             df_existing = self.query_df(f'SELECT * FROM {self.schema}.{name}')
         except Exception as e:
             logger.debug(e)
-            logger.info(f'Table {self.schema}.{name} does not exist. Creating table.')
+            logger.info(
+                f'Table {self.schema}.{name} does not exist. Creating table.')
             self.df_to_db(df, name=name, index=False, **kwargs)
             return
         df_new = pd.concat([df_existing, df])
@@ -169,7 +177,8 @@ class EPDB:
 
         insp = inspect(self.engine)
         if not insp.has_table(table_name):
-            logger.info(f'{table_name} does not exist. Nothing to empty/delete')
+            logger.info(
+                f'{table_name} does not exist. Nothing to empty/delete')
             return
 
         logger.info(f'trying to empty {table_name}')
@@ -224,6 +233,7 @@ class EPDB:
         if self.db_type == 'postgres':
             return self.query('SELECT VERSION()')[0][0]
 
+
 def get_db_config():
     return dict(
         host='localhost',
@@ -232,11 +242,14 @@ def get_db_config():
         password=os.getenv('PGDB_PASSWORD'),
     )
 
+
 def postgres_db(schema, db_name) -> EPDB:
     dbc = dict(dbname=db_name, **get_db_config())
-    print(f'schema is {schema}', f'port is {dbc["port"]}', f'database is {db_name}')
+    print(f'schema is {schema}',
+          f'port is {dbc["port"]}', f'database is {db_name}')
 
     return EPDB(dbc=dbc, db_type='postgres', schema=schema)
+
 
 if __name__ == '__main__':
     db = postgres_db('dnb', 'dnb')

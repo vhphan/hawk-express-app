@@ -34,35 +34,39 @@ create operator ||| (procedure = daily_stats.division, leftarg = anyelement, rig
 
 drop materialized view daily_stats.kpi_nr_nrcelldu;
 
+select pg_get_viewdef('daily_stats.kpi_nr_nrcelldu');
+
 drop materialized view daily_stats.kpi_nr_nrcelldu;
 create materialized view daily_stats.kpi_nr_nrcelldu as
 select
 date_id,
 "Region" as region,
-sum("dl_user_throughput_nom")|||sum("dl_user_throughput_den")  as  "dl_user_throughput" ,
-sum("ul_user_throughput_nom")|||sum("ul_user_throughput_den")  as  "ul_user_throughput" ,
-sum("dl_cell_throughput_nom")|||sum("dl_cell_throughput_den")  as  "dl_cell_throughput" ,
-sum("ul_cell_throughput_nom")|||sum("ul_cell_throughput_den")  as  "ul_cell_throughput" ,
-sum("dl_data_volume_gb_nom")|||sum("dl_data_volume_gb_den")  as  "dl_data_volume_gb" ,
-sum("ul_data_volume_gb_nom")|||sum("ul_data_volume_gb_den")  as  "ul_data_volume_gb" ,
-sum("total_traffic_gb_nom")|||sum("total_traffic_gb_den")  as  "total_traffic_gb" ,
-sum("dl_qpsk_nom")  as  "dl_qpsk"  ,
-sum("dl_16qam_nom")  as  "dl_16qam"  ,
-sum("dl_64qam_nom")  as  "dl_64qam"  ,
-sum("dl_256qam_nom")  as  "dl_256qam"  ,
-sum("ul_qpsk_nom")  as  "ul_qpsk"  ,
-sum("ul_16qam_nom")  as  "ul_16qam"  ,
-sum("ul_64qam_nom")  as  "ul_64qam"  ,
-sum("ul_256qam_nom")  as  "ul_256qam"  ,
-sum("dl_mac_vol_to_scell_nom")|||sum("dl_mac_vol_to_scell_den")  as  "dl_mac_vol_to_scell" ,
-sum("dl_mac_vol_as_scell_nom")|||sum("dl_mac_vol_as_scell_den")  as  "dl_mac_vol_as_scell" ,
-sum("dl_mac_vol_to_scell_ext_nom")|||sum("dl_mac_vol_to_scell_ext_den")  as  "dl_mac_vol_to_scell_ext" ,
-sum("dl_mac_vol_as_scell_ext_nom")|||sum("dl_mac_vol_as_scell_ext_den")  as  "dl_mac_vol_as_scell_ext" ,
-sum("cell_availability_nom")|||sum("cell_availability_den")  as  "cell_availability" ,
+sum("dl_user_throughput_nom")|||1000  as  "dl_user_throughput" ,
+sum("ul_user_throughput_nom")|||1000  as  "ul_user_throughput" ,
+sum("dl_cell_throughput_nom")|||1000  as  "dl_cell_throughput" ,
+sum("ul_cell_throughput_nom")|||1000  as  "ul_cell_throughput" ,
+sum("dl_data_volume_gb_nom")|||power(1024,3)  as  "dl_data_volume_gb" ,
+sum("ul_data_volume_gb_nom")|||power(1024,3)  as  "ul_data_volume_gb" ,
+sum("total_traffic_gb_nom")|||power(1024,3) as  "total_traffic_gb" ,
+
+100 * sum("dl_qpsk_nom") ||| sum("dl_modulation_den") as  "dl_qpsk"  ,
+100 * sum("dl_16qam_nom") ||| sum("dl_modulation_den") as  "dl_16qam"  ,
+100 * sum("dl_64qam_nom") ||| sum("dl_modulation_den") as  "dl_64qam"  ,
+100 * sum("dl_256qam_nom") ||| sum("dl_modulation_den") as  "dl_256qam"  ,
+100 * sum("ul_qpsk_nom") ||| sum("ul_modulation_den")  as  "ul_qpsk"  ,
+100 * sum("ul_16qam_nom") ||| sum("ul_modulation_den") as  "ul_16qam"  ,
+100 * sum("ul_64qam_nom") ||| sum("ul_modulation_den") as  "ul_64qam"  ,
+100 * sum("ul_256qam_nom") ||| sum("ul_modulation_den") as  "ul_256qam"  ,
+
+sum("dl_mac_vol_to_scell_nom")||| power(1024,3) as "dl_mac_vol_to_scell" ,
+sum("dl_mac_vol_as_scell_nom")||| power(1024,3) as "dl_mac_vol_as_scell" ,
+sum("dl_mac_vol_to_scell_ext_nom")||| power(1024,3) as "dl_mac_vol_to_scell_ext" ,
+sum("dl_mac_vol_as_scell_ext_nom")||| power(1024,3) as "dl_mac_vol_as_scell_ext" ,
+100 * sum("cell_availability_nom")|||sum("cell_availability_den")  as  "cell_availability" ,
 -- sum("e-rab_block_rate_nom")|||sum("e-rab_block_rate_den")  as  "e-rab_block_rate" ,
-sum("resource_block_utilizing_rate_dl_nom")|||sum("resource_block_utilizing_rate_dl_den")  as  "resource_block_utilizing_rate_dl" ,
-sum("resource_block_utilizing_rate_ul_nom")|||sum("resource_block_utilizing_rate_ul_den")  as  "resource_block_utilizing_rate_ul" ,
-sum("ul_bler_nom")|||sum("ul_bler_den")  as  "ul_bler"
+100 * sum("resource_block_utilizing_rate_dl_nom")|||sum("resource_block_utilizing_rate_dl_den")  as  "resource_block_utilizing_rate_dl" ,
+100 * sum("resource_block_utilizing_rate_ul_nom")|||sum("resource_block_utilizing_rate_ul_den")  as  "resource_block_utilizing_rate_ul" ,
+100 * sum("ul_bler_nom")|||sum("ul_bler_den")  as  "ul_bler"
 from
 dnb.daily_stats.dc_e_nr_nrcelldu_day as dt
 INNER JOIN dnb.rfdb.cell_mapping as cm on cm."Cellname" = dt."nrcelldu"
@@ -78,14 +82,14 @@ create materialized view daily_stats.kpi_nr_nrcellcu as
 select
 date_id,
 "Region" as region,
-sum("endc_sr_nom")|||sum("endc_sr_den")  as  "endc_sr" ,
-sum("erab_drop_call_rate_sgnb_nom")|||sum("erab_drop_call_rate_sgnb_den")  as  "erab_drop_call_rate_sgnb" ,
-sum("intra-sgnb_pscell_change_success_rate_nom")|||sum("intra-sgnb_pscell_change_success_rate_den")  as  "intra-sgnb_pscell_change_success_rate" ,
-sum("inter-sgnb_pscell_change_success_rate_nom")|||sum("inter-sgnb_pscell_change_success_rate_den")  as  "inter-sgnb_pscell_change_success_rate" ,
-sum("rrc_setup_success_rate_signaling_nom")|||sum("rrc_setup_success_rate_signaling_den")  as  "rrc_setup_success_rate_signaling" ,
-sum("endc_ca_configuration_sr_nom")|||sum("endc_ca_configuration_sr_den")  as  "endc_ca_configuration_sr" ,
-sum("endc_ca_deconfiguration_sr_nom")|||sum("endc_ca_deconfiguration_sr_den")  as  "endc_ca_deconfiguration_sr",
-sum("e-rab_block_rate_nom")|||sum("e-rab_block_rate_den")  as  "e-rab_block_rate" 
+100 * sum("endc_sr_nom")|||sum("endc_sr_den")  as  "endc_sr" ,
+100 * sum("erab_drop_call_rate_sgnb_nom")|||sum("erab_drop_call_rate_sgnb_den")  as  "erab_drop_call_rate_sgnb" ,
+100 * sum("intra-sgnb_pscell_change_success_rate_nom")|||sum("intra-sgnb_pscell_change_success_rate_den")  as  "intra-sgnb_pscell_change_success_rate" ,
+100 * sum("inter-sgnb_pscell_change_success_rate_nom")|||sum("inter-sgnb_pscell_change_success_rate_den")  as  "inter-sgnb_pscell_change_success_rate" ,
+100 * sum("rrc_setup_success_rate_signaling_nom")|||sum("rrc_setup_success_rate_signaling_den")  as  "rrc_setup_success_rate_signaling" ,
+100 * sum("endc_ca_configuration_sr_nom")|||sum("endc_ca_configuration_sr_den")  as  "endc_ca_configuration_sr" ,
+100 * sum("endc_ca_deconfiguration_sr_nom")|||sum("endc_ca_deconfiguration_sr_den")  as  "endc_ca_deconfiguration_sr",
+100 * sum("e-rab_block_rate_nom")|||sum("e-rab_block_rate_den")  as  "e-rab_block_rate" 
 from
 dnb.daily_stats.dc_e_nr_nrcellcu_day as dt
 INNER JOIN dnb.rfdb.cell_mapping as cm on cm."Cellname" = dt."nrcellcu"
@@ -280,8 +284,8 @@ create materialized view daily_stats.kpi_vpp_rpuserplanelink_v as
 select
 date_id,
 "Region" as region,
-sum("packet_loss_dl_nom")|||sum("packet_loss_dl_den")  as  "packet_loss_dl" ,
-sum("packet_loss_ul_nom")|||sum("packet_loss_ul_den")  as  "packet_loss_ul" 
+100 * sum("packet_loss_dl_nom")|||sum("packet_loss_dl_den")  as  "packet_loss_dl" ,
+100 * sum("packet_loss_ul_nom")|||sum("packet_loss_ul_den")  as  "packet_loss_ul" 
 from
 dnb.daily_stats.dc_e_vpp_rpuserplanelink_v_day as dt
 INNER JOIN dnb.rfdb.cell_mapping as cm on cm."Sitename" = dt."ne_name"
@@ -349,3 +353,10 @@ select distinct region from daily_stats.kpi_nr_nrcelldu_v;
 
 
 
+
+
+select cell_availability_den from daily_stats.dc_e_nr_nrcelldu_day 
+group by cell_availability_den;
+
+select cell_availability_den, count(*) from hourly_stats.dc_e_nr_nrcelldu_raw
+group by cell_availability_den;

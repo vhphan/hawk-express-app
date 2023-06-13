@@ -10,11 +10,14 @@ const {
     getRegionDailyStatsLTE,
     getRegionDailyStatsNRFlex,
     getRegionDailyStatsLTEFlex,
+    getCellsList,
 
 } = require("../controllers/kpi");
 const {
     getRegionHourlyStatsNR,
     getRegionHourlyStatsLTE,
+    getRegionHourlyStatsNRFlex,
+    getRegionHourlyStatsLTEFlex,
     getCellHourlyStatsNR,
     getCellHourlyStatsLTE,
 
@@ -57,8 +60,9 @@ const tablesHourly = {
         'dc_e_vpp_rpuserplanelink_v_raw',
     ],
     lte: [
-
-
+        'dc_e_erbs_eutrancellfdd_raw',
+        'dc_e_erbs_eutrancellrelation_raw',
+        'dc_e_erbs_eutrancellfdd_v_raw'
     ]
 }
 
@@ -77,8 +81,9 @@ router.get("/test", testQuery);
 router.get('/dailyStats', asyncHandler(async (req, res) => {
 
     const { tech, cellId } = req.query;
+    const getCellStatsTechFunc = tech === 'nr' ? getCellDailyStatsNR : getCellDailyStatsLTE;
     const promises = tables[tech].map((table) =>
-        getCellDailyStatsNR(cellId, table)
+        getCellStatsTechFunc(cellId, table)
     )
     const results = await compileResultsKpiArrays(promises, tech, null, 'cell');
 
@@ -171,6 +176,51 @@ router.get('/dailyStatsRegionFlex', asyncHandler(async (req, res) => {
 
 }));
 
+router.get('/hourlyStatsRegionFlex', asyncHandler(async (req, res) => {
+
+    const { tech } = req.query;
+    const region = req.query.region || 'all';
+
+    const promises = flexTablesHourly[tech].map((table) => {
+        if (tech === 'nr') return getRegionHourlyStatsNRFlex(table)
+        if (tech === 'lte') return getRegionHourlyStatsLTEFlex(table)
+    });
+
+    const results = await compileResultsKpiArraysFlex(promises, tech, region, 'region');
+
+    res.json({
+        success: true,
+        data: results,
+        meta: {
+            time: new Date(),
+            region,
+            tech,
+        }
+    });
+
+}));
+
+router.get('/cellsList', asyncHandler(async (req, res) => {
+
+    const tech = req.query.tech || 'nr';
+    const region = req.query.region || 'all';
+    const cellPartial = req.query.cellPartial || ''
+
+    const results = await getCellsList(tech, region, cellPartial);
+    res.json({
+
+        success: true,
+        data: results,
+        meta: {
+            time: new Date(),
+            region,
+            tech,
+            cellPartial,
+        }
+    })
+
+
+}));
 
 
 module.exports = router;
@@ -236,7 +286,7 @@ async function compileResultsKpiArraysFlex(promises, tech, region, level = 'regi
                 name: operator,
                 data: seriesData,
             })
-            
+
         });
 
     });
