@@ -74,7 +74,6 @@ if (process.env.NODE_ENV !== "development") {
     createCronToRunMainDPM();
     createCronToRunMainCellMapping();
     createCronToRefreshMaterializedViews();
-
 }
 
 if (process.env.NODE_ENV === "development") {

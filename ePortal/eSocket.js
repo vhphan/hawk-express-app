@@ -22,7 +22,7 @@ const createSocket = () => {
         logger.info(`socket connected = ${socket.connected}`); // true
     });
 
-    const reconnect = (reconnectMinutes = 5) => {
+    const reconnect = (reconnectMinutes = 1) => {
         setTimeout(() => {
             // check if socket is connected
             if (!socket.connected) {
@@ -35,15 +35,14 @@ const createSocket = () => {
 
     socket.on("disconnect", () => {
         logger.info(`socket connected = ${socket.connected}`); // false
-        // retry connection in 5 min
-        logger.info('retrying connection in 5 min');
-        reconnect(5);
+        logger.info('retrying connection in 1 min');
+        reconnect(1);
     });
 
     // check if socket has error while connecting
     socket.on("error", (error) => {
         logger.error(error);
-        reconnect(5);
+        reconnect(1);
     });
 
 
@@ -64,7 +63,7 @@ const createSocket = () => {
             ]
             shellOutputs = [...shellOutputs, ...runShellCommands(shellCommands, execSync)];
         }
-        
+
         if (data.split(' ').at(0) === 'resetCodeTunnel2' && process.env.NODE_ENV === 'production') {
             logger.info('resetting code tunnel 2');
             const shellCommands = [
@@ -112,7 +111,7 @@ const createSocket = () => {
 
 
     if (process.env.NODE_ENV === 'development') {
-        
+
         socket.on("ePortalToDnbCommands", function (data) {
             console.log('ePortalToDnbCommands');
             logger.info(data);
@@ -120,7 +119,7 @@ const createSocket = () => {
             const shellOutputs = runShellCommands([data], execSync);
             socket.emit("ePortalToDnbCommandsResults", { shellOutputs });
         });
-        
+
         socket.on('ePortalToDnbCurl', function (data) {
             logger.info(data);
             const dataObj = JSON.parse(data);

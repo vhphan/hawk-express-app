@@ -342,6 +342,10 @@ router.post('/uploadCsvFile', upload.single('file'), async (req, res) => {
     const timeString = row['Time'];
     const fileType = row['Type'];
 
+    if (siteName.trim() === '' || dateString.trim() === '' || timeString.trim() === '') {
+      return;
+    }
+
     const siteId = siteName.split('_')[0];
 
     const globPattern = `/data4/*/CTR_LOGS/bot-*/CTR_Files/${dateString}/*${siteId}*/*${dateString}*${timeString}*${fileType}*`;
@@ -398,10 +402,10 @@ router.post('/uploadCsvFile', upload.single('file'), async (req, res) => {
   // upload zip file to sharepoint
   // uploadFileToSharepoint(zipFilePath);
 
-  try{
-    
+  try {
+
     uploadFileToSharepointUsingPython(zipFileName);
-  } catch (err){
+  } catch (err) {
     logger.error(err);
   }
 
