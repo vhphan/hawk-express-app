@@ -135,6 +135,8 @@ logs
 pyscripts/venv
 db/df_dpm/*
 uploads/*
+apps/kpi-frontend/*
+sample_jsons_api/*
 
 *.pyc
 kill.txt
