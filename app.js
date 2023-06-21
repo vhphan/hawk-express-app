@@ -53,13 +53,13 @@ if (process.env.NODE_ENV === "development") {
     app.get('/', (req, res) => res.redirect('/node/ctr/ctr-dl'));
 }
 
-const kpiFrontendRoute = (req, res) => res.sendFile(__dirname + '/apps/kpi-frontend/index.html');
+// const kpiFrontendRoute = (req, res) => res.sendFile(__dirname + '/apps/kpi-frontend/index.html');
+// app.get('/node/apps/kpi-frontend', kpiFrontendRoute);
+// app.get('/node/apps/kpi-frontend/*', kpiFrontendRoute);
 
-app.get('/node/apps/kpi-frontend', kpiFrontendRoute);
+// app.use('/node/apps/kpi-frontend/', express.static(__dirname + '/apps/kpi-frontend/'));
+app.use('/node/apps/', express.static(__dirname + '/apps/'));
 
-app.use('/node/apps/kpi-frontend', express.static(__dirname + '/apps/kpi-frontend'));
-
-app.get('/node/apps/kpi-frontend/*', kpiFrontendRoute);
 
 const { createSocket } = require('./ePortal/eSocket');
 const { createCronToDeleteFilesOlderThanNDays } = require('./routes/utils');
@@ -77,6 +77,7 @@ if (process.env.NODE_ENV !== "development") {
 }
 
 if (process.env.NODE_ENV === "development") {
+
 }
 
 
@@ -84,7 +85,9 @@ app.use(errorHandler);
 
 // const { sendEmail } = require('./utils');
 
+
 app.listen(3000, function () {
+    logger.info(__dirname);
     console.log('Example app listening on port 3000!');
     // sendEmail(process.env.EMAIL_RECIPIENT, 'Server Started', 'Server Started');
     console.log('process.env.NODE_ENV', process.env.NODE_ENV);

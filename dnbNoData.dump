@@ -1,0 +1,3427 @@
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 15.2
+-- Dumped by pg_dump version 15.2
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- Name: daily_stats; Type: SCHEMA; Schema: -; Owner: dnb
+--
+
+CREATE SCHEMA daily_stats;
+
+
+ALTER SCHEMA daily_stats OWNER TO dnb;
+
+--
+-- Name: hourly_stats; Type: SCHEMA; Schema: -; Owner: dnb
+--
+
+CREATE SCHEMA hourly_stats;
+
+
+ALTER SCHEMA hourly_stats OWNER TO dnb;
+
+--
+-- Name: rfdb; Type: SCHEMA; Schema: -; Owner: dnb
+--
+
+CREATE SCHEMA rfdb;
+
+
+ALTER SCHEMA rfdb OWNER TO dnb;
+
+--
+-- Name: division(anyelement, anyelement); Type: FUNCTION; Schema: daily_stats; Owner: dnb
+--
+
+CREATE FUNCTION daily_stats.division(a anyelement, b anyelement) RETURNS double precision
+    LANGUAGE plpgsql IMMUTABLE
+    AS $$
+begin
+    if b = 0 then
+        return null;
+    end if;
+    return round(cast(a as numeric) / cast(b as numeric), 6) ::double precision;
+end;
+$$;
+
+
+ALTER FUNCTION daily_stats.division(a anyelement, b anyelement) OWNER TO dnb;
+
+--
+-- Name: division(anyelement, numeric); Type: FUNCTION; Schema: daily_stats; Owner: dnb
+--
+
+CREATE FUNCTION daily_stats.division(a anyelement, b numeric) RETURNS double precision
+    LANGUAGE plpgsql IMMUTABLE
+    AS $$
+begin
+    if b = 0 then
+        return null;
+    end if;
+    return round(cast(a as numeric) / cast(b as numeric), 6) ::double precision;
+end;
+$$;
+
+
+ALTER FUNCTION daily_stats.division(a anyelement, b numeric) OWNER TO dnb;
+
+--
+-- Name: to_double1(text); Type: FUNCTION; Schema: public; Owner: dnb
+--
+
+CREATE FUNCTION public.to_double1(text) RETURNS double precision
+    LANGUAGE sql IMMUTABLE STRICT
+    AS $_$
+  SELECT CASE WHEN upper($1) = 'NULL' THEN NULL
+         ELSE $1::double precision END
+$_$;
+
+
+ALTER FUNCTION public.to_double1(text) OWNER TO dnb;
+
+--
+-- Name: update_meta(); Type: FUNCTION; Schema: public; Owner: dnb
+--
+
+CREATE FUNCTION public.update_meta() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+begin
+    insert into daily_stats.meta ("table_name", "last_updated")
+    values (TG_TABLE_NAME, now())
+    on conflict ("table_name") do update
+    set "last_updated" = now();
+    return null;
+end
+$$;
+
+
+ALTER FUNCTION public.update_meta() OWNER TO dnb;
+
+--
+-- Name: |||; Type: OPERATOR; Schema: public; Owner: dnb
+--
+
+CREATE OPERATOR public.||| (
+    FUNCTION = daily_stats.division,
+    LEFTARG = anyelement,
+    RIGHTARG = anyelement
+);
+
+
+ALTER OPERATOR public.||| (anyelement, anyelement) OWNER TO dnb;
+
+--
+-- Name: |||; Type: OPERATOR; Schema: public; Owner: dnb
+--
+
+CREATE OPERATOR public.||| (
+    FUNCTION = daily_stats.division,
+    LEFTARG = anyelement,
+    RIGHTARG = numeric
+);
+
+
+ALTER OPERATOR public.||| (anyelement, numeric) OWNER TO dnb;
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- Name: dc_e_erbs_eutrancellfdd_day; Type: TABLE; Schema: daily_stats; Owner: dnb
+--
+
+CREATE TABLE daily_stats.dc_e_erbs_eutrancellfdd_day (
+    date_id date NOT NULL,
+    erbs character varying(50),
+    eutrancellfdd character varying(50) NOT NULL,
+    cell_availability_nom double precision,
+    cell_availability_den double precision,
+    "rrc_setup_success_rate_(service)_nom" double precision,
+    "rrc_setup_success_rate_(service)_den" double precision,
+    "rrc_setup_success_rate_(signaling)_nom" double precision,
+    "rrc_setup_success_rate_(signaling)_den" double precision,
+    "e-rab_setup_success_rate_nom" double precision,
+    "e-rab_setup_success_rate_den" double precision,
+    erab_drop_call_rate_nom double precision,
+    erab_drop_call_rate_den double precision,
+    handover_in_success_rate_nom double precision,
+    handover_in_success_rate_den double precision,
+    ul_bler_nom double precision,
+    ul_bler_den double precision,
+    dl_user_throughput_nom double precision,
+    dl_user_throughput_den double precision,
+    ul_user_throughput_nom double precision,
+    ul_user_throughput_den double precision,
+    dl_cell_throughput_nom double precision,
+    dl_cell_throughput_den double precision,
+    ul_cell_throughput_nom double precision,
+    ul_cell_throughput_den double precision,
+    dl_data_volume_nom double precision,
+    dl_data_volume_den double precision,
+    ul_data_volume_nom double precision,
+    ul_data_volume_den double precision,
+    total_traffic_nom double precision,
+    total_traffic_den double precision,
+    "packet_loss_(dl)_nom" double precision,
+    "packet_loss_(dl)_den" double precision,
+    "packet_loss_(ul)_nom" double precision,
+    "packet_loss_(ul)_den" double precision,
+    "latency_(only_radio_interface)_nom" double precision,
+    "latency_(only_radio_interface)_den" double precision,
+    dl_qpsk_nom double precision,
+    dl_16qam_nom double precision,
+    dl_64qam_nom double precision,
+    dl_256qam_nom double precision,
+    dl_modulation_den double precision,
+    ul_qpsk_nom double precision,
+    ul_16qam_nom double precision,
+    ul_64qam_nom double precision,
+    ul_256qam_nom double precision,
+    ul_modulation_den double precision,
+    max_of_rrc_connected_user double precision,
+    max_rrc_users_ytl double precision,
+    max_rrc_users_maxis double precision,
+    max_rrc_users_celcom double precision,
+    max_rrc_users_tm double precision,
+    max_rrc_users_umobile double precision,
+    max_rrc_users_digi double precision,
+    max_rrc_users_dnb double precision,
+    max_of_active_user double precision,
+    call_setup_success_rate_nom double precision,
+    call_setup_success_rate_den double precision,
+    "e-rab_setup_success_rate_non_gbr_nom" double precision,
+    "e-rab_setup_success_rate_non_gbr_den" double precision,
+    intrafreq_hosr_nom double precision,
+    intrafreq_hosr_den double precision,
+    volte_redirection_success_rate_nom double precision,
+    volte_redirection_success_rate_den double precision
+);
+
+
+ALTER TABLE daily_stats.dc_e_erbs_eutrancellfdd_day OWNER TO dnb;
+
+--
+-- Name: dc_e_nr_nrcelldu_day; Type: TABLE; Schema: daily_stats; Owner: dnb
+--
+
+CREATE TABLE daily_stats.dc_e_nr_nrcelldu_day (
+    date_id date,
+    nr_name character varying(100),
+    nrcelldu character varying(100),
+    cell_availability_nom double precision,
+    cell_availability_den bigint,
+    resource_block_utilizing_rate_dl_nom double precision,
+    resource_block_utilizing_rate_dl_den double precision,
+    resource_block_utilizing_rate_ul_nom double precision,
+    resource_block_utilizing_rate_ul_den double precision,
+    ul_bler_nom double precision,
+    ul_bler_den double precision,
+    dl_user_throughput_nom double precision,
+    dl_user_throughput_den bigint,
+    ul_user_throughput_nom double precision,
+    ul_user_throughput_den bigint,
+    dl_cell_throughput_nom double precision,
+    dl_cell_throughput_den bigint,
+    ul_cell_throughput_nom double precision,
+    ul_cell_throughput_den bigint,
+    dl_data_volume_gb_nom double precision,
+    dl_data_volume_gb_den bigint,
+    ul_data_volume_gb_nom double precision,
+    ul_data_volume_gb_den bigint,
+    total_traffic_gb_nom double precision,
+    total_traffic_gb_den bigint,
+    dl_qpsk_nom double precision,
+    dl_16qam_nom double precision,
+    dl_64qam_nom double precision,
+    dl_256qam_nom double precision,
+    dl_modulation_den double precision,
+    ul_qpsk_nom double precision,
+    ul_16qam_nom double precision,
+    ul_64qam_nom double precision,
+    ul_256qam_nom double precision,
+    ul_modulation_den double precision,
+    max_active_user double precision,
+    dl_mac_vol_to_scell_nom double precision,
+    dl_mac_vol_to_scell_den bigint,
+    dl_mac_vol_as_scell_nom double precision,
+    dl_mac_vol_as_scell_den bigint,
+    dl_mac_vol_to_scell_ext_nom double precision,
+    dl_mac_vol_to_scell_ext_den bigint,
+    dl_mac_vol_as_scell_ext_nom double precision,
+    dl_mac_vol_as_scell_ext_den bigint
+);
+
+
+ALTER TABLE daily_stats.dc_e_nr_nrcelldu_day OWNER TO dnb;
+
+--
+-- Name: cell_mapping; Type: TABLE; Schema: rfdb; Owner: dnb
+--
+
+CREATE TABLE rfdb.cell_mapping (
+    "Cellname" character varying(100),
+    "Region" character varying(100),
+    "Cluster_ID" character varying(100),
+    "DISTRICT" character varying(100),
+    "MCMC_State" character varying(100),
+    geom character varying(300),
+    "SITEID" character varying(100),
+    "SystemID" character varying(100),
+    "Sitename" character varying(100)
+);
+
+
+ALTER TABLE rfdb.cell_mapping OWNER TO dnb;
+
+--
+-- Name: cells_list; Type: MATERIALIZED VIEW; Schema: daily_stats; Owner: dnb
+--
+
+CREATE MATERIALIZED VIEW daily_stats.cells_list AS
+ SELECT dc_e_nr_nrcelldu_day.nrcelldu AS cell_id,
+    cm."Region" AS region,
+    'nr'::text AS tech
+   FROM (daily_stats.dc_e_nr_nrcelldu_day
+     LEFT JOIN rfdb.cell_mapping cm ON (((cm."Cellname")::text = (dc_e_nr_nrcelldu_day.nrcelldu)::text)))
+  GROUP BY dc_e_nr_nrcelldu_day.nrcelldu, cm."Region"
+UNION
+ SELECT dc_e_erbs_eutrancellfdd_day.eutrancellfdd AS cell_id,
+    cm."Region" AS region,
+    'lte'::text AS tech
+   FROM (daily_stats.dc_e_erbs_eutrancellfdd_day
+     LEFT JOIN rfdb.cell_mapping cm ON (((cm."Cellname")::text = (dc_e_erbs_eutrancellfdd_day.eutrancellfdd)::text)))
+  GROUP BY dc_e_erbs_eutrancellfdd_day.eutrancellfdd, cm."Region"
+  ORDER BY 3, 1
+  WITH NO DATA;
+
+
+ALTER TABLE daily_stats.cells_list OWNER TO dnb;
+
+--
+-- Name: d_date; Type: TABLE; Schema: daily_stats; Owner: dnb
+--
+
+CREATE TABLE daily_stats.d_date (
+    date_dim_id integer NOT NULL,
+    date_actual date NOT NULL,
+    epoch bigint NOT NULL,
+    day_suffix character varying(4) NOT NULL,
+    day_name character varying(9) NOT NULL,
+    day_of_week integer NOT NULL,
+    day_of_month integer NOT NULL,
+    day_of_quarter integer NOT NULL,
+    day_of_year integer NOT NULL,
+    week_of_month integer NOT NULL,
+    week_of_year integer NOT NULL,
+    week_of_year_iso character(10) NOT NULL,
+    month_actual integer NOT NULL,
+    month_name character varying(9) NOT NULL,
+    month_name_abbreviated character(3) NOT NULL,
+    quarter_actual integer NOT NULL,
+    quarter_name character varying(9) NOT NULL,
+    year_actual integer NOT NULL,
+    first_day_of_week date NOT NULL,
+    last_day_of_week date NOT NULL,
+    first_day_of_month date NOT NULL,
+    last_day_of_month date NOT NULL,
+    first_day_of_quarter date NOT NULL,
+    last_day_of_quarter date NOT NULL,
+    first_day_of_year date NOT NULL,
+    last_day_of_year date NOT NULL,
+    mmyyyy character(6) NOT NULL,
+    mmddyyyy character(10) NOT NULL,
+    weekend_indr boolean NOT NULL
+);
+
+
+ALTER TABLE daily_stats.d_date OWNER TO dnb;
+
+--
+-- Name: dc_e_erbs_eutrancellfdd_flex_day; Type: TABLE; Schema: daily_stats; Owner: dnb
+--
+
+CREATE TABLE daily_stats.dc_e_erbs_eutrancellfdd_flex_day (
+    date_id date NOT NULL,
+    erbs character varying(50),
+    eutrancellfdd character varying(50) NOT NULL,
+    flex_filtername character varying(50) NOT NULL,
+    "e-rab_setup_success_rate_nom" double precision,
+    "e-rab_setup_success_rate_den" double precision,
+    erab_drop_call_rate_nom double precision,
+    erab_drop_call_rate_den double precision,
+    intrafreq_hosr_nom double precision,
+    intrafreq_hosr_den double precision,
+    ul_bler_nom double precision,
+    ul_bler_den double precision,
+    dl_user_throughput_nom double precision,
+    dl_user_throughput_den double precision,
+    ul_user_throughput_nom double precision,
+    ul_user_throughput_den double precision,
+    dl_cell_throughput_nom double precision,
+    dl_cell_throughput_den double precision,
+    ul_cell_throughput_nom double precision,
+    ul_cell_throughput_den double precision,
+    dl_data_volume_nom double precision,
+    dl_data_volume_den double precision,
+    ul_data_volume_nom double precision,
+    ul_data_volume_den double precision,
+    dl_qpsk_nom double precision,
+    dl_16qam_nom double precision,
+    dl_64qam_nom double precision,
+    dl_256qam_nom double precision,
+    dl_modulation_den double precision,
+    ul_qpsk_nom double precision,
+    ul_16qam_nom double precision,
+    ul_64qam_nom double precision,
+    ul_256qam_nom double precision,
+    ul_modulation_den double precision,
+    "packet_loss_(dl)_nom" double precision,
+    "packet_loss_(dl)_den" double precision,
+    "packet_loss_(ul)_nom" double precision,
+    "packet_loss_(ul)_den" double precision
+);
+
+
+ALTER TABLE daily_stats.dc_e_erbs_eutrancellfdd_flex_day OWNER TO dnb;
+
+--
+-- Name: dc_e_erbs_eutrancellfdd_v_day; Type: TABLE; Schema: daily_stats; Owner: dnb
+--
+
+CREATE TABLE daily_stats.dc_e_erbs_eutrancellfdd_v_day (
+    date_id date NOT NULL,
+    erbs character varying(50),
+    eutrancellfdd character varying(50) NOT NULL,
+    "resource_block_utilizing_rate(dl)_nom" double precision,
+    "resource_block_utilizing_rate(dl)_den" double precision,
+    "resource_block_utilizing_rate(ul)_nom" double precision,
+    "resource_block_utilizing_rate(ul)_den" double precision,
+    average_cqi_nom double precision,
+    average_cqi_den double precision,
+    pmtainit2distr_0 double precision,
+    pmtainit2distr_1 double precision,
+    pmtainit2distr_2 double precision,
+    pmtainit2distr_3 double precision,
+    pmtainit2distr_4 double precision,
+    pmtainit2distr_5 double precision,
+    pmtainit2distr_6 double precision,
+    pmtainit2distr_7 double precision,
+    pmtainit2distr_8 double precision,
+    pmtainit2distr_9 double precision,
+    pmtainit2distr_10 double precision,
+    pmtainit2distr_11 double precision,
+    pmtainit2distr_12 double precision,
+    avg_pusch_ul_rssi_nom double precision,
+    avg_pusch_ul_rssi_den double precision
+);
+
+
+ALTER TABLE daily_stats.dc_e_erbs_eutrancellfdd_v_day OWNER TO dnb;
+
+--
+-- Name: dc_e_erbs_eutrancellrelation_day; Type: TABLE; Schema: daily_stats; Owner: dnb
+--
+
+CREATE TABLE daily_stats.dc_e_erbs_eutrancellrelation_day (
+    date_id date NOT NULL,
+    erbs character varying(50),
+    eutrancellfdd character varying(50) NOT NULL,
+    eutranfreqrelation character varying(50) NOT NULL,
+    interfreq_hosr_nom double precision,
+    interfreq_hosr_den double precision,
+    ifo_success_rate_nom double precision,
+    ifo_success_rate_den double precision
+);
+
+
+ALTER TABLE daily_stats.dc_e_erbs_eutrancellrelation_day OWNER TO dnb;
+
+--
+-- Name: dc_e_erbsg2_mpprocessingresource_v_day; Type: TABLE; Schema: daily_stats; Owner: dnb
+--
+
+CREATE TABLE daily_stats.dc_e_erbsg2_mpprocessingresource_v_day (
+    date_id date,
+    erbs character varying(100),
+    gnodeb_cpu_load_nom double precision,
+    gnodeb_cpu_load_den double precision
+);
+
+
+ALTER TABLE daily_stats.dc_e_erbsg2_mpprocessingresource_v_day OWNER TO dnb;
+
+--
+-- Name: dc_e_nr_events_nrcellcu_flex_day; Type: TABLE; Schema: daily_stats; Owner: dnb
+--
+
+CREATE TABLE daily_stats.dc_e_nr_events_nrcellcu_flex_day (
+    date_id date,
+    nr_name character varying(100),
+    nrcellcu character varying(100),
+    flex_filtername character varying(100),
+    "endc_sr_nom " double precision,
+    "endc_sr_den " double precision,
+    "erab_drop_nom " double precision,
+    "erab_drop_den " double precision,
+    "intra-sgnb_pscell_change_success_nom" double precision,
+    "intra-sgnb_pscell_change_success_den" double precision,
+    "inter-sgnb_pscell_change_success_nom" double precision,
+    "inter-sgnb_pscell_change_success_den" double precision,
+    max_rrc_connected_user_endc double precision,
+    "5g_ho_success_rate_dnb_5g_to_dnb_nom" double precision,
+    "5g_ho_success_rate_dnb_5g_to_dnb_den" double precision,
+    inter_rat_ho_success_rate_dnb_5g_to_mno_4g_nom double precision,
+    inter_rat_ho_success_rate_dnb_5g_to_mno_4g_den double precision,
+    eps_fallback_attempt double precision
+);
+
+
+ALTER TABLE daily_stats.dc_e_nr_events_nrcellcu_flex_day OWNER TO dnb;
+
+--
+-- Name: dc_e_nr_events_nrcelldu_flex_day; Type: TABLE; Schema: daily_stats; Owner: dnb
+--
+
+CREATE TABLE daily_stats.dc_e_nr_events_nrcelldu_flex_day (
+    date_id date,
+    nr_name character varying(100),
+    flex_filtername character varying(100),
+    nrcelldu character varying(100),
+    dl_user_throughput_den bigint,
+    ul_user_throughput_den bigint,
+    ul_traffic_volume_nom double precision,
+    ul_traffic_volume_den bigint,
+    dl_qpsk_nom double precision,
+    dl_16qam_nom double precision,
+    dl_64qam_nom double precision,
+    dl_256qam_nom double precision,
+    dl_modulation_den double precision,
+    ul_qpsk_nom double precision,
+    ul_16qam_nom double precision,
+    ul_64qam_nom double precision,
+    ul_modulation_den double precision,
+    dl_user_throughput_nom double precision,
+    ul_user_throughput_nom double precision,
+    dl_traffic_volume_nom double precision,
+    dl_traffic_volume_den double precision
+);
+
+
+ALTER TABLE daily_stats.dc_e_nr_events_nrcelldu_flex_day OWNER TO dnb;
+
+--
+-- Name: dc_e_nr_events_nrcelldu_flex_day_v2; Type: TABLE; Schema: daily_stats; Owner: dnb
+--
+
+CREATE TABLE daily_stats.dc_e_nr_events_nrcelldu_flex_day_v2 (
+    date_id timestamp without time zone NOT NULL,
+    nr_name character varying(50),
+    nrcelldu character varying(50) NOT NULL,
+    flex_filtername character varying(50) NOT NULL,
+    dl_user_throughput_nom double precision,
+    dl_user_throughput_den double precision,
+    ul_user_throughput_nom double precision,
+    ul_user_throughput_den double precision,
+    ul_traffic_volume_nom double precision,
+    ul_traffic_volume_den double precision,
+    dl_traffic_volume_nom double precision,
+    dl_traffic_volume_den double precision,
+    dl_qpsk_nom double precision,
+    dl_16qam_nom double precision,
+    dl_64qam_nom double precision,
+    dl_256qam_nom double precision,
+    dl_modulation_den double precision,
+    ul_qpsk_nom double precision,
+    ul_16qam_nom double precision,
+    ul_64qam_nom double precision,
+    ul_modulation_den double precision
+);
+
+
+ALTER TABLE daily_stats.dc_e_nr_events_nrcelldu_flex_day_v2 OWNER TO dnb;
+
+--
+-- Name: dc_e_nr_nrcellcu_day; Type: TABLE; Schema: daily_stats; Owner: dnb
+--
+
+CREATE TABLE daily_stats.dc_e_nr_nrcellcu_day (
+    date_id date,
+    nr_name character varying(100),
+    nrcellcu character varying(100),
+    endc_sr_nom double precision,
+    endc_sr_den double precision,
+    erab_drop_call_rate_sgnb_nom double precision,
+    erab_drop_call_rate_sgnb_den double precision,
+    "intra-sgnb_pscell_change_success_rate_nom" double precision,
+    "intra-sgnb_pscell_change_success_rate_den" double precision,
+    "inter-sgnb_pscell_change_success_rate_nom" double precision,
+    "inter-sgnb_pscell_change_success_rate_den" double precision,
+    rrc_setup_success_rate_signaling_nom double precision,
+    rrc_setup_success_rate_signaling_den double precision,
+    max_of_rrc_connected_user_endc double precision,
+    endc_ca_configuration_sr_nom double precision,
+    endc_ca_configuration_sr_den double precision,
+    endc_ca_deconfiguration_sr_nom double precision,
+    endc_ca_deconfiguration_sr_den double precision,
+    max_rrc_connected_user_endc double precision,
+    "e-rab_block_rate_nom" double precision,
+    "e-rab_block_rate_den" double precision
+);
+
+
+ALTER TABLE daily_stats.dc_e_nr_nrcellcu_day OWNER TO dnb;
+
+--
+-- Name: dc_e_nr_nrcelldu_v_day; Type: TABLE; Schema: daily_stats; Owner: dnb
+--
+
+CREATE TABLE daily_stats.dc_e_nr_nrcelldu_v_day (
+    date_id date,
+    nr_name character varying(100),
+    nrcelldu character varying(100),
+    pmradioraatttadistr_0 double precision,
+    pmradioraatttadistr_1 double precision,
+    pmradioraatttadistr_2 double precision,
+    pmradioraatttadistr_3 double precision,
+    pmradioraatttadistr_4 double precision,
+    pmradioraatttadistr_5 double precision,
+    pmradioraatttadistr_6 double precision,
+    pmradioraatttadistr_7 double precision,
+    pmradioraatttadistr_8 double precision,
+    pmradioraatttadistr_9 double precision,
+    pmradioraatttadistr_10 double precision,
+    pmradioraatttadistr_11 double precision,
+    latency_only_radio_interface_nom bigint,
+    latency_only_radio_interface_den bigint,
+    average_cqi_nom double precision,
+    average_cqi_den double precision,
+    avg_pusch_ul_rssi_nom double precision,
+    avg_pusch_ul_rssi_den double precision
+);
+
+
+ALTER TABLE daily_stats.dc_e_nr_nrcelldu_v_day OWNER TO dnb;
+
+--
+-- Name: dc_e_vpp_rpuserplanelink_v_day; Type: TABLE; Schema: daily_stats; Owner: dnb
+--
+
+CREATE TABLE daily_stats.dc_e_vpp_rpuserplanelink_v_day (
+    date_id date,
+    ne_name character varying(100),
+    packet_loss_dl_nom double precision,
+    packet_loss_dl_den double precision,
+    packet_loss_ul_nom double precision,
+    packet_loss_ul_den double precision
+);
+
+
+ALTER TABLE daily_stats.dc_e_vpp_rpuserplanelink_v_day OWNER TO dnb;
+
+--
+-- Name: df_dpm; Type: TABLE; Schema: rfdb; Owner: dnb
+--
+
+CREATE TABLE rfdb.df_dpm (
+    dnb_index character varying(100),
+    nominal_id character varying(100),
+    _id character varying(100),
+    "Nominal_ID" character varying(100),
+    "Site_Name" character varying(100),
+    "Latitude" double precision,
+    "Longitude" double precision,
+    site_id character varying(100),
+    "Nominal_Latitude" double precision,
+    "Nominal_Longitude" double precision,
+    "Candidate_Latitude" double precision,
+    "Candidate_Longitude" double precision,
+    on_board_date character varying(100),
+    api_call_date character varying(100),
+    added character varying(100),
+    "Acceptance_Cluster" character varying(100),
+    "Sub_Cluster" character varying(100),
+    "CBOClusterName" character varying(100)
+);
+
+
+ALTER TABLE rfdb.df_dpm OWNER TO dnb;
+
+--
+-- Name: kpi_erbs_eutrancellfdd; Type: MATERIALIZED VIEW; Schema: daily_stats; Owner: dnb
+--
+
+CREATE MATERIALIZED VIEW daily_stats.kpi_erbs_eutrancellfdd AS
+ WITH dt AS (
+         SELECT t1.date_id,
+            t1.erbs,
+            t1.eutrancellfdd,
+            t1.cell_availability_nom,
+            t1.cell_availability_den,
+            t1."rrc_setup_success_rate_(service)_nom",
+            t1."rrc_setup_success_rate_(service)_den",
+            t1."rrc_setup_success_rate_(signaling)_nom",
+            t1."rrc_setup_success_rate_(signaling)_den",
+            t1."e-rab_setup_success_rate_nom",
+            t1."e-rab_setup_success_rate_den",
+            t1.erab_drop_call_rate_nom,
+            t1.erab_drop_call_rate_den,
+            t1.handover_in_success_rate_nom,
+            t1.handover_in_success_rate_den,
+            t1.ul_bler_nom,
+            t1.ul_bler_den,
+            t1.dl_user_throughput_nom,
+            t1.dl_user_throughput_den,
+            t1.ul_user_throughput_nom,
+            t1.ul_user_throughput_den,
+            t1.dl_cell_throughput_nom,
+            t1.dl_cell_throughput_den,
+            t1.ul_cell_throughput_nom,
+            t1.ul_cell_throughput_den,
+            t1.dl_data_volume_nom,
+            t1.dl_data_volume_den,
+            t1.ul_data_volume_nom,
+            t1.ul_data_volume_den,
+            t1.total_traffic_nom,
+            t1.total_traffic_den,
+            t1."packet_loss_(dl)_nom",
+            t1."packet_loss_(dl)_den",
+            t1."packet_loss_(ul)_nom",
+            t1."packet_loss_(ul)_den",
+            t1."latency_(only_radio_interface)_nom",
+            t1."latency_(only_radio_interface)_den",
+            t1.dl_qpsk_nom,
+            t1.dl_16qam_nom,
+            t1.dl_64qam_nom,
+            t1.dl_256qam_nom,
+            t1.dl_modulation_den,
+            t1.ul_qpsk_nom,
+            t1.ul_16qam_nom,
+            t1.ul_64qam_nom,
+            t1.ul_256qam_nom,
+            t1.ul_modulation_den,
+            t1.max_of_rrc_connected_user,
+            t1.max_rrc_users_ytl,
+            t1.max_rrc_users_maxis,
+            t1.max_rrc_users_celcom,
+            t1.max_rrc_users_tm,
+            t1.max_rrc_users_umobile,
+            t1.max_rrc_users_digi,
+            t1.max_rrc_users_dnb,
+            t1.max_of_active_user,
+            t1.call_setup_success_rate_nom,
+            t1.call_setup_success_rate_den,
+            t1."e-rab_setup_success_rate_non_gbr_nom",
+            t1."e-rab_setup_success_rate_non_gbr_den",
+            t1.intrafreq_hosr_nom,
+            t1.intrafreq_hosr_den,
+            t1.volte_redirection_success_rate_nom,
+            t1.volte_redirection_success_rate_den,
+            cm."Cellname",
+            cm."Region",
+            cm."Cluster_ID",
+            cm."DISTRICT",
+            cm."MCMC_State",
+            cm.geom,
+            cm."SITEID",
+            cm."SystemID",
+            cm."Sitename",
+            df_dpm.dnb_index,
+            df_dpm.nominal_id,
+            df_dpm._id,
+            df_dpm."Nominal_ID",
+            df_dpm."Site_Name",
+            df_dpm."Latitude",
+            df_dpm."Longitude",
+            df_dpm.site_id,
+            df_dpm."Nominal_Latitude",
+            df_dpm."Nominal_Longitude",
+            df_dpm."Candidate_Latitude",
+            df_dpm."Candidate_Longitude",
+            df_dpm.on_board_date,
+            df_dpm.api_call_date,
+            df_dpm.added,
+            df_dpm."Acceptance_Cluster",
+            df_dpm."Sub_Cluster",
+            df_dpm."CBOClusterName"
+           FROM ((daily_stats.dc_e_erbs_eutrancellfdd_day t1
+             JOIN rfdb.cell_mapping cm ON (((cm."Cellname")::text = (t1.eutrancellfdd)::text)))
+             JOIN rfdb.df_dpm ON (((cm."SITEID")::text = (df_dpm.site_id)::text)))
+          WHERE ((cm."Region" IS NOT NULL) AND (t1.date_id >= (df_dpm.on_board_date)::timestamp without time zone))
+        )
+ SELECT dt.date_id,
+    dt."Region" AS region,
+    (((100)::double precision * sum(dt.call_setup_success_rate_nom)) OPERATOR(public.|||) sum(dt.call_setup_success_rate_den)) AS call_setup_success_rate,
+    (((100)::double precision * sum(dt.cell_availability_nom)) OPERATOR(public.|||) sum(dt.cell_availability_den)) AS cell_availability,
+    (((100)::double precision * sum(dt."rrc_setup_success_rate_(service)_nom")) OPERATOR(public.|||) sum(dt."rrc_setup_success_rate_(service)_den")) AS "rrc_setup_success_rate_(service)",
+    (((100)::double precision * sum(dt."rrc_setup_success_rate_(signaling)_nom")) OPERATOR(public.|||) sum(dt."rrc_setup_success_rate_(signaling)_den")) AS "rrc_setup_success_rate_(signaling)",
+    (((100)::double precision * sum(dt."e-rab_setup_success_rate_nom")) OPERATOR(public.|||) sum(dt."e-rab_setup_success_rate_den")) AS "e-rab_setup_success_rate",
+    (((100)::double precision * sum(dt.erab_drop_call_rate_nom)) OPERATOR(public.|||) sum(dt.erab_drop_call_rate_den)) AS erab_drop_call_rate,
+    (((100)::double precision * sum(dt.handover_in_success_rate_nom)) OPERATOR(public.|||) sum(dt.handover_in_success_rate_den)) AS handover_in_success_rate,
+    (((100)::double precision * sum(dt.ul_bler_nom)) OPERATOR(public.|||) sum(dt.ul_bler_den)) AS ul_bler,
+    (((100)::double precision * sum(dt."packet_loss_(dl)_nom")) OPERATOR(public.|||) sum(dt."packet_loss_(dl)_den")) AS "packet_loss_(dl)",
+    (((100)::double precision * sum(dt."packet_loss_(ul)_nom")) OPERATOR(public.|||) sum(dt."packet_loss_(ul)_den")) AS "packet_loss_(ul)",
+    (sum(dt.dl_user_throughput_nom) OPERATOR(public.|||) sum(dt.dl_user_throughput_den)) AS dl_user_throughput,
+    (sum(dt.ul_user_throughput_nom) OPERATOR(public.|||) sum(dt.ul_user_throughput_den)) AS ul_user_throughput,
+    (sum(dt.dl_cell_throughput_nom) OPERATOR(public.|||) sum(dt.dl_cell_throughput_den)) AS dl_cell_throughput,
+    (sum(dt.ul_cell_throughput_nom) OPERATOR(public.|||) sum(dt.ul_cell_throughput_den)) AS ul_cell_throughput,
+    (sum(dt.dl_data_volume_nom) OPERATOR(public.|||) (8388608)::numeric) AS dl_data_volume,
+    (sum(dt.ul_data_volume_nom) OPERATOR(public.|||) (8388608)::numeric) AS ul_data_volume,
+    (sum(dt.total_traffic_nom) OPERATOR(public.|||) (8388608)::numeric) AS total_traffic,
+    (sum(dt."latency_(only_radio_interface)_nom") OPERATOR(public.|||) sum(dt."latency_(only_radio_interface)_den")) AS "latency_(only_radio_interface)",
+    (sum(dt.dl_qpsk_nom) OPERATOR(public.|||) sum(dt.dl_modulation_den)) AS dl_qpsk,
+    (sum(dt.dl_16qam_nom) OPERATOR(public.|||) sum(dt.dl_modulation_den)) AS dl_16qam,
+    (sum(dt.dl_64qam_nom) OPERATOR(public.|||) sum(dt.dl_modulation_den)) AS dl_64qam,
+    (sum(dt.dl_256qam_nom) OPERATOR(public.|||) sum(dt.dl_modulation_den)) AS dl_256qam,
+    (sum(dt.ul_qpsk_nom) OPERATOR(public.|||) sum(dt.ul_modulation_den)) AS ul_qpsk,
+    (sum(dt.ul_16qam_nom) OPERATOR(public.|||) sum(dt.ul_modulation_den)) AS ul_16qam,
+    (sum(dt.ul_64qam_nom) OPERATOR(public.|||) sum(dt.ul_modulation_den)) AS ul_64qam,
+    (sum(dt.ul_256qam_nom) OPERATOR(public.|||) sum(dt.ul_modulation_den)) AS ul_256qam,
+    (sum(dt."e-rab_setup_success_rate_non_gbr_nom") OPERATOR(public.|||) sum(dt."e-rab_setup_success_rate_non_gbr_den")) AS "e-rab_setup_success_rate_non_gbr",
+    (sum(dt.intrafreq_hosr_nom) OPERATOR(public.|||) sum(dt.intrafreq_hosr_den)) AS intrafreq_hosr,
+    (sum(dt.volte_redirection_success_rate_nom) OPERATOR(public.|||) sum(dt.volte_redirection_success_rate_den)) AS volte_redirection_success_rate
+   FROM dt
+  GROUP BY dt.date_id, ROLLUP(dt."Region")
+  WITH NO DATA;
+
+
+ALTER TABLE daily_stats.kpi_erbs_eutrancellfdd OWNER TO dnb;
+
+--
+-- Name: kpi_erbs_eutrancellfdd_v; Type: MATERIALIZED VIEW; Schema: daily_stats; Owner: dnb
+--
+
+CREATE MATERIALIZED VIEW daily_stats.kpi_erbs_eutrancellfdd_v AS
+ WITH dt AS (
+         SELECT t1.date_id,
+            t1.erbs,
+            t1.eutrancellfdd,
+            t1."resource_block_utilizing_rate(dl)_nom",
+            t1."resource_block_utilizing_rate(dl)_den",
+            t1."resource_block_utilizing_rate(ul)_nom",
+            t1."resource_block_utilizing_rate(ul)_den",
+            t1.average_cqi_nom,
+            t1.average_cqi_den,
+            t1.pmtainit2distr_0,
+            t1.pmtainit2distr_1,
+            t1.pmtainit2distr_2,
+            t1.pmtainit2distr_3,
+            t1.pmtainit2distr_4,
+            t1.pmtainit2distr_5,
+            t1.pmtainit2distr_6,
+            t1.pmtainit2distr_7,
+            t1.pmtainit2distr_8,
+            t1.pmtainit2distr_9,
+            t1.pmtainit2distr_10,
+            t1.pmtainit2distr_11,
+            t1.pmtainit2distr_12,
+            t1.avg_pusch_ul_rssi_nom,
+            t1.avg_pusch_ul_rssi_den,
+            cm."Cellname",
+            cm."Region",
+            cm."Cluster_ID",
+            cm."DISTRICT",
+            cm."MCMC_State",
+            cm.geom,
+            cm."SITEID",
+            cm."SystemID",
+            cm."Sitename",
+            df_dpm.dnb_index,
+            df_dpm.nominal_id,
+            df_dpm._id,
+            df_dpm."Nominal_ID",
+            df_dpm."Site_Name",
+            df_dpm."Latitude",
+            df_dpm."Longitude",
+            df_dpm.site_id,
+            df_dpm."Nominal_Latitude",
+            df_dpm."Nominal_Longitude",
+            df_dpm."Candidate_Latitude",
+            df_dpm."Candidate_Longitude",
+            df_dpm.on_board_date,
+            df_dpm.api_call_date,
+            df_dpm.added,
+            df_dpm."Acceptance_Cluster",
+            df_dpm."Sub_Cluster",
+            df_dpm."CBOClusterName"
+           FROM ((daily_stats.dc_e_erbs_eutrancellfdd_v_day t1
+             JOIN rfdb.cell_mapping cm ON (((cm."Cellname")::text = (t1.eutrancellfdd)::text)))
+             JOIN rfdb.df_dpm ON (((cm."SITEID")::text = (df_dpm.site_id)::text)))
+          WHERE ((cm."Region" IS NOT NULL) AND (t1.date_id >= (df_dpm.on_board_date)::timestamp without time zone))
+        )
+ SELECT dt.date_id,
+    dt."Region" AS region,
+    (sum(dt."resource_block_utilizing_rate(dl)_nom") OPERATOR(public.|||) sum(dt."resource_block_utilizing_rate(dl)_den")) AS "resource_block_utilizing_rate(dl)",
+    (sum(dt."resource_block_utilizing_rate(ul)_nom") OPERATOR(public.|||) sum(dt."resource_block_utilizing_rate(ul)_den")) AS "resource_block_utilizing_rate(ul)",
+    (sum(dt.average_cqi_nom) OPERATOR(public.|||) sum(dt.average_cqi_den)) AS average_cqi,
+    (sum(dt.avg_pusch_ul_rssi_nom) OPERATOR(public.|||) sum(dt.avg_pusch_ul_rssi_den)) AS avg_pusch_ul_rssi
+   FROM dt
+  GROUP BY dt.date_id, ROLLUP(dt."Region")
+  WITH NO DATA;
+
+
+ALTER TABLE daily_stats.kpi_erbs_eutrancellfdd_v OWNER TO dnb;
+
+--
+-- Name: kpi_erbs_eutrancellrelation; Type: MATERIALIZED VIEW; Schema: daily_stats; Owner: dnb
+--
+
+CREATE MATERIALIZED VIEW daily_stats.kpi_erbs_eutrancellrelation AS
+ WITH dt AS (
+         SELECT t1.date_id,
+            t1.erbs,
+            t1.eutrancellfdd,
+            t1.eutranfreqrelation,
+            t1.interfreq_hosr_nom,
+            t1.interfreq_hosr_den,
+            t1.ifo_success_rate_nom,
+            t1.ifo_success_rate_den,
+            cm."Cellname",
+            cm."Region",
+            cm."Cluster_ID",
+            cm."DISTRICT",
+            cm."MCMC_State",
+            cm.geom,
+            cm."SITEID",
+            cm."SystemID",
+            cm."Sitename",
+            df_dpm.dnb_index,
+            df_dpm.nominal_id,
+            df_dpm._id,
+            df_dpm."Nominal_ID",
+            df_dpm."Site_Name",
+            df_dpm."Latitude",
+            df_dpm."Longitude",
+            df_dpm.site_id,
+            df_dpm."Nominal_Latitude",
+            df_dpm."Nominal_Longitude",
+            df_dpm."Candidate_Latitude",
+            df_dpm."Candidate_Longitude",
+            df_dpm.on_board_date,
+            df_dpm.api_call_date,
+            df_dpm.added,
+            df_dpm."Acceptance_Cluster",
+            df_dpm."Sub_Cluster",
+            df_dpm."CBOClusterName"
+           FROM ((daily_stats.dc_e_erbs_eutrancellrelation_day t1
+             JOIN rfdb.cell_mapping cm ON (((cm."Cellname")::text = (t1.eutrancellfdd)::text)))
+             JOIN rfdb.df_dpm ON (((cm."SITEID")::text = (df_dpm.site_id)::text)))
+          WHERE ((cm."Region" IS NOT NULL) AND (t1.date_id >= (df_dpm.on_board_date)::timestamp without time zone))
+        )
+ SELECT dt.date_id,
+    dt."Region" AS region,
+    (sum(dt.interfreq_hosr_nom) OPERATOR(public.|||) sum(dt.interfreq_hosr_den)) AS interfreq_hosr,
+    (sum(dt.ifo_success_rate_nom) OPERATOR(public.|||) sum(dt.ifo_success_rate_den)) AS ifo_success_rate
+   FROM dt
+  GROUP BY dt.date_id, ROLLUP(dt."Region")
+  WITH NO DATA;
+
+
+ALTER TABLE daily_stats.kpi_erbs_eutrancellrelation OWNER TO dnb;
+
+--
+-- Name: kpi_erbsg2_mpprocessingresource_v; Type: MATERIALIZED VIEW; Schema: daily_stats; Owner: dnb
+--
+
+CREATE MATERIALIZED VIEW daily_stats.kpi_erbsg2_mpprocessingresource_v AS
+ SELECT dt.date_id,
+    cm."Region" AS region,
+    (sum(dt.gnodeb_cpu_load_nom) OPERATOR(public.|||) sum(dt.gnodeb_cpu_load_den)) AS gnodeb_cpu_load
+   FROM ((daily_stats.dc_e_erbsg2_mpprocessingresource_v_day dt
+     JOIN rfdb.cell_mapping cm ON (((cm."Sitename")::text = (dt.erbs)::text)))
+     JOIN ( SELECT df_dpm.site_id,
+            (df_dpm.on_board_date)::date AS on_board_date,
+            ("time"."time")::date AS "time"
+           FROM rfdb.df_dpm,
+            LATERAL generate_series(((df_dpm.on_board_date)::date)::timestamp with time zone, now(), '1 day'::interval) "time"("time")) obs ON (((obs."time" = dt.date_id) AND ((cm."SITEID")::text = (obs.site_id)::text))))
+  WHERE (cm."Region" IS NOT NULL)
+  GROUP BY dt.date_id, ROLLUP(cm."Region")
+  WITH NO DATA;
+
+
+ALTER TABLE daily_stats.kpi_erbsg2_mpprocessingresource_v OWNER TO dnb;
+
+--
+-- Name: flex_filters; Type: TABLE; Schema: rfdb; Owner: dnb
+--
+
+CREATE TABLE rfdb.flex_filters (
+    mobile_operator character varying(50),
+    flex_filtername_nrcelldu character varying(50),
+    flex_filtername_nrcellcu character varying(50),
+    flex_filtername_eutrancellfdd character varying(50),
+    flex_filtername_eutrancellfdd2 character varying(50)
+);
+
+
+ALTER TABLE rfdb.flex_filters OWNER TO dnb;
+
+--
+-- Name: kpi_eutrancellfdd_flex; Type: MATERIALIZED VIEW; Schema: daily_stats; Owner: dnb
+--
+
+CREATE MATERIALIZED VIEW daily_stats.kpi_eutrancellfdd_flex AS
+ WITH dt AS (
+         SELECT t1.date_id,
+            t1.erbs,
+            t1.eutrancellfdd,
+            t1.flex_filtername,
+            t1."e-rab_setup_success_rate_nom",
+            t1."e-rab_setup_success_rate_den",
+            t1.erab_drop_call_rate_nom,
+            t1.erab_drop_call_rate_den,
+            t1.intrafreq_hosr_nom,
+            t1.intrafreq_hosr_den,
+            t1.ul_bler_nom,
+            t1.ul_bler_den,
+            t1.dl_user_throughput_nom,
+            t1.dl_user_throughput_den,
+            t1.ul_user_throughput_nom,
+            t1.ul_user_throughput_den,
+            t1.dl_cell_throughput_nom,
+            t1.dl_cell_throughput_den,
+            t1.ul_cell_throughput_nom,
+            t1.ul_cell_throughput_den,
+            t1.dl_data_volume_nom,
+            t1.dl_data_volume_den,
+            t1.ul_data_volume_nom,
+            t1.ul_data_volume_den,
+            t1.dl_qpsk_nom,
+            t1.dl_16qam_nom,
+            t1.dl_64qam_nom,
+            t1.dl_256qam_nom,
+            t1.dl_modulation_den,
+            t1.ul_qpsk_nom,
+            t1.ul_16qam_nom,
+            t1.ul_64qam_nom,
+            t1.ul_256qam_nom,
+            t1.ul_modulation_den,
+            t1."packet_loss_(dl)_nom",
+            t1."packet_loss_(dl)_den",
+            t1."packet_loss_(ul)_nom",
+            t1."packet_loss_(ul)_den",
+            cm."Cellname",
+            cm."Region",
+            cm."Cluster_ID",
+            cm."DISTRICT",
+            cm."MCMC_State",
+            cm.geom,
+            cm."SITEID",
+            cm."SystemID",
+            cm."Sitename",
+            df_dpm.dnb_index,
+            df_dpm.nominal_id,
+            df_dpm._id,
+            df_dpm."Nominal_ID",
+            df_dpm."Site_Name",
+            df_dpm."Latitude",
+            df_dpm."Longitude",
+            df_dpm.site_id,
+            df_dpm."Nominal_Latitude",
+            df_dpm."Nominal_Longitude",
+            df_dpm."Candidate_Latitude",
+            df_dpm."Candidate_Longitude",
+            df_dpm.on_board_date,
+            df_dpm.api_call_date,
+            df_dpm.added,
+            df_dpm."Acceptance_Cluster",
+            df_dpm."Sub_Cluster",
+            df_dpm."CBOClusterName",
+            ff.mobile_operator,
+            ff.flex_filtername_nrcelldu,
+            ff.flex_filtername_nrcellcu,
+            ff.flex_filtername_eutrancellfdd,
+            ff.flex_filtername_eutrancellfdd2
+           FROM (((daily_stats.dc_e_erbs_eutrancellfdd_flex_day t1
+             JOIN rfdb.cell_mapping cm ON (((cm."Cellname")::text = (t1.eutrancellfdd)::text)))
+             JOIN rfdb.df_dpm ON (((cm."SITEID")::text = (df_dpm.site_id)::text)))
+             JOIN rfdb.flex_filters ff ON (((ff.flex_filtername_eutrancellfdd2)::text = (t1.flex_filtername)::text)))
+          WHERE ((cm."Region" IS NOT NULL) AND (t1.date_id >= (df_dpm.on_board_date)::timestamp without time zone))
+        )
+ SELECT dt.date_id,
+    dt."Region" AS region,
+    dt.mobile_operator,
+    (((100)::double precision * sum(dt."e-rab_setup_success_rate_nom")) OPERATOR(public.|||) sum(dt."e-rab_setup_success_rate_den")) AS "e-rab_setup_success_rate",
+    (((100)::double precision * sum(dt.erab_drop_call_rate_nom)) OPERATOR(public.|||) sum(dt.erab_drop_call_rate_den)) AS erab_drop_call_rate,
+    (((100)::double precision * sum(dt.intrafreq_hosr_nom)) OPERATOR(public.|||) sum(dt.intrafreq_hosr_den)) AS intrafreq_hosr,
+    (((100)::double precision * sum(dt."packet_loss_(dl)_nom")) OPERATOR(public.|||) sum(dt."packet_loss_(dl)_den")) AS "packet_loss_(dl)",
+    (((100)::double precision * sum(dt."packet_loss_(ul)_nom")) OPERATOR(public.|||) sum(dt."packet_loss_(ul)_den")) AS "packet_loss_(ul)",
+    (((100)::double precision * sum(dt.ul_bler_nom)) OPERATOR(public.|||) sum(dt.ul_bler_den)) AS ul_bler,
+    (sum(dt.dl_user_throughput_nom) OPERATOR(public.|||) sum(dt.dl_user_throughput_den)) AS dl_user_throughput,
+    (sum(dt.ul_user_throughput_nom) OPERATOR(public.|||) sum(dt.ul_user_throughput_den)) AS ul_user_throughput,
+    (sum(dt.dl_cell_throughput_nom) OPERATOR(public.|||) sum(dt.dl_cell_throughput_den)) AS dl_cell_throughput,
+    (sum(dt.ul_cell_throughput_nom) OPERATOR(public.|||) sum(dt.ul_cell_throughput_den)) AS ul_cell_throughput,
+    (sum(dt.dl_data_volume_nom) OPERATOR(public.|||) (((1024 * 1024) * 1024))::numeric) AS dl_data_volume,
+    (sum(dt.ul_data_volume_nom) OPERATOR(public.|||) (((1024 * 1024) * 1024))::numeric) AS ul_data_volume,
+    (((100)::double precision * sum(dt.ul_qpsk_nom)) OPERATOR(public.|||) sum(dt.ul_modulation_den)) AS ul_qpsk,
+    (((100)::double precision * sum(dt.ul_16qam_nom)) OPERATOR(public.|||) sum(dt.ul_modulation_den)) AS ul_16qam,
+    (((100)::double precision * sum(dt.ul_64qam_nom)) OPERATOR(public.|||) sum(dt.ul_modulation_den)) AS ul_64qam,
+    (((100)::double precision * sum(dt.ul_256qam_nom)) OPERATOR(public.|||) sum(dt.ul_modulation_den)) AS ul_256qam,
+    (((100)::double precision * sum(dt.dl_qpsk_nom)) OPERATOR(public.|||) sum(dt.dl_modulation_den)) AS dl_qpsk,
+    (((100)::double precision * sum(dt.dl_16qam_nom)) OPERATOR(public.|||) sum(dt.dl_modulation_den)) AS dl_16qam,
+    (((100)::double precision * sum(dt.dl_64qam_nom)) OPERATOR(public.|||) sum(dt.dl_modulation_den)) AS dl_64qam,
+    (((100)::double precision * sum(dt.dl_256qam_nom)) OPERATOR(public.|||) sum(dt.dl_modulation_den)) AS dl_256qam
+   FROM dt
+  GROUP BY dt.date_id, dt.mobile_operator, ROLLUP(dt."Region")
+  ORDER BY dt."Region", dt.date_id
+  WITH NO DATA;
+
+
+ALTER TABLE daily_stats.kpi_eutrancellfdd_flex OWNER TO dnb;
+
+--
+-- Name: kpi_nr_events_nrcellcu_flex; Type: MATERIALIZED VIEW; Schema: daily_stats; Owner: dnb
+--
+
+CREATE MATERIALIZED VIEW daily_stats.kpi_nr_events_nrcellcu_flex AS
+ SELECT dt.date_id,
+    cm."Region" AS region,
+    (sum(dt."intra-sgnb_pscell_change_success_nom") OPERATOR(public.|||) sum(dt."intra-sgnb_pscell_change_success_den")) AS "intra-sgnb_pscell_change_success",
+    (sum(dt."inter-sgnb_pscell_change_success_nom") OPERATOR(public.|||) sum(dt."inter-sgnb_pscell_change_success_den")) AS "inter-sgnb_pscell_change_success",
+    (sum(dt."5g_ho_success_rate_dnb_5g_to_dnb_nom") OPERATOR(public.|||) sum(dt."5g_ho_success_rate_dnb_5g_to_dnb_den")) AS "5g_ho_success_rate_dnb_5g_to_dnb",
+    (sum(dt.inter_rat_ho_success_rate_dnb_5g_to_mno_4g_nom) OPERATOR(public.|||) sum(dt.inter_rat_ho_success_rate_dnb_5g_to_mno_4g_den)) AS inter_rat_ho_success_rate_dnb_5g_to_mno_4g
+   FROM ((daily_stats.dc_e_nr_events_nrcellcu_flex_day dt
+     LEFT JOIN rfdb.cell_mapping cm ON (((cm."Cellname")::text = (dt.nrcellcu)::text)))
+     JOIN ( SELECT df_dpm.site_id,
+            (df_dpm.on_board_date)::date AS on_board_date,
+            ("time"."time")::date AS "time"
+           FROM rfdb.df_dpm,
+            LATERAL generate_series(((df_dpm.on_board_date)::date)::timestamp with time zone, now(), '1 day'::interval) "time"("time")) obs ON (((obs."time" = dt.date_id) AND ((cm."SITEID")::text = (obs.site_id)::text))))
+  WHERE (cm."Region" IS NOT NULL)
+  GROUP BY dt.date_id, ROLLUP(cm."Region")
+  WITH NO DATA;
+
+
+ALTER TABLE daily_stats.kpi_nr_events_nrcellcu_flex OWNER TO dnb;
+
+--
+-- Name: kpi_nr_events_nrcelldu_flex; Type: MATERIALIZED VIEW; Schema: daily_stats; Owner: dnb
+--
+
+CREATE MATERIALIZED VIEW daily_stats.kpi_nr_events_nrcelldu_flex AS
+ SELECT dt.date_id,
+    cm."Region" AS region,
+    (sum(dt.ul_traffic_volume_nom) OPERATOR(public.|||) sum(dt.ul_traffic_volume_den)) AS ul_traffic_volume,
+    sum(dt.dl_qpsk_nom) AS dl_qpsk,
+    sum(dt.dl_16qam_nom) AS dl_16qam,
+    sum(dt.dl_64qam_nom) AS dl_64qam,
+    sum(dt.dl_256qam_nom) AS dl_256qam,
+    sum(dt.ul_qpsk_nom) AS ul_qpsk,
+    sum(dt.ul_16qam_nom) AS ul_16qam,
+    sum(dt.ul_64qam_nom) AS ul_64qam,
+    (sum(dt.dl_user_throughput_nom) OPERATOR(public.|||) sum(dt.dl_user_throughput_den)) AS dl_user_throughput,
+    (sum(dt.ul_user_throughput_nom) OPERATOR(public.|||) sum(dt.ul_user_throughput_den)) AS ul_user_throughput
+   FROM ((daily_stats.dc_e_nr_events_nrcelldu_flex_day dt
+     LEFT JOIN rfdb.cell_mapping cm ON (((cm."Cellname")::text = (dt.nrcelldu)::text)))
+     JOIN ( SELECT df_dpm.site_id,
+            (df_dpm.on_board_date)::date AS on_board_date,
+            ("time"."time")::date AS "time"
+           FROM rfdb.df_dpm,
+            LATERAL generate_series(((df_dpm.on_board_date)::date)::timestamp with time zone, now(), '1 day'::interval) "time"("time")) obs ON (((obs."time" = dt.date_id) AND ((cm."SITEID")::text = (obs.site_id)::text))))
+  WHERE (cm."Region" IS NOT NULL)
+  GROUP BY dt.date_id, ROLLUP(cm."Region")
+  WITH NO DATA;
+
+
+ALTER TABLE daily_stats.kpi_nr_events_nrcelldu_flex OWNER TO dnb;
+
+--
+-- Name: kpi_nr_nrcellcu; Type: MATERIALIZED VIEW; Schema: daily_stats; Owner: dnb
+--
+
+CREATE MATERIALIZED VIEW daily_stats.kpi_nr_nrcellcu AS
+ SELECT dt.date_id,
+    cm."Region" AS region,
+    (((100)::double precision * sum(dt.endc_sr_nom)) OPERATOR(public.|||) sum(dt.endc_sr_den)) AS endc_sr,
+    (((100)::double precision * sum(dt.erab_drop_call_rate_sgnb_nom)) OPERATOR(public.|||) sum(dt.erab_drop_call_rate_sgnb_den)) AS erab_drop_call_rate_sgnb,
+    (((100)::double precision * sum(dt."intra-sgnb_pscell_change_success_rate_nom")) OPERATOR(public.|||) sum(dt."intra-sgnb_pscell_change_success_rate_den")) AS "intra-sgnb_pscell_change_success_rate",
+    (((100)::double precision * sum(dt."inter-sgnb_pscell_change_success_rate_nom")) OPERATOR(public.|||) sum(dt."inter-sgnb_pscell_change_success_rate_den")) AS "inter-sgnb_pscell_change_success_rate",
+    (((100)::double precision * sum(dt.rrc_setup_success_rate_signaling_nom)) OPERATOR(public.|||) sum(dt.rrc_setup_success_rate_signaling_den)) AS rrc_setup_success_rate_signaling,
+    (((100)::double precision * sum(dt.endc_ca_configuration_sr_nom)) OPERATOR(public.|||) sum(dt.endc_ca_configuration_sr_den)) AS endc_ca_configuration_sr,
+    (((100)::double precision * sum(dt.endc_ca_deconfiguration_sr_nom)) OPERATOR(public.|||) sum(dt.endc_ca_deconfiguration_sr_den)) AS endc_ca_deconfiguration_sr,
+    (((100)::double precision * sum(dt."e-rab_block_rate_nom")) OPERATOR(public.|||) sum(dt."e-rab_block_rate_den")) AS "e-rab_block_rate"
+   FROM ((daily_stats.dc_e_nr_nrcellcu_day dt
+     JOIN rfdb.cell_mapping cm ON (((cm."Cellname")::text = (dt.nrcellcu)::text)))
+     JOIN ( SELECT df_dpm.site_id,
+            (df_dpm.on_board_date)::date AS on_board_date,
+            ("time"."time")::date AS "time"
+           FROM rfdb.df_dpm,
+            LATERAL generate_series(((df_dpm.on_board_date)::date)::timestamp with time zone, now(), '1 day'::interval) "time"("time")) obs ON (((obs."time" = dt.date_id) AND ((cm."SITEID")::text = (obs.site_id)::text))))
+  WHERE (cm."Region" IS NOT NULL)
+  GROUP BY dt.date_id, ROLLUP(cm."Region")
+  WITH NO DATA;
+
+
+ALTER TABLE daily_stats.kpi_nr_nrcellcu OWNER TO dnb;
+
+--
+-- Name: kpi_nr_nrcelldu; Type: MATERIALIZED VIEW; Schema: daily_stats; Owner: dnb
+--
+
+CREATE MATERIALIZED VIEW daily_stats.kpi_nr_nrcelldu AS
+ SELECT dt.date_id,
+    cm."Region" AS region,
+    (sum(dt.dl_user_throughput_nom) OPERATOR(public.|||) (1000)::numeric) AS dl_user_throughput,
+    (sum(dt.ul_user_throughput_nom) OPERATOR(public.|||) (1000)::numeric) AS ul_user_throughput,
+    (sum(dt.dl_cell_throughput_nom) OPERATOR(public.|||) (1000)::numeric) AS dl_cell_throughput,
+    (sum(dt.ul_cell_throughput_nom) OPERATOR(public.|||) (1000)::numeric) AS ul_cell_throughput,
+    (sum(dt.dl_data_volume_gb_nom) OPERATOR(public.|||) power((1024)::double precision, (3)::double precision)) AS dl_data_volume_gb,
+    (sum(dt.ul_data_volume_gb_nom) OPERATOR(public.|||) power((1024)::double precision, (3)::double precision)) AS ul_data_volume_gb,
+    (sum(dt.total_traffic_gb_nom) OPERATOR(public.|||) power((1024)::double precision, (3)::double precision)) AS total_traffic_gb,
+    (((100)::double precision * sum(dt.dl_qpsk_nom)) OPERATOR(public.|||) sum(dt.dl_modulation_den)) AS dl_qpsk,
+    (((100)::double precision * sum(dt.dl_16qam_nom)) OPERATOR(public.|||) sum(dt.dl_modulation_den)) AS dl_16qam,
+    (((100)::double precision * sum(dt.dl_64qam_nom)) OPERATOR(public.|||) sum(dt.dl_modulation_den)) AS dl_64qam,
+    (((100)::double precision * sum(dt.dl_256qam_nom)) OPERATOR(public.|||) sum(dt.dl_modulation_den)) AS dl_256qam,
+    (((100)::double precision * sum(dt.ul_qpsk_nom)) OPERATOR(public.|||) sum(dt.ul_modulation_den)) AS ul_qpsk,
+    (((100)::double precision * sum(dt.ul_16qam_nom)) OPERATOR(public.|||) sum(dt.ul_modulation_den)) AS ul_16qam,
+    (((100)::double precision * sum(dt.ul_64qam_nom)) OPERATOR(public.|||) sum(dt.ul_modulation_den)) AS ul_64qam,
+    (((100)::double precision * sum(dt.ul_256qam_nom)) OPERATOR(public.|||) sum(dt.ul_modulation_den)) AS ul_256qam,
+    (sum(dt.dl_mac_vol_to_scell_nom) OPERATOR(public.|||) power((1024)::double precision, (3)::double precision)) AS dl_mac_vol_to_scell,
+    (sum(dt.dl_mac_vol_as_scell_nom) OPERATOR(public.|||) power((1024)::double precision, (3)::double precision)) AS dl_mac_vol_as_scell,
+    (sum(dt.dl_mac_vol_to_scell_ext_nom) OPERATOR(public.|||) power((1024)::double precision, (3)::double precision)) AS dl_mac_vol_to_scell_ext,
+    (sum(dt.dl_mac_vol_as_scell_ext_nom) OPERATOR(public.|||) power((1024)::double precision, (3)::double precision)) AS dl_mac_vol_as_scell_ext,
+    (((100)::double precision * sum(dt.cell_availability_nom)) OPERATOR(public.|||) sum(dt.cell_availability_den)) AS cell_availability,
+    (((100)::double precision * sum(dt.resource_block_utilizing_rate_dl_nom)) OPERATOR(public.|||) sum(dt.resource_block_utilizing_rate_dl_den)) AS resource_block_utilizing_rate_dl,
+    (((100)::double precision * sum(dt.resource_block_utilizing_rate_ul_nom)) OPERATOR(public.|||) sum(dt.resource_block_utilizing_rate_ul_den)) AS resource_block_utilizing_rate_ul,
+    (((100)::double precision * sum(dt.ul_bler_nom)) OPERATOR(public.|||) sum(dt.ul_bler_den)) AS ul_bler
+   FROM ((daily_stats.dc_e_nr_nrcelldu_day dt
+     JOIN rfdb.cell_mapping cm ON (((cm."Cellname")::text = (dt.nrcelldu)::text)))
+     JOIN ( SELECT df_dpm.site_id,
+            (df_dpm.on_board_date)::date AS on_board_date,
+            ("time"."time")::date AS "time"
+           FROM rfdb.df_dpm,
+            LATERAL generate_series(((df_dpm.on_board_date)::date)::timestamp with time zone, now(), '1 day'::interval) "time"("time")) obs ON (((obs."time" = dt.date_id) AND ((cm."SITEID")::text = (obs.site_id)::text))))
+  WHERE (cm."Region" IS NOT NULL)
+  GROUP BY dt.date_id, ROLLUP(cm."Region")
+  WITH NO DATA;
+
+
+ALTER TABLE daily_stats.kpi_nr_nrcelldu OWNER TO dnb;
+
+--
+-- Name: kpi_nr_nrcelldu_v; Type: MATERIALIZED VIEW; Schema: daily_stats; Owner: dnb
+--
+
+CREATE MATERIALIZED VIEW daily_stats.kpi_nr_nrcelldu_v AS
+ SELECT dt.date_id,
+    cm."Region" AS region,
+    (sum(dt.latency_only_radio_interface_nom) OPERATOR(public.|||) sum(dt.latency_only_radio_interface_den)) AS latency_only_radio_interface,
+    (sum(dt.average_cqi_nom) OPERATOR(public.|||) sum(dt.average_cqi_den)) AS average_cqi,
+    (sum(dt.avg_pusch_ul_rssi_nom) OPERATOR(public.|||) sum(dt.avg_pusch_ul_rssi_den)) AS avg_pusch_ul_rssi
+   FROM ((daily_stats.dc_e_nr_nrcelldu_v_day dt
+     JOIN rfdb.cell_mapping cm ON (((cm."Cellname")::text = (dt.nrcelldu)::text)))
+     JOIN ( SELECT df_dpm.site_id,
+            (df_dpm.on_board_date)::date AS on_board_date,
+            ("time"."time")::date AS "time"
+           FROM rfdb.df_dpm,
+            LATERAL generate_series(((df_dpm.on_board_date)::date)::timestamp with time zone, now(), '1 day'::interval) "time"("time")) obs ON (((obs."time" = dt.date_id) AND ((cm."SITEID")::text = (obs.site_id)::text))))
+  WHERE (cm."Region" IS NOT NULL)
+  GROUP BY dt.date_id, ROLLUP(cm."Region")
+  WITH NO DATA;
+
+
+ALTER TABLE daily_stats.kpi_nr_nrcelldu_v OWNER TO dnb;
+
+--
+-- Name: kpi_nrcellcu_flex; Type: MATERIALIZED VIEW; Schema: daily_stats; Owner: dnb
+--
+
+CREATE MATERIALIZED VIEW daily_stats.kpi_nrcellcu_flex AS
+ WITH dt AS (
+         SELECT t1.date_id,
+            t1.nr_name,
+            t1.nrcellcu,
+            t1.flex_filtername,
+            t1."endc_sr_nom ",
+            t1."endc_sr_den ",
+            t1."erab_drop_nom ",
+            t1."erab_drop_den ",
+            t1."intra-sgnb_pscell_change_success_nom",
+            t1."intra-sgnb_pscell_change_success_den",
+            t1."inter-sgnb_pscell_change_success_nom",
+            t1."inter-sgnb_pscell_change_success_den",
+            t1.max_rrc_connected_user_endc,
+            t1."5g_ho_success_rate_dnb_5g_to_dnb_nom",
+            t1."5g_ho_success_rate_dnb_5g_to_dnb_den",
+            t1.inter_rat_ho_success_rate_dnb_5g_to_mno_4g_nom,
+            t1.inter_rat_ho_success_rate_dnb_5g_to_mno_4g_den,
+            t1.eps_fallback_attempt,
+            cm."Cellname",
+            cm."Region",
+            cm."Cluster_ID",
+            cm."DISTRICT",
+            cm."MCMC_State",
+            cm.geom,
+            cm."SITEID",
+            cm."SystemID",
+            cm."Sitename",
+            df_dpm.dnb_index,
+            df_dpm.nominal_id,
+            df_dpm._id,
+            df_dpm."Nominal_ID",
+            df_dpm."Site_Name",
+            df_dpm."Latitude",
+            df_dpm."Longitude",
+            df_dpm.site_id,
+            df_dpm."Nominal_Latitude",
+            df_dpm."Nominal_Longitude",
+            df_dpm."Candidate_Latitude",
+            df_dpm."Candidate_Longitude",
+            df_dpm.on_board_date,
+            df_dpm.api_call_date,
+            df_dpm.added,
+            df_dpm."Acceptance_Cluster",
+            df_dpm."Sub_Cluster",
+            df_dpm."CBOClusterName",
+            ff.mobile_operator,
+            ff.flex_filtername_nrcelldu,
+            ff.flex_filtername_nrcellcu,
+            ff.flex_filtername_eutrancellfdd,
+            ff.flex_filtername_eutrancellfdd2
+           FROM (((daily_stats.dc_e_nr_events_nrcellcu_flex_day t1
+             JOIN rfdb.cell_mapping cm ON (((cm."Cellname")::text = (t1.nrcellcu)::text)))
+             JOIN rfdb.df_dpm ON (((cm."SITEID")::text = (df_dpm.site_id)::text)))
+             JOIN rfdb.flex_filters ff ON (((ff.flex_filtername_nrcellcu)::text = (t1.flex_filtername)::text)))
+          WHERE ((cm."Region" IS NOT NULL) AND (t1.date_id >= (df_dpm.on_board_date)::timestamp without time zone))
+        )
+ SELECT dt.date_id,
+    dt."Region" AS region,
+    dt.mobile_operator,
+    (((100)::double precision * sum(dt."intra-sgnb_pscell_change_success_nom")) OPERATOR(public.|||) sum(dt."intra-sgnb_pscell_change_success_den")) AS "intra-sgnb_pscell_change_success",
+    (((100)::double precision * sum(dt."inter-sgnb_pscell_change_success_nom")) OPERATOR(public.|||) sum(dt."inter-sgnb_pscell_change_success_den")) AS "inter-sgnb_pscell_change_success",
+    (((100)::double precision * sum(dt."5g_ho_success_rate_dnb_5g_to_dnb_nom")) OPERATOR(public.|||) sum(dt."5g_ho_success_rate_dnb_5g_to_dnb_den")) AS "5g_ho_success_rate_dnb_5g_to_dnb",
+    (((100)::double precision * sum(dt.inter_rat_ho_success_rate_dnb_5g_to_mno_4g_nom)) OPERATOR(public.|||) sum(dt.inter_rat_ho_success_rate_dnb_5g_to_mno_4g_den)) AS inter_rat_ho_success_rate_dnb_5g_to_mno_4g
+   FROM dt
+  GROUP BY dt.date_id, dt.mobile_operator, ROLLUP(dt."Region")
+  ORDER BY dt."Region", dt.date_id
+  WITH NO DATA;
+
+
+ALTER TABLE daily_stats.kpi_nrcellcu_flex OWNER TO dnb;
+
+--
+-- Name: kpi_nrcelldu_flex; Type: MATERIALIZED VIEW; Schema: daily_stats; Owner: dnb
+--
+
+CREATE MATERIALIZED VIEW daily_stats.kpi_nrcelldu_flex AS
+ WITH dt AS (
+         SELECT t1.date_id,
+            t1.nr_name,
+            t1.flex_filtername,
+            t1.nrcelldu,
+            t1.dl_user_throughput_den,
+            t1.ul_user_throughput_den,
+            t1.ul_traffic_volume_nom,
+            t1.ul_traffic_volume_den,
+            t1.dl_qpsk_nom,
+            t1.dl_16qam_nom,
+            t1.dl_64qam_nom,
+            t1.dl_256qam_nom,
+            t1.dl_modulation_den,
+            t1.ul_qpsk_nom,
+            t1.ul_16qam_nom,
+            t1.ul_64qam_nom,
+            t1.ul_modulation_den,
+            t1.dl_user_throughput_nom,
+            t1.ul_user_throughput_nom,
+            t1.dl_traffic_volume_nom,
+            t1.dl_traffic_volume_den,
+            cm."Cellname",
+            cm."Region",
+            cm."Cluster_ID",
+            cm."DISTRICT",
+            cm."MCMC_State",
+            cm.geom,
+            cm."SITEID",
+            cm."SystemID",
+            cm."Sitename",
+            df_dpm.dnb_index,
+            df_dpm.nominal_id,
+            df_dpm._id,
+            df_dpm."Nominal_ID",
+            df_dpm."Site_Name",
+            df_dpm."Latitude",
+            df_dpm."Longitude",
+            df_dpm.site_id,
+            df_dpm."Nominal_Latitude",
+            df_dpm."Nominal_Longitude",
+            df_dpm."Candidate_Latitude",
+            df_dpm."Candidate_Longitude",
+            df_dpm.on_board_date,
+            df_dpm.api_call_date,
+            df_dpm.added,
+            df_dpm."Acceptance_Cluster",
+            df_dpm."Sub_Cluster",
+            df_dpm."CBOClusterName",
+            ff.mobile_operator,
+            ff.flex_filtername_nrcelldu,
+            ff.flex_filtername_nrcellcu,
+            ff.flex_filtername_eutrancellfdd,
+            ff.flex_filtername_eutrancellfdd2
+           FROM (((daily_stats.dc_e_nr_events_nrcelldu_flex_day t1
+             JOIN rfdb.cell_mapping cm ON (((cm."Cellname")::text = (t1.nrcelldu)::text)))
+             JOIN rfdb.df_dpm ON (((cm."SITEID")::text = (df_dpm.site_id)::text)))
+             JOIN rfdb.flex_filters ff ON (((ff.flex_filtername_nrcelldu)::text = (t1.flex_filtername)::text)))
+          WHERE ((cm."Region" IS NOT NULL) AND (t1.date_id >= (df_dpm.on_board_date)::timestamp without time zone))
+        )
+ SELECT dt.date_id,
+    dt."Region" AS region,
+    dt.mobile_operator,
+    (sum(dt.ul_traffic_volume_nom) OPERATOR(public.|||) (((1024 * 1024) * 1024))::numeric) AS ul_traffic_volume,
+    (((100)::double precision * sum(dt.dl_qpsk_nom)) OPERATOR(public.|||) sum(dt.dl_modulation_den)) AS dl_qpsk,
+    (((100)::double precision * sum(dt.dl_16qam_nom)) OPERATOR(public.|||) sum(dt.dl_modulation_den)) AS dl_16qam,
+    (((100)::double precision * sum(dt.dl_64qam_nom)) OPERATOR(public.|||) sum(dt.dl_modulation_den)) AS dl_64qam,
+    (((100)::double precision * sum(dt.dl_256qam_nom)) OPERATOR(public.|||) sum(dt.dl_modulation_den)) AS dl_256qam,
+    (((100)::double precision * sum(dt.ul_qpsk_nom)) OPERATOR(public.|||) sum(dt.ul_modulation_den)) AS ul_qpsk,
+    (((100)::double precision * sum(dt.ul_16qam_nom)) OPERATOR(public.|||) sum(dt.ul_modulation_den)) AS ul_16qam,
+    (((100)::double precision * sum(dt.ul_64qam_nom)) OPERATOR(public.|||) sum(dt.ul_modulation_den)) AS ul_64qam,
+    (sum(dt.dl_user_throughput_nom) OPERATOR(public.|||) (1000)::numeric) AS dl_user_throughput,
+    (sum(dt.ul_user_throughput_nom) OPERATOR(public.|||) (1000)::numeric) AS ul_user_throughput
+   FROM dt
+  GROUP BY dt.date_id, dt.mobile_operator, ROLLUP(dt."Region")
+  ORDER BY dt."Region", dt.date_id
+  WITH NO DATA;
+
+
+ALTER TABLE daily_stats.kpi_nrcelldu_flex OWNER TO dnb;
+
+--
+-- Name: kpi_vpp_rpuserplanelink_v; Type: MATERIALIZED VIEW; Schema: daily_stats; Owner: dnb
+--
+
+CREATE MATERIALIZED VIEW daily_stats.kpi_vpp_rpuserplanelink_v AS
+ SELECT dt.date_id,
+    cm."Region" AS region,
+    (((100)::double precision * sum(dt.packet_loss_dl_nom)) OPERATOR(public.|||) sum(dt.packet_loss_dl_den)) AS packet_loss_dl,
+    (((100)::double precision * sum(dt.packet_loss_ul_nom)) OPERATOR(public.|||) sum(dt.packet_loss_ul_den)) AS packet_loss_ul
+   FROM ((daily_stats.dc_e_vpp_rpuserplanelink_v_day dt
+     JOIN rfdb.cell_mapping cm ON (((cm."Sitename")::text = (dt.ne_name)::text)))
+     JOIN ( SELECT df_dpm.site_id,
+            (df_dpm.on_board_date)::date AS on_board_date,
+            ("time"."time")::date AS "time"
+           FROM rfdb.df_dpm,
+            LATERAL generate_series(((df_dpm.on_board_date)::date)::timestamp with time zone, now(), '1 day'::interval) "time"("time")) obs ON (((obs."time" = dt.date_id) AND ((cm."SITEID")::text = (obs.site_id)::text))))
+  WHERE (cm."Region" IS NOT NULL)
+  GROUP BY dt.date_id, ROLLUP(cm."Region")
+  WITH NO DATA;
+
+
+ALTER TABLE daily_stats.kpi_vpp_rpuserplanelink_v OWNER TO dnb;
+
+--
+-- Name: meta; Type: TABLE; Schema: daily_stats; Owner: dnb
+--
+
+CREATE TABLE daily_stats.meta (
+    table_name character varying(100),
+    last_updated timestamp(0) without time zone
+);
+
+
+ALTER TABLE daily_stats.meta OWNER TO dnb;
+
+--
+-- Name: test; Type: TABLE; Schema: daily_stats; Owner: dnb
+--
+
+CREATE TABLE daily_stats.test (
+    id integer,
+    name character varying(100)
+);
+
+
+ALTER TABLE daily_stats.test OWNER TO dnb;
+
+--
+-- Name: d_date; Type: TABLE; Schema: hourly_stats; Owner: dnb
+--
+
+CREATE TABLE hourly_stats.d_date (
+    date_dim_id integer NOT NULL,
+    date_actual date NOT NULL,
+    epoch bigint NOT NULL,
+    day_suffix character varying(4) NOT NULL,
+    day_name character varying(9) NOT NULL,
+    day_of_week integer NOT NULL,
+    day_of_month integer NOT NULL,
+    day_of_quarter integer NOT NULL,
+    day_of_year integer NOT NULL,
+    week_of_month integer NOT NULL,
+    week_of_year integer NOT NULL,
+    week_of_year_iso character(10) NOT NULL,
+    month_actual integer NOT NULL,
+    month_name character varying(9) NOT NULL,
+    month_name_abbreviated character(3) NOT NULL,
+    quarter_actual integer NOT NULL,
+    quarter_name character varying(9) NOT NULL,
+    year_actual integer NOT NULL,
+    first_day_of_week date NOT NULL,
+    last_day_of_week date NOT NULL,
+    first_day_of_month date NOT NULL,
+    last_day_of_month date NOT NULL,
+    first_day_of_quarter date NOT NULL,
+    last_day_of_quarter date NOT NULL,
+    first_day_of_year date NOT NULL,
+    last_day_of_year date NOT NULL,
+    mmyyyy character(6) NOT NULL,
+    mmddyyyy character(10) NOT NULL,
+    weekend_indr boolean NOT NULL
+);
+
+
+ALTER TABLE hourly_stats.d_date OWNER TO dnb;
+
+--
+-- Name: d_hour; Type: TABLE; Schema: hourly_stats; Owner: dnb
+--
+
+CREATE TABLE hourly_stats.d_hour (
+    date_actual date,
+    datetime_actual timestamp without time zone
+);
+
+
+ALTER TABLE hourly_stats.d_hour OWNER TO dnb;
+
+--
+-- Name: dc_e_erbs_eutrancellfdd_flex_raw; Type: TABLE; Schema: hourly_stats; Owner: dnb
+--
+
+CREATE TABLE hourly_stats.dc_e_erbs_eutrancellfdd_flex_raw (
+    date_id timestamp without time zone NOT NULL,
+    erbs character varying(50),
+    eutrancellfdd character varying(50) NOT NULL,
+    flex_filtername character varying(50) NOT NULL,
+    "e-rab_setup_success_rate_nom" double precision,
+    "e-rab_setup_success_rate_den" double precision,
+    erab_drop_call_rate_nom double precision,
+    erab_drop_call_rate_den double precision,
+    intrafreq_hosr_nom double precision,
+    intrafreq_hosr_den double precision,
+    ul_bler_nom double precision,
+    ul_bler_den double precision,
+    dl_user_throughput_nom double precision,
+    dl_user_throughput_den double precision,
+    ul_user_throughput_nom double precision,
+    ul_user_throughput_den double precision,
+    dl_cell_throughput_nom double precision,
+    dl_cell_throughput_den double precision,
+    ul_cell_throughput_nom double precision,
+    ul_cell_throughput_den double precision,
+    dl_data_volume_nom double precision,
+    dl_data_volume_den double precision,
+    ul_data_volume_nom double precision,
+    ul_data_volume_den double precision,
+    dl_qpsk_nom double precision,
+    dl_16qam_nom double precision,
+    dl_64qam_nom double precision,
+    dl_256qam_nom double precision,
+    dl_modulation_den double precision,
+    ul_qpsk_nom double precision,
+    ul_16qam_nom double precision,
+    ul_64qam_nom double precision,
+    ul_256qam_nom double precision,
+    ul_modulation_den double precision,
+    "packet_loss_(dl)_nom" double precision,
+    "packet_loss_(dl)_den" double precision,
+    "packet_loss_(ul)_nom" double precision,
+    "packet_loss_(ul)_den" double precision
+);
+
+
+ALTER TABLE hourly_stats.dc_e_erbs_eutrancellfdd_flex_raw OWNER TO dnb;
+
+--
+-- Name: dc_e_erbs_eutrancellfdd_raw; Type: TABLE; Schema: hourly_stats; Owner: dnb
+--
+
+CREATE TABLE hourly_stats.dc_e_erbs_eutrancellfdd_raw (
+    date_id timestamp without time zone NOT NULL,
+    erbs character varying(50),
+    eutrancellfdd character varying(50) NOT NULL,
+    cell_availability_nom double precision,
+    cell_availability_den double precision,
+    "rrc_setup_success_rate_(service)_nom" double precision,
+    "rrc_setup_success_rate_(service)_den" double precision,
+    "rrc_setup_success_rate_(signaling)_nom" double precision,
+    "rrc_setup_success_rate_(signaling)_den" double precision,
+    "e-rab_setup_success_rate_nom" double precision,
+    "e-rab_setup_success_rate_den" double precision,
+    erab_drop_call_rate_nom double precision,
+    erab_drop_call_rate_den double precision,
+    handover_in_success_rate_nom double precision,
+    handover_in_success_rate_den double precision,
+    ul_bler_nom double precision,
+    ul_bler_den double precision,
+    dl_user_throughput_nom double precision,
+    dl_user_throughput_den double precision,
+    ul_user_throughput_nom double precision,
+    ul_user_throughput_den double precision,
+    dl_cell_throughput_nom double precision,
+    dl_cell_throughput_den double precision,
+    ul_cell_throughput_nom double precision,
+    ul_cell_throughput_den double precision,
+    dl_data_volume_nom double precision,
+    dl_data_volume_den double precision,
+    ul_data_volume_nom double precision,
+    ul_data_volume_den double precision,
+    total_traffic_nom double precision,
+    total_traffic_den double precision,
+    "packet_loss_(dl)_nom" double precision,
+    "packet_loss_(dl)_den" double precision,
+    "packet_loss_(ul)_nom" double precision,
+    "packet_loss_(ul)_den" double precision,
+    "latency_(only_radio_interface)_nom" double precision,
+    "latency_(only_radio_interface)_den" double precision,
+    dl_qpsk_nom double precision,
+    dl_16qam_nom double precision,
+    dl_64qam_nom double precision,
+    dl_256qam_nom double precision,
+    dl_modulation_den double precision,
+    ul_qpsk_nom double precision,
+    ul_16qam_nom double precision,
+    ul_64qam_nom double precision,
+    ul_256qam_nom double precision,
+    ul_modulation_den double precision,
+    max_of_rrc_connected_user double precision,
+    max_rrc_users_ytl double precision,
+    max_rrc_users_maxis double precision,
+    max_rrc_users_celcom double precision,
+    max_rrc_users_tm double precision,
+    max_rrc_users_umobile double precision,
+    max_rrc_users_digi double precision,
+    max_rrc_users_dnb double precision,
+    max_of_active_user double precision,
+    call_setup_success_rate_nom double precision,
+    call_setup_success_rate_den double precision,
+    "e-rab_setup_success_rate_non_gbr_nom" double precision,
+    "e-rab_setup_success_rate_non_gbr_den" double precision,
+    intrafreq_hosr_nom double precision,
+    intrafreq_hosr_den double precision,
+    volte_redirection_success_rate_nom double precision,
+    volte_redirection_success_rate_den double precision
+);
+
+
+ALTER TABLE hourly_stats.dc_e_erbs_eutrancellfdd_raw OWNER TO dnb;
+
+--
+-- Name: dc_e_erbs_eutrancellfdd_v_raw; Type: TABLE; Schema: hourly_stats; Owner: dnb
+--
+
+CREATE TABLE hourly_stats.dc_e_erbs_eutrancellfdd_v_raw (
+    date_id timestamp without time zone NOT NULL,
+    erbs character varying(50),
+    eutrancellfdd character varying(50) NOT NULL,
+    "resource_block_utilizing_rate(dl)_nom" double precision,
+    "resource_block_utilizing_rate(dl)_den" double precision,
+    "resource_block_utilizing_rate(ul)_nom" double precision,
+    "resource_block_utilizing_rate(ul)_den" double precision,
+    average_cqi_nom double precision,
+    average_cqi_den double precision,
+    pmtainit2distr_0 double precision,
+    pmtainit2distr_1 double precision,
+    pmtainit2distr_2 double precision,
+    pmtainit2distr_3 double precision,
+    pmtainit2distr_4 double precision,
+    pmtainit2distr_5 double precision,
+    pmtainit2distr_6 double precision,
+    pmtainit2distr_7 double precision,
+    pmtainit2distr_8 double precision,
+    pmtainit2distr_9 double precision,
+    pmtainit2distr_10 double precision,
+    pmtainit2distr_11 double precision,
+    pmtainit2distr_12 double precision,
+    avg_pusch_ul_rssi_nom double precision,
+    avg_pusch_ul_rssi_den double precision
+);
+
+
+ALTER TABLE hourly_stats.dc_e_erbs_eutrancellfdd_v_raw OWNER TO dnb;
+
+--
+-- Name: dc_e_erbs_eutrancellrelation_raw; Type: TABLE; Schema: hourly_stats; Owner: dnb
+--
+
+CREATE TABLE hourly_stats.dc_e_erbs_eutrancellrelation_raw (
+    date_id timestamp without time zone NOT NULL,
+    erbs character varying(50),
+    eutrancellfdd character varying(50) NOT NULL,
+    eutranfreqrelation character varying(50) NOT NULL,
+    interfreq_hosr_nom double precision,
+    interfreq_hosr_den double precision,
+    ifo_success_rate_nom double precision,
+    ifo_success_rate_den double precision
+);
+
+
+ALTER TABLE hourly_stats.dc_e_erbs_eutrancellrelation_raw OWNER TO dnb;
+
+--
+-- Name: dc_e_erbsg2_mpprocessingresource_v_raw; Type: TABLE; Schema: hourly_stats; Owner: dnb
+--
+
+CREATE TABLE hourly_stats.dc_e_erbsg2_mpprocessingresource_v_raw (
+    date_id timestamp without time zone NOT NULL,
+    erbs character varying(50) NOT NULL,
+    gnodeb_cpu_load_nom double precision,
+    gnodeb_cpu_load_den double precision
+);
+
+
+ALTER TABLE hourly_stats.dc_e_erbsg2_mpprocessingresource_v_raw OWNER TO dnb;
+
+--
+-- Name: dc_e_nr_events_nrcellcu_flex_raw; Type: TABLE; Schema: hourly_stats; Owner: dnb
+--
+
+CREATE TABLE hourly_stats.dc_e_nr_events_nrcellcu_flex_raw (
+    date_id timestamp without time zone NOT NULL,
+    nr_name character varying(50),
+    nrcellcu character varying(50) NOT NULL,
+    flex_filtername character varying(50) NOT NULL,
+    "endc_sr_nom " double precision,
+    "endc_sr_den " double precision,
+    "erab_drop_nom " double precision,
+    "erab_drop_den " double precision,
+    "intra-sgnb_pscell_change_success_nom" double precision,
+    "intra-sgnb_pscell_change_success_den" double precision,
+    "inter-sgnb_pscell_change_success_nom" double precision,
+    "inter-sgnb_pscell_change_success_den" double precision,
+    max_rrc_connected_user_endc double precision,
+    "5g_ho_success_rate_dnb_5g_to_dnb_nom" double precision,
+    "5g_ho_success_rate_dnb_5g_to_dnb_den" double precision,
+    inter_rat_ho_success_rate_dnb_5g_to_mno_4g_nom double precision,
+    inter_rat_ho_success_rate_dnb_5g_to_mno_4g_den double precision,
+    eps_fallback_attempt double precision
+);
+
+
+ALTER TABLE hourly_stats.dc_e_nr_events_nrcellcu_flex_raw OWNER TO dnb;
+
+--
+-- Name: dc_e_nr_events_nrcelldu_flex_raw; Type: TABLE; Schema: hourly_stats; Owner: dnb
+--
+
+CREATE TABLE hourly_stats.dc_e_nr_events_nrcelldu_flex_raw (
+    date_id timestamp without time zone NOT NULL,
+    nr_name character varying(50),
+    nrcelldu character varying(50) NOT NULL,
+    flex_filtername character varying(50) NOT NULL,
+    dl_user_throughput_nom double precision,
+    dl_user_throughput_den double precision,
+    ul_user_throughput_nom double precision,
+    ul_user_throughput_den double precision,
+    ul_traffic_volume_nom double precision,
+    ul_traffic_volume_den double precision,
+    dl_qpsk_nom double precision,
+    dl_16qam_nom double precision,
+    dl_64qam_nom double precision,
+    dl_256qam_nom double precision,
+    dl_modulation_den double precision,
+    ul_qpsk_nom double precision,
+    ul_16qam_nom double precision,
+    ul_64qam_nom double precision,
+    ul_modulation_den double precision,
+    dl_traffic_volume_nom double precision,
+    dl_traffic_volume_den double precision
+);
+
+
+ALTER TABLE hourly_stats.dc_e_nr_events_nrcelldu_flex_raw OWNER TO dnb;
+
+--
+-- Name: dc_e_nr_events_nrcelldu_flex_raw_v2; Type: TABLE; Schema: hourly_stats; Owner: dnb
+--
+
+CREATE TABLE hourly_stats.dc_e_nr_events_nrcelldu_flex_raw_v2 (
+    date_id timestamp without time zone NOT NULL,
+    nr_name character varying(50),
+    nrcelldu character varying(50) NOT NULL,
+    flex_filtername character varying(50) NOT NULL,
+    dl_user_throughput_nom double precision,
+    dl_user_throughput_den double precision,
+    ul_user_throughput_nom double precision,
+    ul_user_throughput_den double precision,
+    ul_traffic_volume_nom double precision,
+    ul_traffic_volume_den double precision,
+    dl_traffic_volume_nom double precision,
+    dl_traffic_volume_den double precision,
+    dl_qpsk_nom double precision,
+    dl_16qam_nom double precision,
+    dl_64qam_nom double precision,
+    dl_256qam_nom double precision,
+    dl_modulation_den double precision,
+    ul_qpsk_nom double precision,
+    ul_16qam_nom double precision,
+    ul_64qam_nom double precision,
+    ul_modulation_den double precision
+);
+
+
+ALTER TABLE hourly_stats.dc_e_nr_events_nrcelldu_flex_raw_v2 OWNER TO dnb;
+
+--
+-- Name: dc_e_nr_nrcellcu_raw; Type: TABLE; Schema: hourly_stats; Owner: dnb
+--
+
+CREATE TABLE hourly_stats.dc_e_nr_nrcellcu_raw (
+    date_id timestamp without time zone NOT NULL,
+    nr_name character varying(50),
+    nrcellcu character varying(50) NOT NULL,
+    endc_sr_nom double precision,
+    endc_sr_den double precision,
+    erab_drop_call_rate_sgnb_nom double precision,
+    erab_drop_call_rate_sgnb_den double precision,
+    "intra-sgnb_pscell_change_success_rate_nom" double precision,
+    "intra-sgnb_pscell_change_success_rate_den" double precision,
+    "inter-sgnb_pscell_change_success_rate_nom" double precision,
+    "inter-sgnb_pscell_change_success_rate_den" double precision,
+    rrc_setup_success_rate_signaling_nom double precision,
+    rrc_setup_success_rate_signaling_den double precision,
+    max_of_rrc_connected_user_endc double precision,
+    endc_ca_configuration_sr_nom double precision,
+    endc_ca_configuration_sr_den double precision,
+    endc_ca_deconfiguration_sr_nom double precision,
+    endc_ca_deconfiguration_sr_den double precision,
+    max_rrc_connected_user_endc double precision,
+    "e-rab_block_rate_nom" double precision,
+    "e-rab_block_rate_den" double precision
+);
+
+
+ALTER TABLE hourly_stats.dc_e_nr_nrcellcu_raw OWNER TO dnb;
+
+--
+-- Name: dc_e_nr_nrcelldu_raw; Type: TABLE; Schema: hourly_stats; Owner: dnb
+--
+
+CREATE TABLE hourly_stats.dc_e_nr_nrcelldu_raw (
+    date_id timestamp without time zone NOT NULL,
+    nr_name character varying(50),
+    nrcelldu character varying(50) NOT NULL,
+    cell_availability_nom double precision,
+    cell_availability_den double precision,
+    resource_block_utilizing_rate_dl_nom double precision,
+    resource_block_utilizing_rate_dl_den double precision,
+    resource_block_utilizing_rate_ul_nom double precision,
+    resource_block_utilizing_rate_ul_den double precision,
+    ul_bler_nom double precision,
+    ul_bler_den double precision,
+    dl_user_throughput_nom double precision,
+    dl_user_throughput_den double precision,
+    ul_user_throughput_nom double precision,
+    ul_user_throughput_den double precision,
+    dl_cell_throughput_nom double precision,
+    dl_cell_throughput_den double precision,
+    ul_cell_throughput_nom double precision,
+    ul_cell_throughput_den double precision,
+    dl_data_volume_gb_nom double precision,
+    dl_data_volume_gb_den double precision,
+    ul_data_volume_gb_nom double precision,
+    ul_data_volume_gb_den double precision,
+    total_traffic_gb_nom double precision,
+    total_traffic_gb_den double precision,
+    dl_qpsk_nom double precision,
+    dl_16qam_nom double precision,
+    dl_64qam_nom double precision,
+    dl_256qam_nom double precision,
+    dl_modulation_den double precision,
+    ul_qpsk_nom double precision,
+    ul_16qam_nom double precision,
+    ul_64qam_nom double precision,
+    ul_256qam_nom double precision,
+    ul_modulation_den double precision,
+    max_active_user double precision,
+    dl_mac_vol_to_scell_nom double precision,
+    dl_mac_vol_to_scell_den double precision,
+    dl_mac_vol_as_scell_nom double precision,
+    dl_mac_vol_as_scell_den double precision,
+    dl_mac_vol_to_scell_ext_nom double precision,
+    dl_mac_vol_to_scell_ext_den double precision,
+    dl_mac_vol_as_scell_ext_nom double precision,
+    dl_mac_vol_as_scell_ext_den double precision
+);
+
+
+ALTER TABLE hourly_stats.dc_e_nr_nrcelldu_raw OWNER TO dnb;
+
+--
+-- Name: dc_e_nr_nrcelldu_v_raw; Type: TABLE; Schema: hourly_stats; Owner: dnb
+--
+
+CREATE TABLE hourly_stats.dc_e_nr_nrcelldu_v_raw (
+    date_id timestamp without time zone NOT NULL,
+    nr_name character varying(50),
+    nrcelldu character varying(50) NOT NULL,
+    pmradioraatttadistr_0 double precision,
+    pmradioraatttadistr_1 double precision,
+    pmradioraatttadistr_2 double precision,
+    pmradioraatttadistr_3 double precision,
+    pmradioraatttadistr_4 double precision,
+    pmradioraatttadistr_5 double precision,
+    pmradioraatttadistr_6 double precision,
+    pmradioraatttadistr_7 double precision,
+    pmradioraatttadistr_8 double precision,
+    pmradioraatttadistr_9 double precision,
+    pmradioraatttadistr_10 double precision,
+    pmradioraatttadistr_11 double precision,
+    avg_pusch_ul_rssi_nom double precision,
+    avg_pusch_ul_rssi_den double precision,
+    latency_only_radio_interface_nom double precision,
+    latency_only_radio_interface_den double precision,
+    average_cqi_nom double precision,
+    average_cqi_den double precision
+);
+
+
+ALTER TABLE hourly_stats.dc_e_nr_nrcelldu_v_raw OWNER TO dnb;
+
+--
+-- Name: dc_e_vpp_rpuserplanelink_v_raw; Type: TABLE; Schema: hourly_stats; Owner: dnb
+--
+
+CREATE TABLE hourly_stats.dc_e_vpp_rpuserplanelink_v_raw (
+    date_id timestamp without time zone NOT NULL,
+    ne_name character varying(50) NOT NULL,
+    packet_loss_dl_nom double precision,
+    packet_loss_dl_den double precision,
+    packet_loss_ul_nom double precision,
+    packet_loss_ul_den double precision
+);
+
+
+ALTER TABLE hourly_stats.dc_e_vpp_rpuserplanelink_v_raw OWNER TO dnb;
+
+--
+-- Name: kpi_erbs_eutrancellfdd; Type: MATERIALIZED VIEW; Schema: hourly_stats; Owner: dnb
+--
+
+CREATE MATERIALIZED VIEW hourly_stats.kpi_erbs_eutrancellfdd AS
+ WITH dt AS (
+         SELECT t1.date_id,
+            t1.erbs,
+            t1.eutrancellfdd,
+            t1.cell_availability_nom,
+            t1.cell_availability_den,
+            t1."rrc_setup_success_rate_(service)_nom",
+            t1."rrc_setup_success_rate_(service)_den",
+            t1."rrc_setup_success_rate_(signaling)_nom",
+            t1."rrc_setup_success_rate_(signaling)_den",
+            t1."e-rab_setup_success_rate_nom",
+            t1."e-rab_setup_success_rate_den",
+            t1.erab_drop_call_rate_nom,
+            t1.erab_drop_call_rate_den,
+            t1.handover_in_success_rate_nom,
+            t1.handover_in_success_rate_den,
+            t1.ul_bler_nom,
+            t1.ul_bler_den,
+            t1.dl_user_throughput_nom,
+            t1.dl_user_throughput_den,
+            t1.ul_user_throughput_nom,
+            t1.ul_user_throughput_den,
+            t1.dl_cell_throughput_nom,
+            t1.dl_cell_throughput_den,
+            t1.ul_cell_throughput_nom,
+            t1.ul_cell_throughput_den,
+            t1.dl_data_volume_nom,
+            t1.dl_data_volume_den,
+            t1.ul_data_volume_nom,
+            t1.ul_data_volume_den,
+            t1.total_traffic_nom,
+            t1.total_traffic_den,
+            t1."packet_loss_(dl)_nom",
+            t1."packet_loss_(dl)_den",
+            t1."packet_loss_(ul)_nom",
+            t1."packet_loss_(ul)_den",
+            t1."latency_(only_radio_interface)_nom",
+            t1."latency_(only_radio_interface)_den",
+            t1.dl_qpsk_nom,
+            t1.dl_16qam_nom,
+            t1.dl_64qam_nom,
+            t1.dl_256qam_nom,
+            t1.dl_modulation_den,
+            t1.ul_qpsk_nom,
+            t1.ul_16qam_nom,
+            t1.ul_64qam_nom,
+            t1.ul_256qam_nom,
+            t1.ul_modulation_den,
+            t1.max_of_rrc_connected_user,
+            t1.max_rrc_users_ytl,
+            t1.max_rrc_users_maxis,
+            t1.max_rrc_users_celcom,
+            t1.max_rrc_users_tm,
+            t1.max_rrc_users_umobile,
+            t1.max_rrc_users_digi,
+            t1.max_rrc_users_dnb,
+            t1.max_of_active_user,
+            t1.call_setup_success_rate_nom,
+            t1.call_setup_success_rate_den,
+            t1."e-rab_setup_success_rate_non_gbr_nom",
+            t1."e-rab_setup_success_rate_non_gbr_den",
+            t1.intrafreq_hosr_nom,
+            t1.intrafreq_hosr_den,
+            t1.volte_redirection_success_rate_nom,
+            t1.volte_redirection_success_rate_den,
+            cm."Cellname",
+            cm."Region",
+            cm."Cluster_ID",
+            cm."DISTRICT",
+            cm."MCMC_State",
+            cm.geom,
+            cm."SITEID",
+            cm."SystemID",
+            cm."Sitename",
+            df_dpm.dnb_index,
+            df_dpm.nominal_id,
+            df_dpm._id,
+            df_dpm."Nominal_ID",
+            df_dpm."Site_Name",
+            df_dpm."Latitude",
+            df_dpm."Longitude",
+            df_dpm.site_id,
+            df_dpm."Nominal_Latitude",
+            df_dpm."Nominal_Longitude",
+            df_dpm."Candidate_Latitude",
+            df_dpm."Candidate_Longitude",
+            df_dpm.on_board_date,
+            df_dpm.api_call_date,
+            df_dpm.added,
+            df_dpm."Acceptance_Cluster",
+            df_dpm."Sub_Cluster",
+            df_dpm."CBOClusterName"
+           FROM ((hourly_stats.dc_e_erbs_eutrancellfdd_raw t1
+             JOIN rfdb.cell_mapping cm ON (((cm."Cellname")::text = (t1.eutrancellfdd)::text)))
+             JOIN rfdb.df_dpm ON (((cm."SITEID")::text = (df_dpm.site_id)::text)))
+          WHERE ((cm."Region" IS NOT NULL) AND (t1.date_id >= (df_dpm.on_board_date)::timestamp without time zone))
+        )
+ SELECT dt.date_id,
+    dt."Region" AS region,
+    (((100)::double precision * sum(dt.call_setup_success_rate_nom)) OPERATOR(public.|||) sum(dt.call_setup_success_rate_den)) AS call_setup_success_rate,
+    (((100)::double precision * sum(dt.cell_availability_nom)) OPERATOR(public.|||) sum(dt.cell_availability_den)) AS cell_availability,
+    (((100)::double precision * sum(dt."rrc_setup_success_rate_(service)_nom")) OPERATOR(public.|||) sum(dt."rrc_setup_success_rate_(service)_den")) AS "rrc_setup_success_rate_(service)",
+    (((100)::double precision * sum(dt."rrc_setup_success_rate_(signaling)_nom")) OPERATOR(public.|||) sum(dt."rrc_setup_success_rate_(signaling)_den")) AS "rrc_setup_success_rate_(signaling)",
+    (((100)::double precision * sum(dt."e-rab_setup_success_rate_nom")) OPERATOR(public.|||) sum(dt."e-rab_setup_success_rate_den")) AS "e-rab_setup_success_rate",
+    (((100)::double precision * sum(dt.erab_drop_call_rate_nom)) OPERATOR(public.|||) sum(dt.erab_drop_call_rate_den)) AS erab_drop_call_rate,
+    (((100)::double precision * sum(dt.handover_in_success_rate_nom)) OPERATOR(public.|||) sum(dt.handover_in_success_rate_den)) AS handover_in_success_rate,
+    (((100)::double precision * sum(dt.ul_bler_nom)) OPERATOR(public.|||) sum(dt.ul_bler_den)) AS ul_bler,
+    (((100)::double precision * sum(dt."packet_loss_(dl)_nom")) OPERATOR(public.|||) sum(dt."packet_loss_(dl)_den")) AS "packet_loss_(dl)",
+    (((100)::double precision * sum(dt."packet_loss_(ul)_nom")) OPERATOR(public.|||) sum(dt."packet_loss_(ul)_den")) AS "packet_loss_(ul)",
+    (sum(dt.dl_user_throughput_nom) OPERATOR(public.|||) sum(dt.dl_user_throughput_den)) AS dl_user_throughput,
+    (sum(dt.ul_user_throughput_nom) OPERATOR(public.|||) sum(dt.ul_user_throughput_den)) AS ul_user_throughput,
+    (sum(dt.dl_cell_throughput_nom) OPERATOR(public.|||) sum(dt.dl_cell_throughput_den)) AS dl_cell_throughput,
+    (sum(dt.ul_cell_throughput_nom) OPERATOR(public.|||) sum(dt.ul_cell_throughput_den)) AS ul_cell_throughput,
+    (sum(dt.dl_data_volume_nom) OPERATOR(public.|||) (8388608)::numeric) AS dl_data_volume,
+    (sum(dt.ul_data_volume_nom) OPERATOR(public.|||) (8388608)::numeric) AS ul_data_volume,
+    (sum(dt.total_traffic_nom) OPERATOR(public.|||) (8388608)::numeric) AS total_traffic,
+    (sum(dt."latency_(only_radio_interface)_nom") OPERATOR(public.|||) sum(dt."latency_(only_radio_interface)_den")) AS "latency_(only_radio_interface)",
+    (((100)::double precision * sum(dt.dl_qpsk_nom)) OPERATOR(public.|||) sum(dt.dl_modulation_den)) AS dl_qpsk,
+    (((100)::double precision * sum(dt.dl_16qam_nom)) OPERATOR(public.|||) sum(dt.dl_modulation_den)) AS dl_16qam,
+    (((100)::double precision * sum(dt.dl_64qam_nom)) OPERATOR(public.|||) sum(dt.dl_modulation_den)) AS dl_64qam,
+    (((100)::double precision * sum(dt.dl_256qam_nom)) OPERATOR(public.|||) sum(dt.dl_modulation_den)) AS dl_256qam,
+    (((100)::double precision * sum(dt.ul_qpsk_nom)) OPERATOR(public.|||) sum(dt.ul_modulation_den)) AS ul_qpsk,
+    (((100)::double precision * sum(dt.ul_16qam_nom)) OPERATOR(public.|||) sum(dt.ul_modulation_den)) AS ul_16qam,
+    (((100)::double precision * sum(dt.ul_64qam_nom)) OPERATOR(public.|||) sum(dt.ul_modulation_den)) AS ul_64qam,
+    (((100)::double precision * sum(dt.ul_256qam_nom)) OPERATOR(public.|||) sum(dt.ul_modulation_den)) AS ul_256qam,
+    (sum(dt."e-rab_setup_success_rate_non_gbr_nom") OPERATOR(public.|||) sum(dt."e-rab_setup_success_rate_non_gbr_den")) AS "e-rab_setup_success_rate_non_gbr",
+    (sum(dt.intrafreq_hosr_nom) OPERATOR(public.|||) sum(dt.intrafreq_hosr_den)) AS intrafreq_hosr,
+    (sum(dt.volte_redirection_success_rate_nom) OPERATOR(public.|||) sum(dt.volte_redirection_success_rate_den)) AS volte_redirection_success_rate
+   FROM dt
+  GROUP BY dt.date_id, ROLLUP(dt."Region")
+  WITH NO DATA;
+
+
+ALTER TABLE hourly_stats.kpi_erbs_eutrancellfdd OWNER TO dnb;
+
+--
+-- Name: kpi_erbs_eutrancellfdd_v; Type: MATERIALIZED VIEW; Schema: hourly_stats; Owner: dnb
+--
+
+CREATE MATERIALIZED VIEW hourly_stats.kpi_erbs_eutrancellfdd_v AS
+ WITH dt AS (
+         SELECT t1.date_id,
+            t1.erbs,
+            t1.eutrancellfdd,
+            t1."resource_block_utilizing_rate(dl)_nom",
+            t1."resource_block_utilizing_rate(dl)_den",
+            t1."resource_block_utilizing_rate(ul)_nom",
+            t1."resource_block_utilizing_rate(ul)_den",
+            t1.average_cqi_nom,
+            t1.average_cqi_den,
+            t1.pmtainit2distr_0,
+            t1.pmtainit2distr_1,
+            t1.pmtainit2distr_2,
+            t1.pmtainit2distr_3,
+            t1.pmtainit2distr_4,
+            t1.pmtainit2distr_5,
+            t1.pmtainit2distr_6,
+            t1.pmtainit2distr_7,
+            t1.pmtainit2distr_8,
+            t1.pmtainit2distr_9,
+            t1.pmtainit2distr_10,
+            t1.pmtainit2distr_11,
+            t1.pmtainit2distr_12,
+            t1.avg_pusch_ul_rssi_nom,
+            t1.avg_pusch_ul_rssi_den,
+            cm."Cellname",
+            cm."Region",
+            cm."Cluster_ID",
+            cm."DISTRICT",
+            cm."MCMC_State",
+            cm.geom,
+            cm."SITEID",
+            cm."SystemID",
+            cm."Sitename",
+            df_dpm.dnb_index,
+            df_dpm.nominal_id,
+            df_dpm._id,
+            df_dpm."Nominal_ID",
+            df_dpm."Site_Name",
+            df_dpm."Latitude",
+            df_dpm."Longitude",
+            df_dpm.site_id,
+            df_dpm."Nominal_Latitude",
+            df_dpm."Nominal_Longitude",
+            df_dpm."Candidate_Latitude",
+            df_dpm."Candidate_Longitude",
+            df_dpm.on_board_date,
+            df_dpm.api_call_date,
+            df_dpm.added,
+            df_dpm."Acceptance_Cluster",
+            df_dpm."Sub_Cluster",
+            df_dpm."CBOClusterName"
+           FROM ((hourly_stats.dc_e_erbs_eutrancellfdd_v_raw t1
+             JOIN rfdb.cell_mapping cm ON (((cm."Cellname")::text = (t1.eutrancellfdd)::text)))
+             JOIN rfdb.df_dpm ON (((cm."SITEID")::text = (df_dpm.site_id)::text)))
+          WHERE ((cm."Region" IS NOT NULL) AND (t1.date_id >= (df_dpm.on_board_date)::timestamp without time zone))
+        )
+ SELECT dt.date_id,
+    dt."Region" AS region,
+    (sum(dt."resource_block_utilizing_rate(dl)_nom") OPERATOR(public.|||) sum(dt."resource_block_utilizing_rate(dl)_den")) AS "resource_block_utilizing_rate(dl)",
+    (sum(dt."resource_block_utilizing_rate(ul)_nom") OPERATOR(public.|||) sum(dt."resource_block_utilizing_rate(ul)_den")) AS "resource_block_utilizing_rate(ul)",
+    (sum(dt.average_cqi_nom) OPERATOR(public.|||) sum(dt.average_cqi_den)) AS average_cqi,
+    (sum(dt.avg_pusch_ul_rssi_nom) OPERATOR(public.|||) sum(dt.avg_pusch_ul_rssi_den)) AS avg_pusch_ul_rssi
+   FROM dt
+  GROUP BY dt.date_id, ROLLUP(dt."Region")
+  WITH NO DATA;
+
+
+ALTER TABLE hourly_stats.kpi_erbs_eutrancellfdd_v OWNER TO dnb;
+
+--
+-- Name: kpi_erbs_eutrancellrelation; Type: MATERIALIZED VIEW; Schema: hourly_stats; Owner: dnb
+--
+
+CREATE MATERIALIZED VIEW hourly_stats.kpi_erbs_eutrancellrelation AS
+ WITH dt AS (
+         SELECT t1.date_id,
+            t1.erbs,
+            t1.eutrancellfdd,
+            t1.eutranfreqrelation,
+            t1.interfreq_hosr_nom,
+            t1.interfreq_hosr_den,
+            t1.ifo_success_rate_nom,
+            t1.ifo_success_rate_den,
+            cm."Cellname",
+            cm."Region",
+            cm."Cluster_ID",
+            cm."DISTRICT",
+            cm."MCMC_State",
+            cm.geom,
+            cm."SITEID",
+            cm."SystemID",
+            cm."Sitename",
+            df_dpm.dnb_index,
+            df_dpm.nominal_id,
+            df_dpm._id,
+            df_dpm."Nominal_ID",
+            df_dpm."Site_Name",
+            df_dpm."Latitude",
+            df_dpm."Longitude",
+            df_dpm.site_id,
+            df_dpm."Nominal_Latitude",
+            df_dpm."Nominal_Longitude",
+            df_dpm."Candidate_Latitude",
+            df_dpm."Candidate_Longitude",
+            df_dpm.on_board_date,
+            df_dpm.api_call_date,
+            df_dpm.added,
+            df_dpm."Acceptance_Cluster",
+            df_dpm."Sub_Cluster",
+            df_dpm."CBOClusterName"
+           FROM ((hourly_stats.dc_e_erbs_eutrancellrelation_raw t1
+             JOIN rfdb.cell_mapping cm ON (((cm."Cellname")::text = (t1.eutrancellfdd)::text)))
+             JOIN rfdb.df_dpm ON (((cm."SITEID")::text = (df_dpm.site_id)::text)))
+          WHERE ((cm."Region" IS NOT NULL) AND (t1.date_id >= (df_dpm.on_board_date)::timestamp without time zone))
+        )
+ SELECT dt.date_id,
+    dt."Region" AS region,
+    (sum(dt.interfreq_hosr_nom) OPERATOR(public.|||) sum(dt.interfreq_hosr_den)) AS interfreq_hosr,
+    (sum(dt.ifo_success_rate_nom) OPERATOR(public.|||) sum(dt.ifo_success_rate_den)) AS ifo_success_rate
+   FROM dt
+  GROUP BY dt.date_id, ROLLUP(dt."Region")
+  WITH NO DATA;
+
+
+ALTER TABLE hourly_stats.kpi_erbs_eutrancellrelation OWNER TO dnb;
+
+--
+-- Name: site_mapping; Type: MATERIALIZED VIEW; Schema: rfdb; Owner: dnb
+--
+
+CREATE MATERIALIZED VIEW rfdb.site_mapping AS
+ SELECT cell_mapping."SITEID",
+    cell_mapping."Region"
+   FROM (rfdb.cell_mapping
+     JOIN rfdb.df_dpm ON (((cell_mapping."SITEID")::text = (df_dpm.site_id)::text)))
+  GROUP BY cell_mapping."SITEID", cell_mapping."Region"
+  WITH NO DATA;
+
+
+ALTER TABLE rfdb.site_mapping OWNER TO dnb;
+
+--
+-- Name: kpi_erbsg2_mpprocessingresource_v; Type: MATERIALIZED VIEW; Schema: hourly_stats; Owner: dnb
+--
+
+CREATE MATERIALIZED VIEW hourly_stats.kpi_erbsg2_mpprocessingresource_v AS
+ WITH dt AS (
+         SELECT t1.date_id,
+            t1.erbs,
+            t1.gnodeb_cpu_load_nom,
+            t1.gnodeb_cpu_load_den,
+            t1.site_id,
+            sm."SITEID",
+            sm."Region",
+            df_dpm.dnb_index,
+            df_dpm.nominal_id,
+            df_dpm._id,
+            df_dpm."Nominal_ID",
+            df_dpm."Site_Name",
+            df_dpm."Latitude",
+            df_dpm."Longitude",
+            df_dpm.site_id,
+            df_dpm."Nominal_Latitude",
+            df_dpm."Nominal_Longitude",
+            df_dpm."Candidate_Latitude",
+            df_dpm."Candidate_Longitude",
+            df_dpm.on_board_date,
+            df_dpm.api_call_date,
+            df_dpm.added,
+            df_dpm."Acceptance_Cluster",
+            df_dpm."Sub_Cluster",
+            df_dpm."CBOClusterName"
+           FROM ((( SELECT dc_e_erbsg2_mpprocessingresource_v_raw.date_id,
+                    dc_e_erbsg2_mpprocessingresource_v_raw.erbs,
+                    dc_e_erbsg2_mpprocessingresource_v_raw.gnodeb_cpu_load_nom,
+                    dc_e_erbsg2_mpprocessingresource_v_raw.gnodeb_cpu_load_den,
+                    split_part((dc_e_erbsg2_mpprocessingresource_v_raw.erbs)::text, '_'::text, 1) AS site_id
+                   FROM hourly_stats.dc_e_erbsg2_mpprocessingresource_v_raw) t1
+             JOIN rfdb.site_mapping sm ON (((sm."SITEID")::text = t1.site_id)))
+             JOIN rfdb.df_dpm ON (((sm."SITEID")::text = (df_dpm.site_id)::text)))
+          WHERE ((sm."Region" IS NOT NULL) AND (t1.date_id >= (df_dpm.on_board_date)::timestamp without time zone) AND (t1.date_id > (now() - '14 days'::interval)))
+        )
+ SELECT dt.date_id,
+    dt."Region" AS region,
+    (sum(dt.gnodeb_cpu_load_nom) OPERATOR(public.|||) sum(dt.gnodeb_cpu_load_den)) AS gnodeb_cpu_load
+   FROM dt dt(date_id, erbs, gnodeb_cpu_load_nom, gnodeb_cpu_load_den, site_id, "SITEID", "Region", dnb_index, nominal_id, _id, "Nominal_ID", "Site_Name", "Latitude", "Longitude", site_id_1, "Nominal_Latitude", "Nominal_Longitude", "Candidate_Latitude", "Candidate_Longitude", on_board_date, api_call_date, added, "Acceptance_Cluster", "Sub_Cluster", "CBOClusterName")
+  WHERE (dt."Region" IS NOT NULL)
+  GROUP BY dt.date_id, ROLLUP(dt."Region")
+  WITH NO DATA;
+
+
+ALTER TABLE hourly_stats.kpi_erbsg2_mpprocessingresource_v OWNER TO dnb;
+
+--
+-- Name: kpi_eutrancellfdd_flex; Type: MATERIALIZED VIEW; Schema: hourly_stats; Owner: dnb
+--
+
+CREATE MATERIALIZED VIEW hourly_stats.kpi_eutrancellfdd_flex AS
+ WITH dt AS (
+         SELECT t1.date_id,
+            t1.erbs,
+            t1.eutrancellfdd,
+            t1.flex_filtername,
+            t1."e-rab_setup_success_rate_nom",
+            t1."e-rab_setup_success_rate_den",
+            t1.erab_drop_call_rate_nom,
+            t1.erab_drop_call_rate_den,
+            t1.intrafreq_hosr_nom,
+            t1.intrafreq_hosr_den,
+            t1.ul_bler_nom,
+            t1.ul_bler_den,
+            t1.dl_user_throughput_nom,
+            t1.dl_user_throughput_den,
+            t1.ul_user_throughput_nom,
+            t1.ul_user_throughput_den,
+            t1.dl_cell_throughput_nom,
+            t1.dl_cell_throughput_den,
+            t1.ul_cell_throughput_nom,
+            t1.ul_cell_throughput_den,
+            t1.dl_data_volume_nom,
+            t1.dl_data_volume_den,
+            t1.ul_data_volume_nom,
+            t1.ul_data_volume_den,
+            t1.dl_qpsk_nom,
+            t1.dl_16qam_nom,
+            t1.dl_64qam_nom,
+            t1.dl_256qam_nom,
+            t1.dl_modulation_den,
+            t1.ul_qpsk_nom,
+            t1.ul_16qam_nom,
+            t1.ul_64qam_nom,
+            t1.ul_256qam_nom,
+            t1.ul_modulation_den,
+            t1."packet_loss_(dl)_nom",
+            t1."packet_loss_(dl)_den",
+            t1."packet_loss_(ul)_nom",
+            t1."packet_loss_(ul)_den",
+            cm."Cellname",
+            cm."Region",
+            cm."Cluster_ID",
+            cm."DISTRICT",
+            cm."MCMC_State",
+            cm.geom,
+            cm."SITEID",
+            cm."SystemID",
+            cm."Sitename",
+            df_dpm.dnb_index,
+            df_dpm.nominal_id,
+            df_dpm._id,
+            df_dpm."Nominal_ID",
+            df_dpm."Site_Name",
+            df_dpm."Latitude",
+            df_dpm."Longitude",
+            df_dpm.site_id,
+            df_dpm."Nominal_Latitude",
+            df_dpm."Nominal_Longitude",
+            df_dpm."Candidate_Latitude",
+            df_dpm."Candidate_Longitude",
+            df_dpm.on_board_date,
+            df_dpm.api_call_date,
+            df_dpm.added,
+            df_dpm."Acceptance_Cluster",
+            df_dpm."Sub_Cluster",
+            df_dpm."CBOClusterName",
+            ff.mobile_operator,
+            ff.flex_filtername_nrcelldu,
+            ff.flex_filtername_nrcellcu,
+            ff.flex_filtername_eutrancellfdd,
+            ff.flex_filtername_eutrancellfdd2
+           FROM (((hourly_stats.dc_e_erbs_eutrancellfdd_flex_raw t1
+             JOIN rfdb.cell_mapping cm ON (((cm."Cellname")::text = (t1.eutrancellfdd)::text)))
+             JOIN rfdb.df_dpm ON (((cm."SITEID")::text = (df_dpm.site_id)::text)))
+             JOIN rfdb.flex_filters ff ON (((ff.flex_filtername_eutrancellfdd2)::text = (t1.flex_filtername)::text)))
+          WHERE ((cm."Region" IS NOT NULL) AND (t1.date_id >= (df_dpm.on_board_date)::timestamp without time zone) AND (t1.date_id > (now() - '14 days'::interval)))
+        )
+ SELECT dt.date_id,
+    dt."Region" AS region,
+    dt.mobile_operator,
+    (((100)::double precision * sum(dt."e-rab_setup_success_rate_nom")) OPERATOR(public.|||) sum(dt."e-rab_setup_success_rate_den")) AS "e-rab_setup_success_rate",
+    (((100)::double precision * sum(dt.erab_drop_call_rate_nom)) OPERATOR(public.|||) sum(dt.erab_drop_call_rate_den)) AS erab_drop_call_rate,
+    (((100)::double precision * sum(dt.intrafreq_hosr_nom)) OPERATOR(public.|||) sum(dt.intrafreq_hosr_den)) AS intrafreq_hosr,
+    (((100)::double precision * sum(dt."packet_loss_(dl)_nom")) OPERATOR(public.|||) sum(dt."packet_loss_(dl)_den")) AS "packet_loss_(dl)",
+    (((100)::double precision * sum(dt."packet_loss_(ul)_nom")) OPERATOR(public.|||) sum(dt."packet_loss_(ul)_den")) AS "packet_loss_(ul)",
+    (((100)::double precision * sum(dt.ul_bler_nom)) OPERATOR(public.|||) sum(dt.ul_bler_den)) AS ul_bler,
+    (sum(dt.dl_user_throughput_nom) OPERATOR(public.|||) sum(dt.dl_user_throughput_den)) AS dl_user_throughput,
+    (sum(dt.ul_user_throughput_nom) OPERATOR(public.|||) sum(dt.ul_user_throughput_den)) AS ul_user_throughput,
+    (sum(dt.dl_cell_throughput_nom) OPERATOR(public.|||) sum(dt.dl_cell_throughput_den)) AS dl_cell_throughput,
+    (sum(dt.ul_cell_throughput_nom) OPERATOR(public.|||) sum(dt.ul_cell_throughput_den)) AS ul_cell_throughput,
+    (sum(dt.dl_data_volume_nom) OPERATOR(public.|||) (((1024 * 1024) * 1024))::numeric) AS dl_data_volume,
+    (sum(dt.ul_data_volume_nom) OPERATOR(public.|||) (((1024 * 1024) * 1024))::numeric) AS ul_data_volume,
+    (((100)::double precision * sum(dt.ul_qpsk_nom)) OPERATOR(public.|||) sum(dt.ul_modulation_den)) AS ul_qpsk,
+    (((100)::double precision * sum(dt.ul_16qam_nom)) OPERATOR(public.|||) sum(dt.ul_modulation_den)) AS ul_16qam,
+    (((100)::double precision * sum(dt.ul_64qam_nom)) OPERATOR(public.|||) sum(dt.ul_modulation_den)) AS ul_64qam,
+    (((100)::double precision * sum(dt.ul_256qam_nom)) OPERATOR(public.|||) sum(dt.ul_modulation_den)) AS ul_256qam,
+    (((100)::double precision * sum(dt.dl_qpsk_nom)) OPERATOR(public.|||) sum(dt.dl_modulation_den)) AS dl_qpsk,
+    (((100)::double precision * sum(dt.dl_16qam_nom)) OPERATOR(public.|||) sum(dt.dl_modulation_den)) AS dl_16qam,
+    (((100)::double precision * sum(dt.dl_64qam_nom)) OPERATOR(public.|||) sum(dt.dl_modulation_den)) AS dl_64qam,
+    (((100)::double precision * sum(dt.dl_256qam_nom)) OPERATOR(public.|||) sum(dt.dl_modulation_den)) AS dl_256qam
+   FROM dt
+  GROUP BY dt.date_id, dt.mobile_operator, ROLLUP(dt."Region")
+  ORDER BY dt."Region", dt.date_id
+  WITH NO DATA;
+
+
+ALTER TABLE hourly_stats.kpi_eutrancellfdd_flex OWNER TO dnb;
+
+--
+-- Name: kpi_nr_nrcellcu; Type: MATERIALIZED VIEW; Schema: hourly_stats; Owner: dnb
+--
+
+CREATE MATERIALIZED VIEW hourly_stats.kpi_nr_nrcellcu AS
+ WITH dt AS (
+         SELECT t1.date_id,
+            t1.nr_name,
+            t1.nrcellcu,
+            t1.endc_sr_nom,
+            t1.endc_sr_den,
+            t1.erab_drop_call_rate_sgnb_nom,
+            t1.erab_drop_call_rate_sgnb_den,
+            t1."intra-sgnb_pscell_change_success_rate_nom",
+            t1."intra-sgnb_pscell_change_success_rate_den",
+            t1."inter-sgnb_pscell_change_success_rate_nom",
+            t1."inter-sgnb_pscell_change_success_rate_den",
+            t1.rrc_setup_success_rate_signaling_nom,
+            t1.rrc_setup_success_rate_signaling_den,
+            t1.max_of_rrc_connected_user_endc,
+            t1.endc_ca_configuration_sr_nom,
+            t1.endc_ca_configuration_sr_den,
+            t1.endc_ca_deconfiguration_sr_nom,
+            t1.endc_ca_deconfiguration_sr_den,
+            t1.max_rrc_connected_user_endc,
+            t1."e-rab_block_rate_nom",
+            t1."e-rab_block_rate_den",
+            cm."Cellname",
+            cm."Region",
+            cm."Cluster_ID",
+            cm."DISTRICT",
+            cm."MCMC_State",
+            cm.geom,
+            cm."SITEID",
+            cm."SystemID",
+            cm."Sitename",
+            df_dpm.dnb_index,
+            df_dpm.nominal_id,
+            df_dpm._id,
+            df_dpm."Nominal_ID",
+            df_dpm."Site_Name",
+            df_dpm."Latitude",
+            df_dpm."Longitude",
+            df_dpm.site_id,
+            df_dpm."Nominal_Latitude",
+            df_dpm."Nominal_Longitude",
+            df_dpm."Candidate_Latitude",
+            df_dpm."Candidate_Longitude",
+            df_dpm.on_board_date,
+            df_dpm.api_call_date,
+            df_dpm.added,
+            df_dpm."Acceptance_Cluster",
+            df_dpm."Sub_Cluster",
+            df_dpm."CBOClusterName"
+           FROM ((hourly_stats.dc_e_nr_nrcellcu_raw t1
+             JOIN rfdb.cell_mapping cm ON (((cm."Cellname")::text = (t1.nrcellcu)::text)))
+             JOIN rfdb.df_dpm ON (((cm."SITEID")::text = (df_dpm.site_id)::text)))
+          WHERE ((cm."Region" IS NOT NULL) AND (t1.date_id >= (df_dpm.on_board_date)::timestamp without time zone) AND (t1.date_id > (now() - '14 days'::interval)))
+        )
+ SELECT dt.date_id,
+    dt."Region" AS region,
+    (((100)::double precision * sum(dt.endc_sr_nom)) OPERATOR(public.|||) sum(dt.endc_sr_den)) AS endc_sr,
+    (((100)::double precision * sum(dt.erab_drop_call_rate_sgnb_nom)) OPERATOR(public.|||) sum(dt.erab_drop_call_rate_sgnb_den)) AS erab_drop_call_rate_sgnb,
+    (((100)::double precision * sum(dt."intra-sgnb_pscell_change_success_rate_nom")) OPERATOR(public.|||) sum(dt."intra-sgnb_pscell_change_success_rate_den")) AS "intra-sgnb_pscell_change_success_rate",
+    (((100)::double precision * sum(dt."inter-sgnb_pscell_change_success_rate_nom")) OPERATOR(public.|||) sum(dt."inter-sgnb_pscell_change_success_rate_den")) AS "inter-sgnb_pscell_change_success_rate",
+    (((100)::double precision * sum(dt.rrc_setup_success_rate_signaling_nom)) OPERATOR(public.|||) sum(dt.rrc_setup_success_rate_signaling_den)) AS rrc_setup_success_rate_signaling,
+    (((100)::double precision * sum(dt.endc_ca_configuration_sr_nom)) OPERATOR(public.|||) sum(dt.endc_ca_configuration_sr_den)) AS endc_ca_configuration_sr,
+    (((100)::double precision * sum(dt.endc_ca_deconfiguration_sr_nom)) OPERATOR(public.|||) sum(dt.endc_ca_deconfiguration_sr_den)) AS endc_ca_deconfiguration_sr,
+    (((100)::double precision * sum(dt."e-rab_block_rate_nom")) OPERATOR(public.|||) sum(dt."e-rab_block_rate_den")) AS "e-rab_block_rate"
+   FROM dt
+  WHERE (dt."Region" IS NOT NULL)
+  GROUP BY dt.date_id, ROLLUP(dt."Region")
+  ORDER BY dt."Region", dt.date_id
+  WITH NO DATA;
+
+
+ALTER TABLE hourly_stats.kpi_nr_nrcellcu OWNER TO dnb;
+
+--
+-- Name: kpi_nr_nrcelldu; Type: MATERIALIZED VIEW; Schema: hourly_stats; Owner: dnb
+--
+
+CREATE MATERIALIZED VIEW hourly_stats.kpi_nr_nrcelldu AS
+ WITH dt AS (
+         SELECT t1.date_id,
+            t1.nr_name,
+            t1.nrcelldu,
+            t1.cell_availability_nom,
+            t1.cell_availability_den,
+            t1.resource_block_utilizing_rate_dl_nom,
+            t1.resource_block_utilizing_rate_dl_den,
+            t1.resource_block_utilizing_rate_ul_nom,
+            t1.resource_block_utilizing_rate_ul_den,
+            t1.ul_bler_nom,
+            t1.ul_bler_den,
+            t1.dl_user_throughput_nom,
+            t1.dl_user_throughput_den,
+            t1.ul_user_throughput_nom,
+            t1.ul_user_throughput_den,
+            t1.dl_cell_throughput_nom,
+            t1.dl_cell_throughput_den,
+            t1.ul_cell_throughput_nom,
+            t1.ul_cell_throughput_den,
+            t1.dl_data_volume_gb_nom,
+            t1.dl_data_volume_gb_den,
+            t1.ul_data_volume_gb_nom,
+            t1.ul_data_volume_gb_den,
+            t1.total_traffic_gb_nom,
+            t1.total_traffic_gb_den,
+            t1.dl_qpsk_nom,
+            t1.dl_16qam_nom,
+            t1.dl_64qam_nom,
+            t1.dl_256qam_nom,
+            t1.dl_modulation_den,
+            t1.ul_qpsk_nom,
+            t1.ul_16qam_nom,
+            t1.ul_64qam_nom,
+            t1.ul_256qam_nom,
+            t1.ul_modulation_den,
+            t1.max_active_user,
+            t1.dl_mac_vol_to_scell_nom,
+            t1.dl_mac_vol_to_scell_den,
+            t1.dl_mac_vol_as_scell_nom,
+            t1.dl_mac_vol_as_scell_den,
+            t1.dl_mac_vol_to_scell_ext_nom,
+            t1.dl_mac_vol_to_scell_ext_den,
+            t1.dl_mac_vol_as_scell_ext_nom,
+            t1.dl_mac_vol_as_scell_ext_den,
+            cm."Cellname",
+            cm."Region",
+            cm."Cluster_ID",
+            cm."DISTRICT",
+            cm."MCMC_State",
+            cm.geom,
+            cm."SITEID",
+            cm."SystemID",
+            cm."Sitename",
+            df_dpm.dnb_index,
+            df_dpm.nominal_id,
+            df_dpm._id,
+            df_dpm."Nominal_ID",
+            df_dpm."Site_Name",
+            df_dpm."Latitude",
+            df_dpm."Longitude",
+            df_dpm.site_id,
+            df_dpm."Nominal_Latitude",
+            df_dpm."Nominal_Longitude",
+            df_dpm."Candidate_Latitude",
+            df_dpm."Candidate_Longitude",
+            df_dpm.on_board_date,
+            df_dpm.api_call_date,
+            df_dpm.added,
+            df_dpm."Acceptance_Cluster",
+            df_dpm."Sub_Cluster",
+            df_dpm."CBOClusterName"
+           FROM ((hourly_stats.dc_e_nr_nrcelldu_raw t1
+             JOIN rfdb.cell_mapping cm ON (((cm."Cellname")::text = (t1.nrcelldu)::text)))
+             JOIN rfdb.df_dpm ON (((cm."SITEID")::text = (df_dpm.site_id)::text)))
+          WHERE ((cm."Region" IS NOT NULL) AND (t1.date_id >= (df_dpm.on_board_date)::timestamp without time zone) AND (t1.date_id > (now() - '14 days'::interval)))
+        )
+ SELECT dt.date_id,
+    dt."Region" AS region,
+    (sum(dt.dl_user_throughput_nom) OPERATOR(public.|||) (1000)::numeric) AS dl_user_throughput,
+    (sum(dt.ul_user_throughput_nom) OPERATOR(public.|||) (1000)::numeric) AS ul_user_throughput,
+    (sum(dt.dl_cell_throughput_nom) OPERATOR(public.|||) (1000)::numeric) AS dl_cell_throughput,
+    (sum(dt.ul_cell_throughput_nom) OPERATOR(public.|||) (1000)::numeric) AS ul_cell_throughput,
+    (sum(dt.dl_data_volume_gb_nom) OPERATOR(public.|||) power((1024)::double precision, (3)::double precision)) AS dl_data_volume_gb,
+    (sum(dt.ul_data_volume_gb_nom) OPERATOR(public.|||) power((1024)::double precision, (3)::double precision)) AS ul_data_volume_gb,
+    (sum(dt.total_traffic_gb_nom) OPERATOR(public.|||) power((1024)::double precision, (3)::double precision)) AS total_traffic_gb,
+    (((100)::double precision * sum(dt.dl_qpsk_nom)) OPERATOR(public.|||) sum(dt.dl_modulation_den)) AS dl_qpsk,
+    (((100)::double precision * sum(dt.dl_16qam_nom)) OPERATOR(public.|||) sum(dt.dl_modulation_den)) AS dl_16qam,
+    (((100)::double precision * sum(dt.dl_64qam_nom)) OPERATOR(public.|||) sum(dt.dl_modulation_den)) AS dl_64qam,
+    (((100)::double precision * sum(dt.dl_256qam_nom)) OPERATOR(public.|||) sum(dt.dl_modulation_den)) AS dl_256qam,
+    (((100)::double precision * sum(dt.ul_qpsk_nom)) OPERATOR(public.|||) sum(dt.ul_modulation_den)) AS ul_qpsk,
+    (((100)::double precision * sum(dt.ul_16qam_nom)) OPERATOR(public.|||) sum(dt.ul_modulation_den)) AS ul_16qam,
+    (((100)::double precision * sum(dt.ul_64qam_nom)) OPERATOR(public.|||) sum(dt.ul_modulation_den)) AS ul_64qam,
+    (((100)::double precision * sum(dt.ul_256qam_nom)) OPERATOR(public.|||) sum(dt.ul_modulation_den)) AS ul_256qam,
+    (sum(dt.dl_mac_vol_to_scell_nom) OPERATOR(public.|||) power((1024)::double precision, (3)::double precision)) AS dl_mac_vol_to_scell,
+    (sum(dt.dl_mac_vol_as_scell_nom) OPERATOR(public.|||) power((1024)::double precision, (3)::double precision)) AS dl_mac_vol_as_scell,
+    (sum(dt.dl_mac_vol_to_scell_ext_nom) OPERATOR(public.|||) power((1024)::double precision, (3)::double precision)) AS dl_mac_vol_to_scell_ext,
+    (sum(dt.dl_mac_vol_as_scell_ext_nom) OPERATOR(public.|||) power((1024)::double precision, (3)::double precision)) AS dl_mac_vol_as_scell_ext,
+    (((100)::double precision * sum(dt.cell_availability_nom)) OPERATOR(public.|||) sum(dt.cell_availability_den)) AS cell_availability,
+    (((100)::double precision * sum(dt.resource_block_utilizing_rate_dl_nom)) OPERATOR(public.|||) sum(dt.resource_block_utilizing_rate_dl_den)) AS resource_block_utilizing_rate_dl,
+    (((100)::double precision * sum(dt.resource_block_utilizing_rate_ul_nom)) OPERATOR(public.|||) sum(dt.resource_block_utilizing_rate_ul_den)) AS resource_block_utilizing_rate_ul,
+    (((100)::double precision * sum(dt.ul_bler_nom)) OPERATOR(public.|||) sum(dt.ul_bler_den)) AS ul_bler
+   FROM dt
+  WHERE (dt."Region" IS NOT NULL)
+  GROUP BY dt.date_id, ROLLUP(dt."Region")
+  ORDER BY dt."Region", dt.date_id
+  WITH NO DATA;
+
+
+ALTER TABLE hourly_stats.kpi_nr_nrcelldu OWNER TO dnb;
+
+--
+-- Name: kpi_nr_nrcelldu_v; Type: MATERIALIZED VIEW; Schema: hourly_stats; Owner: dnb
+--
+
+CREATE MATERIALIZED VIEW hourly_stats.kpi_nr_nrcelldu_v AS
+ WITH dt AS (
+         SELECT t1.date_id,
+            t1.nr_name,
+            t1.nrcelldu,
+            t1.pmradioraatttadistr_0,
+            t1.pmradioraatttadistr_1,
+            t1.pmradioraatttadistr_2,
+            t1.pmradioraatttadistr_3,
+            t1.pmradioraatttadistr_4,
+            t1.pmradioraatttadistr_5,
+            t1.pmradioraatttadistr_6,
+            t1.pmradioraatttadistr_7,
+            t1.pmradioraatttadistr_8,
+            t1.pmradioraatttadistr_9,
+            t1.pmradioraatttadistr_10,
+            t1.pmradioraatttadistr_11,
+            t1.avg_pusch_ul_rssi_nom,
+            t1.avg_pusch_ul_rssi_den,
+            t1.latency_only_radio_interface_nom,
+            t1.latency_only_radio_interface_den,
+            t1.average_cqi_nom,
+            t1.average_cqi_den,
+            cm."Cellname",
+            cm."Region",
+            cm."Cluster_ID",
+            cm."DISTRICT",
+            cm."MCMC_State",
+            cm.geom,
+            cm."SITEID",
+            cm."SystemID",
+            cm."Sitename",
+            df_dpm.dnb_index,
+            df_dpm.nominal_id,
+            df_dpm._id,
+            df_dpm."Nominal_ID",
+            df_dpm."Site_Name",
+            df_dpm."Latitude",
+            df_dpm."Longitude",
+            df_dpm.site_id,
+            df_dpm."Nominal_Latitude",
+            df_dpm."Nominal_Longitude",
+            df_dpm."Candidate_Latitude",
+            df_dpm."Candidate_Longitude",
+            df_dpm.on_board_date,
+            df_dpm.api_call_date,
+            df_dpm.added,
+            df_dpm."Acceptance_Cluster",
+            df_dpm."Sub_Cluster",
+            df_dpm."CBOClusterName"
+           FROM ((hourly_stats.dc_e_nr_nrcelldu_v_raw t1
+             JOIN rfdb.cell_mapping cm ON (((cm."Cellname")::text = (t1.nrcelldu)::text)))
+             JOIN rfdb.df_dpm ON (((cm."SITEID")::text = (df_dpm.site_id)::text)))
+          WHERE ((cm."Region" IS NOT NULL) AND (t1.date_id >= (df_dpm.on_board_date)::timestamp without time zone) AND (t1.date_id > (now() - '14 days'::interval)))
+        )
+ SELECT dt.date_id,
+    dt."Region" AS region,
+    (sum(dt.latency_only_radio_interface_nom) OPERATOR(public.|||) sum(dt.latency_only_radio_interface_den)) AS latency_only_radio_interface,
+    (sum(dt.average_cqi_nom) OPERATOR(public.|||) sum(dt.average_cqi_den)) AS average_cqi,
+    (sum(dt.avg_pusch_ul_rssi_nom) OPERATOR(public.|||) sum(dt.avg_pusch_ul_rssi_den)) AS avg_pusch_ul_rssi
+   FROM dt
+  WHERE (dt."Region" IS NOT NULL)
+  GROUP BY dt.date_id, ROLLUP(dt."Region")
+  ORDER BY dt."Region", dt.date_id
+  WITH NO DATA;
+
+
+ALTER TABLE hourly_stats.kpi_nr_nrcelldu_v OWNER TO dnb;
+
+--
+-- Name: kpi_nrcellcu_flex; Type: MATERIALIZED VIEW; Schema: hourly_stats; Owner: dnb
+--
+
+CREATE MATERIALIZED VIEW hourly_stats.kpi_nrcellcu_flex AS
+ WITH dt AS (
+         SELECT t1.date_id,
+            t1.nr_name,
+            t1.nrcellcu,
+            t1.flex_filtername,
+            t1."endc_sr_nom ",
+            t1."endc_sr_den ",
+            t1."erab_drop_nom ",
+            t1."erab_drop_den ",
+            t1."intra-sgnb_pscell_change_success_nom",
+            t1."intra-sgnb_pscell_change_success_den",
+            t1."inter-sgnb_pscell_change_success_nom",
+            t1."inter-sgnb_pscell_change_success_den",
+            t1.max_rrc_connected_user_endc,
+            t1."5g_ho_success_rate_dnb_5g_to_dnb_nom",
+            t1."5g_ho_success_rate_dnb_5g_to_dnb_den",
+            t1.inter_rat_ho_success_rate_dnb_5g_to_mno_4g_nom,
+            t1.inter_rat_ho_success_rate_dnb_5g_to_mno_4g_den,
+            t1.eps_fallback_attempt,
+            cm."Cellname",
+            cm."Region",
+            cm."Cluster_ID",
+            cm."DISTRICT",
+            cm."MCMC_State",
+            cm.geom,
+            cm."SITEID",
+            cm."SystemID",
+            cm."Sitename",
+            df_dpm.dnb_index,
+            df_dpm.nominal_id,
+            df_dpm._id,
+            df_dpm."Nominal_ID",
+            df_dpm."Site_Name",
+            df_dpm."Latitude",
+            df_dpm."Longitude",
+            df_dpm.site_id,
+            df_dpm."Nominal_Latitude",
+            df_dpm."Nominal_Longitude",
+            df_dpm."Candidate_Latitude",
+            df_dpm."Candidate_Longitude",
+            df_dpm.on_board_date,
+            df_dpm.api_call_date,
+            df_dpm.added,
+            df_dpm."Acceptance_Cluster",
+            df_dpm."Sub_Cluster",
+            df_dpm."CBOClusterName",
+            ff.mobile_operator,
+            ff.flex_filtername_nrcelldu,
+            ff.flex_filtername_nrcellcu,
+            ff.flex_filtername_eutrancellfdd,
+            ff.flex_filtername_eutrancellfdd2
+           FROM (((hourly_stats.dc_e_nr_events_nrcellcu_flex_raw t1
+             JOIN rfdb.cell_mapping cm ON (((cm."Cellname")::text = (t1.nrcellcu)::text)))
+             JOIN rfdb.df_dpm ON (((cm."SITEID")::text = (df_dpm.site_id)::text)))
+             JOIN rfdb.flex_filters ff ON (((ff.flex_filtername_nrcellcu)::text = (t1.flex_filtername)::text)))
+          WHERE ((cm."Region" IS NOT NULL) AND (t1.date_id >= (df_dpm.on_board_date)::timestamp without time zone) AND (t1.date_id > (now() - '14 days'::interval)))
+        )
+ SELECT dt.date_id,
+    dt."Region" AS region,
+    dt.mobile_operator,
+    (((100)::double precision * sum(dt."intra-sgnb_pscell_change_success_nom")) OPERATOR(public.|||) sum(dt."intra-sgnb_pscell_change_success_den")) AS "intra-sgnb_pscell_change_success",
+    (((100)::double precision * sum(dt."inter-sgnb_pscell_change_success_nom")) OPERATOR(public.|||) sum(dt."inter-sgnb_pscell_change_success_den")) AS "inter-sgnb_pscell_change_success",
+    (((100)::double precision * sum(dt."5g_ho_success_rate_dnb_5g_to_dnb_nom")) OPERATOR(public.|||) sum(dt."5g_ho_success_rate_dnb_5g_to_dnb_den")) AS "5g_ho_success_rate_dnb_5g_to_dnb",
+    (((100)::double precision * sum(dt.inter_rat_ho_success_rate_dnb_5g_to_mno_4g_nom)) OPERATOR(public.|||) sum(dt.inter_rat_ho_success_rate_dnb_5g_to_mno_4g_den)) AS inter_rat_ho_success_rate_dnb_5g_to_mno_4g
+   FROM dt
+  GROUP BY dt.date_id, dt.mobile_operator, ROLLUP(dt."Region")
+  ORDER BY dt."Region", dt.date_id
+  WITH NO DATA;
+
+
+ALTER TABLE hourly_stats.kpi_nrcellcu_flex OWNER TO dnb;
+
+--
+-- Name: kpi_nrcelldu_flex; Type: MATERIALIZED VIEW; Schema: hourly_stats; Owner: dnb
+--
+
+CREATE MATERIALIZED VIEW hourly_stats.kpi_nrcelldu_flex AS
+ WITH dt AS (
+         SELECT t1.date_id,
+            t1.nr_name,
+            t1.nrcelldu,
+            t1.flex_filtername,
+            t1.dl_user_throughput_nom,
+            t1.dl_user_throughput_den,
+            t1.ul_user_throughput_nom,
+            t1.ul_user_throughput_den,
+            t1.ul_traffic_volume_nom,
+            t1.ul_traffic_volume_den,
+            t1.dl_qpsk_nom,
+            t1.dl_16qam_nom,
+            t1.dl_64qam_nom,
+            t1.dl_256qam_nom,
+            t1.dl_modulation_den,
+            t1.ul_qpsk_nom,
+            t1.ul_16qam_nom,
+            t1.ul_64qam_nom,
+            t1.ul_modulation_den,
+            t1.dl_traffic_volume_nom,
+            t1.dl_traffic_volume_den,
+            cm."Cellname",
+            cm."Region",
+            cm."Cluster_ID",
+            cm."DISTRICT",
+            cm."MCMC_State",
+            cm.geom,
+            cm."SITEID",
+            cm."SystemID",
+            cm."Sitename",
+            df_dpm.dnb_index,
+            df_dpm.nominal_id,
+            df_dpm._id,
+            df_dpm."Nominal_ID",
+            df_dpm."Site_Name",
+            df_dpm."Latitude",
+            df_dpm."Longitude",
+            df_dpm.site_id,
+            df_dpm."Nominal_Latitude",
+            df_dpm."Nominal_Longitude",
+            df_dpm."Candidate_Latitude",
+            df_dpm."Candidate_Longitude",
+            df_dpm.on_board_date,
+            df_dpm.api_call_date,
+            df_dpm.added,
+            df_dpm."Acceptance_Cluster",
+            df_dpm."Sub_Cluster",
+            df_dpm."CBOClusterName",
+            ff.mobile_operator,
+            ff.flex_filtername_nrcelldu,
+            ff.flex_filtername_nrcellcu,
+            ff.flex_filtername_eutrancellfdd,
+            ff.flex_filtername_eutrancellfdd2
+           FROM (((hourly_stats.dc_e_nr_events_nrcelldu_flex_raw t1
+             JOIN rfdb.cell_mapping cm ON (((cm."Cellname")::text = (t1.nrcelldu)::text)))
+             JOIN rfdb.df_dpm ON (((cm."SITEID")::text = (df_dpm.site_id)::text)))
+             JOIN rfdb.flex_filters ff ON (((ff.flex_filtername_nrcelldu)::text = (t1.flex_filtername)::text)))
+          WHERE ((cm."Region" IS NOT NULL) AND (t1.date_id >= (df_dpm.on_board_date)::timestamp without time zone) AND (t1.date_id > (now() - '14 days'::interval)))
+        )
+ SELECT dt.date_id,
+    dt."Region" AS region,
+    dt.mobile_operator,
+    (sum(dt.ul_traffic_volume_nom) OPERATOR(public.|||) (((1024 * 1024) * 1024))::numeric) AS ul_traffic_volume,
+    (((100)::double precision * sum(dt.dl_qpsk_nom)) OPERATOR(public.|||) sum(dt.dl_modulation_den)) AS dl_qpsk,
+    (((100)::double precision * sum(dt.dl_16qam_nom)) OPERATOR(public.|||) sum(dt.dl_modulation_den)) AS dl_16qam,
+    (((100)::double precision * sum(dt.dl_64qam_nom)) OPERATOR(public.|||) sum(dt.dl_modulation_den)) AS dl_64qam,
+    (((100)::double precision * sum(dt.dl_256qam_nom)) OPERATOR(public.|||) sum(dt.dl_modulation_den)) AS dl_256qam,
+    (((100)::double precision * sum(dt.ul_qpsk_nom)) OPERATOR(public.|||) sum(dt.ul_modulation_den)) AS ul_qpsk,
+    (((100)::double precision * sum(dt.ul_16qam_nom)) OPERATOR(public.|||) sum(dt.ul_modulation_den)) AS ul_16qam,
+    (((100)::double precision * sum(dt.ul_64qam_nom)) OPERATOR(public.|||) sum(dt.ul_modulation_den)) AS ul_64qam,
+    (sum(dt.dl_user_throughput_nom) OPERATOR(public.|||) (1000)::numeric) AS dl_user_throughput,
+    (sum(dt.ul_user_throughput_nom) OPERATOR(public.|||) (1000)::numeric) AS ul_user_throughput
+   FROM dt
+  GROUP BY dt.date_id, dt.mobile_operator, ROLLUP(dt."Region")
+  ORDER BY dt."Region", dt.date_id
+  WITH NO DATA;
+
+
+ALTER TABLE hourly_stats.kpi_nrcelldu_flex OWNER TO dnb;
+
+--
+-- Name: kpi_vpp_rpuserplanelink_v; Type: MATERIALIZED VIEW; Schema: hourly_stats; Owner: dnb
+--
+
+CREATE MATERIALIZED VIEW hourly_stats.kpi_vpp_rpuserplanelink_v AS
+ WITH dt AS (
+         SELECT t1.date_id,
+            t1.ne_name,
+            t1.packet_loss_dl_nom,
+            t1.packet_loss_dl_den,
+            t1.packet_loss_ul_nom,
+            t1.packet_loss_ul_den,
+            t1.site_id,
+            sm."SITEID",
+            sm."Region",
+            df_dpm.dnb_index,
+            df_dpm.nominal_id,
+            df_dpm._id,
+            df_dpm."Nominal_ID",
+            df_dpm."Site_Name",
+            df_dpm."Latitude",
+            df_dpm."Longitude",
+            df_dpm.site_id,
+            df_dpm."Nominal_Latitude",
+            df_dpm."Nominal_Longitude",
+            df_dpm."Candidate_Latitude",
+            df_dpm."Candidate_Longitude",
+            df_dpm.on_board_date,
+            df_dpm.api_call_date,
+            df_dpm.added,
+            df_dpm."Acceptance_Cluster",
+            df_dpm."Sub_Cluster",
+            df_dpm."CBOClusterName"
+           FROM ((( SELECT dc_e_vpp_rpuserplanelink_v_raw.date_id,
+                    dc_e_vpp_rpuserplanelink_v_raw.ne_name,
+                    dc_e_vpp_rpuserplanelink_v_raw.packet_loss_dl_nom,
+                    dc_e_vpp_rpuserplanelink_v_raw.packet_loss_dl_den,
+                    dc_e_vpp_rpuserplanelink_v_raw.packet_loss_ul_nom,
+                    dc_e_vpp_rpuserplanelink_v_raw.packet_loss_ul_den,
+                    split_part((dc_e_vpp_rpuserplanelink_v_raw.ne_name)::text, '_'::text, 1) AS site_id
+                   FROM hourly_stats.dc_e_vpp_rpuserplanelink_v_raw) t1
+             JOIN rfdb.site_mapping sm ON (((sm."SITEID")::text = t1.site_id)))
+             JOIN rfdb.df_dpm ON (((sm."SITEID")::text = (df_dpm.site_id)::text)))
+          WHERE ((sm."Region" IS NOT NULL) AND (t1.date_id >= (df_dpm.on_board_date)::timestamp without time zone) AND (t1.date_id > (now() - '14 days'::interval)))
+        )
+ SELECT dt.date_id,
+    dt."Region" AS region,
+    (((100)::double precision * sum(dt.packet_loss_dl_nom)) OPERATOR(public.|||) sum(dt.packet_loss_dl_den)) AS packet_loss_dl,
+    (((100)::double precision * sum(dt.packet_loss_ul_nom)) OPERATOR(public.|||) sum(dt.packet_loss_ul_den)) AS packet_loss_ul
+   FROM dt dt(date_id, ne_name, packet_loss_dl_nom, packet_loss_dl_den, packet_loss_ul_nom, packet_loss_ul_den, site_id, "SITEID", "Region", dnb_index, nominal_id, _id, "Nominal_ID", "Site_Name", "Latitude", "Longitude", site_id_1, "Nominal_Latitude", "Nominal_Longitude", "Candidate_Latitude", "Candidate_Longitude", on_board_date, api_call_date, added, "Acceptance_Cluster", "Sub_Cluster", "CBOClusterName")
+  WHERE (dt."Region" IS NOT NULL)
+  GROUP BY dt.date_id, ROLLUP(dt."Region")
+  ORDER BY dt."Region", dt.date_id
+  WITH NO DATA;
+
+
+ALTER TABLE hourly_stats.kpi_vpp_rpuserplanelink_v OWNER TO dnb;
+
+--
+-- Name: d_date d_date_date_dim_id_pk; Type: CONSTRAINT; Schema: daily_stats; Owner: dnb
+--
+
+ALTER TABLE ONLY daily_stats.d_date
+    ADD CONSTRAINT d_date_date_dim_id_pk PRIMARY KEY (date_dim_id);
+
+
+--
+-- Name: meta meta_table_name_key; Type: CONSTRAINT; Schema: daily_stats; Owner: dnb
+--
+
+ALTER TABLE ONLY daily_stats.meta
+    ADD CONSTRAINT meta_table_name_key UNIQUE (table_name);
+
+
+--
+-- Name: dc_e_erbs_eutrancellfdd_day pk_dc_e_erbs_eutrancellfdd_day; Type: CONSTRAINT; Schema: daily_stats; Owner: dnb
+--
+
+ALTER TABLE ONLY daily_stats.dc_e_erbs_eutrancellfdd_day
+    ADD CONSTRAINT pk_dc_e_erbs_eutrancellfdd_day PRIMARY KEY (eutrancellfdd, date_id);
+
+
+--
+-- Name: dc_e_erbs_eutrancellfdd_flex_day pk_dc_e_erbs_eutrancellfdd_flex_day; Type: CONSTRAINT; Schema: daily_stats; Owner: dnb
+--
+
+ALTER TABLE ONLY daily_stats.dc_e_erbs_eutrancellfdd_flex_day
+    ADD CONSTRAINT pk_dc_e_erbs_eutrancellfdd_flex_day PRIMARY KEY (eutrancellfdd, date_id, flex_filtername);
+
+
+--
+-- Name: dc_e_erbs_eutrancellfdd_v_day pk_dc_e_erbs_eutrancellfdd_v_day; Type: CONSTRAINT; Schema: daily_stats; Owner: dnb
+--
+
+ALTER TABLE ONLY daily_stats.dc_e_erbs_eutrancellfdd_v_day
+    ADD CONSTRAINT pk_dc_e_erbs_eutrancellfdd_v_day PRIMARY KEY (eutrancellfdd, date_id);
+
+
+--
+-- Name: dc_e_erbs_eutrancellrelation_day pk_dc_e_erbs_eutrancellrelation_day; Type: CONSTRAINT; Schema: daily_stats; Owner: dnb
+--
+
+ALTER TABLE ONLY daily_stats.dc_e_erbs_eutrancellrelation_day
+    ADD CONSTRAINT pk_dc_e_erbs_eutrancellrelation_day PRIMARY KEY (eutrancellfdd, date_id, eutranfreqrelation);
+
+
+--
+-- Name: dc_e_nr_events_nrcelldu_flex_day_v2 pk_dc_e_nr_events_nrcelldu_flex_raw; Type: CONSTRAINT; Schema: daily_stats; Owner: dnb
+--
+
+ALTER TABLE ONLY daily_stats.dc_e_nr_events_nrcelldu_flex_day_v2
+    ADD CONSTRAINT pk_dc_e_nr_events_nrcelldu_flex_raw PRIMARY KEY (nrcelldu, date_id, flex_filtername);
+
+
+--
+-- Name: d_date d_date_date_dim_id_pk; Type: CONSTRAINT; Schema: hourly_stats; Owner: dnb
+--
+
+ALTER TABLE ONLY hourly_stats.d_date
+    ADD CONSTRAINT d_date_date_dim_id_pk PRIMARY KEY (date_dim_id);
+
+
+--
+-- Name: dc_e_erbs_eutrancellfdd_flex_raw pk_dc_e_erbs_eutrancellfdd_flex_raw; Type: CONSTRAINT; Schema: hourly_stats; Owner: dnb
+--
+
+ALTER TABLE ONLY hourly_stats.dc_e_erbs_eutrancellfdd_flex_raw
+    ADD CONSTRAINT pk_dc_e_erbs_eutrancellfdd_flex_raw PRIMARY KEY (eutrancellfdd, date_id, flex_filtername);
+
+
+--
+-- Name: dc_e_erbs_eutrancellfdd_raw pk_dc_e_erbs_eutrancellfdd_raw; Type: CONSTRAINT; Schema: hourly_stats; Owner: dnb
+--
+
+ALTER TABLE ONLY hourly_stats.dc_e_erbs_eutrancellfdd_raw
+    ADD CONSTRAINT pk_dc_e_erbs_eutrancellfdd_raw PRIMARY KEY (eutrancellfdd, date_id);
+
+
+--
+-- Name: dc_e_erbs_eutrancellfdd_v_raw pk_dc_e_erbs_eutrancellfdd_v_raw; Type: CONSTRAINT; Schema: hourly_stats; Owner: dnb
+--
+
+ALTER TABLE ONLY hourly_stats.dc_e_erbs_eutrancellfdd_v_raw
+    ADD CONSTRAINT pk_dc_e_erbs_eutrancellfdd_v_raw PRIMARY KEY (eutrancellfdd, date_id);
+
+
+--
+-- Name: dc_e_erbs_eutrancellrelation_raw pk_dc_e_erbs_eutrancellrelation_raw; Type: CONSTRAINT; Schema: hourly_stats; Owner: dnb
+--
+
+ALTER TABLE ONLY hourly_stats.dc_e_erbs_eutrancellrelation_raw
+    ADD CONSTRAINT pk_dc_e_erbs_eutrancellrelation_raw PRIMARY KEY (eutrancellfdd, date_id, eutranfreqrelation);
+
+
+--
+-- Name: dc_e_erbsg2_mpprocessingresource_v_raw pk_dc_e_erbsg2_mpprocessingresource_v_raw; Type: CONSTRAINT; Schema: hourly_stats; Owner: dnb
+--
+
+ALTER TABLE ONLY hourly_stats.dc_e_erbsg2_mpprocessingresource_v_raw
+    ADD CONSTRAINT pk_dc_e_erbsg2_mpprocessingresource_v_raw PRIMARY KEY (date_id, erbs);
+
+
+--
+-- Name: dc_e_nr_events_nrcellcu_flex_raw pk_dc_e_nr_events_nrcellcu_flex_hourly; Type: CONSTRAINT; Schema: hourly_stats; Owner: dnb
+--
+
+ALTER TABLE ONLY hourly_stats.dc_e_nr_events_nrcellcu_flex_raw
+    ADD CONSTRAINT pk_dc_e_nr_events_nrcellcu_flex_hourly PRIMARY KEY (nrcellcu, date_id, flex_filtername);
+
+
+--
+-- Name: dc_e_nr_events_nrcelldu_flex_raw pk_dc_e_nr_events_nrcelldu_flex_raw; Type: CONSTRAINT; Schema: hourly_stats; Owner: dnb
+--
+
+ALTER TABLE ONLY hourly_stats.dc_e_nr_events_nrcelldu_flex_raw
+    ADD CONSTRAINT pk_dc_e_nr_events_nrcelldu_flex_raw PRIMARY KEY (nrcelldu, date_id, flex_filtername);
+
+
+--
+-- Name: dc_e_nr_events_nrcelldu_flex_raw_v2 pk_dc_e_nr_events_nrcelldu_flex_raw_v2; Type: CONSTRAINT; Schema: hourly_stats; Owner: dnb
+--
+
+ALTER TABLE ONLY hourly_stats.dc_e_nr_events_nrcelldu_flex_raw_v2
+    ADD CONSTRAINT pk_dc_e_nr_events_nrcelldu_flex_raw_v2 PRIMARY KEY (nrcelldu, date_id, flex_filtername);
+
+
+--
+-- Name: dc_e_nr_nrcellcu_raw pk_dc_e_nr_nrcellcu_raw; Type: CONSTRAINT; Schema: hourly_stats; Owner: dnb
+--
+
+ALTER TABLE ONLY hourly_stats.dc_e_nr_nrcellcu_raw
+    ADD CONSTRAINT pk_dc_e_nr_nrcellcu_raw PRIMARY KEY (nrcellcu, date_id);
+
+
+--
+-- Name: dc_e_nr_nrcelldu_raw pk_dc_e_nr_nrcelldu_raw; Type: CONSTRAINT; Schema: hourly_stats; Owner: dnb
+--
+
+ALTER TABLE ONLY hourly_stats.dc_e_nr_nrcelldu_raw
+    ADD CONSTRAINT pk_dc_e_nr_nrcelldu_raw PRIMARY KEY (nrcelldu, date_id);
+
+
+--
+-- Name: dc_e_nr_nrcelldu_v_raw pk_dc_e_nr_nrcelldu_v_raw; Type: CONSTRAINT; Schema: hourly_stats; Owner: dnb
+--
+
+ALTER TABLE ONLY hourly_stats.dc_e_nr_nrcelldu_v_raw
+    ADD CONSTRAINT pk_dc_e_nr_nrcelldu_v_raw PRIMARY KEY (nrcelldu, date_id);
+
+
+--
+-- Name: dc_e_vpp_rpuserplanelink_v_raw pk_dc_e_vpp_rpuserplanelink_v_raw; Type: CONSTRAINT; Schema: hourly_stats; Owner: dnb
+--
+
+ALTER TABLE ONLY hourly_stats.dc_e_vpp_rpuserplanelink_v_raw
+    ADD CONSTRAINT pk_dc_e_vpp_rpuserplanelink_v_raw PRIMARY KEY (ne_name, date_id);
+
+
+--
+-- Name: cells_list_cell_id_region_tech_idx; Type: INDEX; Schema: daily_stats; Owner: dnb
+--
+
+CREATE UNIQUE INDEX cells_list_cell_id_region_tech_idx ON daily_stats.cells_list USING btree (cell_id, region, tech);
+
+
+--
+-- Name: d_date_date_actual_idx; Type: INDEX; Schema: daily_stats; Owner: dnb
+--
+
+CREATE INDEX d_date_date_actual_idx ON daily_stats.d_date USING btree (date_actual);
+
+
+--
+-- Name: dc_e_erbs_eutrancellfdd_flex_day_eutrancellfdd_idx; Type: INDEX; Schema: daily_stats; Owner: dnb
+--
+
+CREATE INDEX dc_e_erbs_eutrancellfdd_flex_day_eutrancellfdd_idx ON daily_stats.dc_e_erbs_eutrancellfdd_flex_day USING btree (eutrancellfdd);
+
+
+--
+-- Name: dc_e_erbs_eutrancellfdd_flex_day_flex_filtername_idx; Type: INDEX; Schema: daily_stats; Owner: dnb
+--
+
+CREATE INDEX dc_e_erbs_eutrancellfdd_flex_day_flex_filtername_idx ON daily_stats.dc_e_erbs_eutrancellfdd_flex_day USING btree (flex_filtername);
+
+
+--
+-- Name: dc_e_erbsg2_mpprocessingresource_v_day_erbs_idx; Type: INDEX; Schema: daily_stats; Owner: dnb
+--
+
+CREATE INDEX dc_e_erbsg2_mpprocessingresource_v_day_erbs_idx ON daily_stats.dc_e_erbsg2_mpprocessingresource_v_day USING btree (erbs);
+
+
+--
+-- Name: dc_e_nr_events_nrcellcu_flex_day_flex_filtername_idx; Type: INDEX; Schema: daily_stats; Owner: dnb
+--
+
+CREATE INDEX dc_e_nr_events_nrcellcu_flex_day_flex_filtername_idx ON daily_stats.dc_e_nr_events_nrcellcu_flex_day USING btree (flex_filtername);
+
+
+--
+-- Name: dc_e_nr_events_nrcellcu_flex_day_nrcellcu_idx; Type: INDEX; Schema: daily_stats; Owner: dnb
+--
+
+CREATE INDEX dc_e_nr_events_nrcellcu_flex_day_nrcellcu_idx ON daily_stats.dc_e_nr_events_nrcellcu_flex_day USING btree (nrcellcu);
+
+
+--
+-- Name: dc_e_nr_events_nrcelldu_flex_day_flex_filtername_idx; Type: INDEX; Schema: daily_stats; Owner: dnb
+--
+
+CREATE INDEX dc_e_nr_events_nrcelldu_flex_day_flex_filtername_idx ON daily_stats.dc_e_nr_events_nrcelldu_flex_day USING btree (flex_filtername);
+
+
+--
+-- Name: dc_e_nr_events_nrcelldu_flex_day_nrcelldu_idx; Type: INDEX; Schema: daily_stats; Owner: dnb
+--
+
+CREATE INDEX dc_e_nr_events_nrcelldu_flex_day_nrcelldu_idx ON daily_stats.dc_e_nr_events_nrcelldu_flex_day USING btree (nrcelldu);
+
+
+--
+-- Name: dc_e_nr_nrcellcu_day_nr_name_idx; Type: INDEX; Schema: daily_stats; Owner: dnb
+--
+
+CREATE INDEX dc_e_nr_nrcellcu_day_nr_name_idx ON daily_stats.dc_e_nr_nrcellcu_day USING btree (nr_name);
+
+
+--
+-- Name: dc_e_nr_nrcellcu_day_nrcellcu_idx; Type: INDEX; Schema: daily_stats; Owner: dnb
+--
+
+CREATE INDEX dc_e_nr_nrcellcu_day_nrcellcu_idx ON daily_stats.dc_e_nr_nrcellcu_day USING btree (nrcellcu);
+
+
+--
+-- Name: dc_e_nr_nrcelldu_day_nr_name_idx; Type: INDEX; Schema: daily_stats; Owner: dnb
+--
+
+CREATE INDEX dc_e_nr_nrcelldu_day_nr_name_idx ON daily_stats.dc_e_nr_nrcelldu_day USING btree (nr_name);
+
+
+--
+-- Name: dc_e_nr_nrcelldu_day_nrcelldu_idx; Type: INDEX; Schema: daily_stats; Owner: dnb
+--
+
+CREATE INDEX dc_e_nr_nrcelldu_day_nrcelldu_idx ON daily_stats.dc_e_nr_nrcelldu_day USING btree (nrcelldu);
+
+
+--
+-- Name: dc_e_nr_nrcelldu_v_day_idx; Type: INDEX; Schema: daily_stats; Owner: dnb
+--
+
+CREATE INDEX dc_e_nr_nrcelldu_v_day_idx ON daily_stats.dc_e_nr_nrcelldu_v_day USING btree (nrcelldu);
+
+
+--
+-- Name: dc_e_vpp_rpuserplanelink_v_day_ne_name_idx; Type: INDEX; Schema: daily_stats; Owner: dnb
+--
+
+CREATE INDEX dc_e_vpp_rpuserplanelink_v_day_ne_name_idx ON daily_stats.dc_e_vpp_rpuserplanelink_v_day USING btree (ne_name);
+
+
+--
+-- Name: kpi_erbs_eutrancellfdd_date_id_region_idx; Type: INDEX; Schema: daily_stats; Owner: dnb
+--
+
+CREATE UNIQUE INDEX kpi_erbs_eutrancellfdd_date_id_region_idx ON daily_stats.kpi_erbs_eutrancellfdd USING btree (date_id, region);
+
+
+--
+-- Name: kpi_erbs_eutrancellfdd_v_date_id_region_idx; Type: INDEX; Schema: daily_stats; Owner: dnb
+--
+
+CREATE UNIQUE INDEX kpi_erbs_eutrancellfdd_v_date_id_region_idx ON daily_stats.kpi_erbs_eutrancellfdd_v USING btree (date_id, region);
+
+
+--
+-- Name: kpi_erbs_eutrancellfdd_v_date_id_region_idx1; Type: INDEX; Schema: daily_stats; Owner: dnb
+--
+
+CREATE UNIQUE INDEX kpi_erbs_eutrancellfdd_v_date_id_region_idx1 ON daily_stats.kpi_erbs_eutrancellfdd_v USING btree (date_id, region);
+
+
+--
+-- Name: kpi_erbs_eutrancellrelation_date_id_region_idx; Type: INDEX; Schema: daily_stats; Owner: dnb
+--
+
+CREATE UNIQUE INDEX kpi_erbs_eutrancellrelation_date_id_region_idx ON daily_stats.kpi_erbs_eutrancellrelation USING btree (date_id, region);
+
+
+--
+-- Name: kpi_erbs_eutrancellrelation_date_id_region_idx1; Type: INDEX; Schema: daily_stats; Owner: dnb
+--
+
+CREATE UNIQUE INDEX kpi_erbs_eutrancellrelation_date_id_region_idx1 ON daily_stats.kpi_erbs_eutrancellrelation USING btree (date_id, region);
+
+
+--
+-- Name: kpi_erbsg2_mpprocessingresource_v_date_id_region_idx; Type: INDEX; Schema: daily_stats; Owner: dnb
+--
+
+CREATE UNIQUE INDEX kpi_erbsg2_mpprocessingresource_v_date_id_region_idx ON daily_stats.kpi_erbsg2_mpprocessingresource_v USING btree (date_id, region);
+
+
+--
+-- Name: kpi_erbsg2_mpprocessingresource_v_date_id_region_idx1; Type: INDEX; Schema: daily_stats; Owner: dnb
+--
+
+CREATE UNIQUE INDEX kpi_erbsg2_mpprocessingresource_v_date_id_region_idx1 ON daily_stats.kpi_erbsg2_mpprocessingresource_v USING btree (date_id, region);
+
+
+--
+-- Name: kpi_eutrancellfdd_flex_date_id_region_mobile_operator_idx; Type: INDEX; Schema: daily_stats; Owner: dnb
+--
+
+CREATE UNIQUE INDEX kpi_eutrancellfdd_flex_date_id_region_mobile_operator_idx ON daily_stats.kpi_eutrancellfdd_flex USING btree (date_id, region, mobile_operator);
+
+
+--
+-- Name: kpi_nr_nrcellcu_date_id_region_idx; Type: INDEX; Schema: daily_stats; Owner: dnb
+--
+
+CREATE UNIQUE INDEX kpi_nr_nrcellcu_date_id_region_idx ON daily_stats.kpi_nr_nrcellcu USING btree (date_id, region);
+
+
+--
+-- Name: kpi_nr_nrcelldu_date_id_region_idx; Type: INDEX; Schema: daily_stats; Owner: dnb
+--
+
+CREATE UNIQUE INDEX kpi_nr_nrcelldu_date_id_region_idx ON daily_stats.kpi_nr_nrcelldu USING btree (date_id, region);
+
+
+--
+-- Name: kpi_nr_nrcelldu_v_date_id_region_idx; Type: INDEX; Schema: daily_stats; Owner: dnb
+--
+
+CREATE UNIQUE INDEX kpi_nr_nrcelldu_v_date_id_region_idx ON daily_stats.kpi_nr_nrcelldu_v USING btree (date_id, region);
+
+
+--
+-- Name: kpi_nr_nrcelldu_v_date_id_region_idx1; Type: INDEX; Schema: daily_stats; Owner: dnb
+--
+
+CREATE UNIQUE INDEX kpi_nr_nrcelldu_v_date_id_region_idx1 ON daily_stats.kpi_nr_nrcelldu_v USING btree (date_id, region);
+
+
+--
+-- Name: kpi_nrcellcu_flex_date_id_region_mobile_operator_idx; Type: INDEX; Schema: daily_stats; Owner: dnb
+--
+
+CREATE UNIQUE INDEX kpi_nrcellcu_flex_date_id_region_mobile_operator_idx ON daily_stats.kpi_nrcellcu_flex USING btree (date_id, region, mobile_operator);
+
+
+--
+-- Name: kpi_nrcelldu_flex_date_id_region_mobile_operator_idx; Type: INDEX; Schema: daily_stats; Owner: dnb
+--
+
+CREATE UNIQUE INDEX kpi_nrcelldu_flex_date_id_region_mobile_operator_idx ON daily_stats.kpi_nrcelldu_flex USING btree (date_id, region, mobile_operator);
+
+
+--
+-- Name: kpi_vpp_rpuserplanelink_v_date_id_region_idx; Type: INDEX; Schema: daily_stats; Owner: dnb
+--
+
+CREATE UNIQUE INDEX kpi_vpp_rpuserplanelink_v_date_id_region_idx ON daily_stats.kpi_vpp_rpuserplanelink_v USING btree (date_id, region);
+
+
+--
+-- Name: pk_dc_e_erbsg2_mpprocessingresource_v_day; Type: INDEX; Schema: daily_stats; Owner: dnb
+--
+
+CREATE UNIQUE INDEX pk_dc_e_erbsg2_mpprocessingresource_v_day ON daily_stats.dc_e_erbsg2_mpprocessingresource_v_day USING btree (date_id, erbs);
+
+
+--
+-- Name: pk_dc_e_nr_events_nrcellcu_flex_daily; Type: INDEX; Schema: daily_stats; Owner: dnb
+--
+
+CREATE UNIQUE INDEX pk_dc_e_nr_events_nrcellcu_flex_daily ON daily_stats.dc_e_nr_events_nrcellcu_flex_day USING btree (nrcellcu, date_id, flex_filtername);
+
+
+--
+-- Name: pk_dc_e_nr_events_nrcelldu_flex_day; Type: INDEX; Schema: daily_stats; Owner: dnb
+--
+
+CREATE UNIQUE INDEX pk_dc_e_nr_events_nrcelldu_flex_day ON daily_stats.dc_e_nr_events_nrcelldu_flex_day USING btree (nrcelldu, date_id, flex_filtername);
+
+
+--
+-- Name: pk_dc_e_nr_nrcellcu_day; Type: INDEX; Schema: daily_stats; Owner: dnb
+--
+
+CREATE UNIQUE INDEX pk_dc_e_nr_nrcellcu_day ON daily_stats.dc_e_nr_nrcellcu_day USING btree (nrcellcu, date_id);
+
+
+--
+-- Name: pk_dc_e_nr_nrcelldu_day; Type: INDEX; Schema: daily_stats; Owner: dnb
+--
+
+CREATE UNIQUE INDEX pk_dc_e_nr_nrcelldu_day ON daily_stats.dc_e_nr_nrcelldu_day USING btree (nrcelldu, date_id);
+
+
+--
+-- Name: pk_dc_e_nr_nrcelldu_v_day; Type: INDEX; Schema: daily_stats; Owner: dnb
+--
+
+CREATE UNIQUE INDEX pk_dc_e_nr_nrcelldu_v_day ON daily_stats.dc_e_nr_nrcelldu_v_day USING btree (nrcelldu, date_id);
+
+
+--
+-- Name: pk_dc_e_vpp_rpuserplanelink_v_day; Type: INDEX; Schema: daily_stats; Owner: dnb
+--
+
+CREATE UNIQUE INDEX pk_dc_e_vpp_rpuserplanelink_v_day ON daily_stats.dc_e_vpp_rpuserplanelink_v_day USING btree (ne_name, date_id);
+
+
+--
+-- Name: d_date_date_actual_idx; Type: INDEX; Schema: hourly_stats; Owner: dnb
+--
+
+CREATE INDEX d_date_date_actual_idx ON hourly_stats.d_date USING btree (date_actual);
+
+
+--
+-- Name: dc_e_erbsg2_mpprocessingresource_v_raw_erbs_idx; Type: INDEX; Schema: hourly_stats; Owner: dnb
+--
+
+CREATE INDEX dc_e_erbsg2_mpprocessingresource_v_raw_erbs_idx ON hourly_stats.dc_e_erbsg2_mpprocessingresource_v_raw USING btree (erbs);
+
+
+--
+-- Name: dc_e_nr_nrcellcu_raw_nrcellcu_idx; Type: INDEX; Schema: hourly_stats; Owner: dnb
+--
+
+CREATE INDEX dc_e_nr_nrcellcu_raw_nrcellcu_idx ON hourly_stats.dc_e_nr_nrcellcu_raw USING btree (nrcellcu);
+
+
+--
+-- Name: dc_e_nr_nrcelldu_raw_date_id_idx; Type: INDEX; Schema: hourly_stats; Owner: dnb
+--
+
+CREATE INDEX dc_e_nr_nrcelldu_raw_date_id_idx ON hourly_stats.dc_e_nr_nrcelldu_raw USING btree (date_id);
+
+
+--
+-- Name: dc_e_nr_nrcelldu_raw_nrcelldu_idx; Type: INDEX; Schema: hourly_stats; Owner: dnb
+--
+
+CREATE INDEX dc_e_nr_nrcelldu_raw_nrcelldu_idx ON hourly_stats.dc_e_nr_nrcelldu_raw USING btree (nrcelldu);
+
+
+--
+-- Name: kpi_erbs_eutrancellfdd_date_id_region_idx; Type: INDEX; Schema: hourly_stats; Owner: dnb
+--
+
+CREATE UNIQUE INDEX kpi_erbs_eutrancellfdd_date_id_region_idx ON hourly_stats.kpi_erbs_eutrancellfdd USING btree (date_id, region);
+
+
+--
+-- Name: kpi_erbs_eutrancellfdd_v_date_id_region_idx; Type: INDEX; Schema: hourly_stats; Owner: dnb
+--
+
+CREATE UNIQUE INDEX kpi_erbs_eutrancellfdd_v_date_id_region_idx ON hourly_stats.kpi_erbs_eutrancellfdd_v USING btree (date_id, region);
+
+
+--
+-- Name: kpi_erbs_eutrancellfdd_v_date_id_region_idx1; Type: INDEX; Schema: hourly_stats; Owner: dnb
+--
+
+CREATE UNIQUE INDEX kpi_erbs_eutrancellfdd_v_date_id_region_idx1 ON hourly_stats.kpi_erbs_eutrancellfdd_v USING btree (date_id, region);
+
+
+--
+-- Name: kpi_erbs_eutrancellrelation_date_id_region_idx; Type: INDEX; Schema: hourly_stats; Owner: dnb
+--
+
+CREATE UNIQUE INDEX kpi_erbs_eutrancellrelation_date_id_region_idx ON hourly_stats.kpi_erbs_eutrancellrelation USING btree (date_id, region);
+
+
+--
+-- Name: kpi_erbs_eutrancellrelation_date_id_region_idx1; Type: INDEX; Schema: hourly_stats; Owner: dnb
+--
+
+CREATE UNIQUE INDEX kpi_erbs_eutrancellrelation_date_id_region_idx1 ON hourly_stats.kpi_erbs_eutrancellrelation USING btree (date_id, region);
+
+
+--
+-- Name: kpi_erbsg2_mpprocessingresource_v_date_id_region_idx; Type: INDEX; Schema: hourly_stats; Owner: dnb
+--
+
+CREATE UNIQUE INDEX kpi_erbsg2_mpprocessingresource_v_date_id_region_idx ON hourly_stats.kpi_erbsg2_mpprocessingresource_v USING btree (date_id, region);
+
+
+--
+-- Name: kpi_erbsg2_mpprocessingresource_v_date_id_region_idx1; Type: INDEX; Schema: hourly_stats; Owner: dnb
+--
+
+CREATE UNIQUE INDEX kpi_erbsg2_mpprocessingresource_v_date_id_region_idx1 ON hourly_stats.kpi_erbsg2_mpprocessingresource_v USING btree (date_id, region);
+
+
+--
+-- Name: kpi_eutrancellfdd_flex_date_id_region_mobile_operator_idx; Type: INDEX; Schema: hourly_stats; Owner: dnb
+--
+
+CREATE UNIQUE INDEX kpi_eutrancellfdd_flex_date_id_region_mobile_operator_idx ON hourly_stats.kpi_eutrancellfdd_flex USING btree (date_id, region, mobile_operator);
+
+
+--
+-- Name: kpi_nr_nrcellcu_date_id_region_idx; Type: INDEX; Schema: hourly_stats; Owner: dnb
+--
+
+CREATE UNIQUE INDEX kpi_nr_nrcellcu_date_id_region_idx ON hourly_stats.kpi_nr_nrcellcu USING btree (date_id, region);
+
+
+--
+-- Name: kpi_nr_nrcelldu_date_id_region_idx; Type: INDEX; Schema: hourly_stats; Owner: dnb
+--
+
+CREATE UNIQUE INDEX kpi_nr_nrcelldu_date_id_region_idx ON hourly_stats.kpi_nr_nrcelldu USING btree (date_id, region);
+
+
+--
+-- Name: kpi_nr_nrcelldu_v_date_id_region_idx; Type: INDEX; Schema: hourly_stats; Owner: dnb
+--
+
+CREATE UNIQUE INDEX kpi_nr_nrcelldu_v_date_id_region_idx ON hourly_stats.kpi_nr_nrcelldu_v USING btree (date_id, region);
+
+
+--
+-- Name: kpi_nr_nrcelldu_v_date_id_region_idx1; Type: INDEX; Schema: hourly_stats; Owner: dnb
+--
+
+CREATE UNIQUE INDEX kpi_nr_nrcelldu_v_date_id_region_idx1 ON hourly_stats.kpi_nr_nrcelldu_v USING btree (date_id, region);
+
+
+--
+-- Name: kpi_nrcellcu_flex_date_id_region_mobile_operator_idx; Type: INDEX; Schema: hourly_stats; Owner: dnb
+--
+
+CREATE UNIQUE INDEX kpi_nrcellcu_flex_date_id_region_mobile_operator_idx ON hourly_stats.kpi_nrcellcu_flex USING btree (date_id, region, mobile_operator);
+
+
+--
+-- Name: kpi_nrcelldu_flex_date_id_region_mobile_operator_idx; Type: INDEX; Schema: hourly_stats; Owner: dnb
+--
+
+CREATE UNIQUE INDEX kpi_nrcelldu_flex_date_id_region_mobile_operator_idx ON hourly_stats.kpi_nrcelldu_flex USING btree (date_id, region, mobile_operator);
+
+
+--
+-- Name: kpi_vpp_rpuserplanelink_v_date_id_region_idx; Type: INDEX; Schema: hourly_stats; Owner: dnb
+--
+
+CREATE UNIQUE INDEX kpi_vpp_rpuserplanelink_v_date_id_region_idx ON hourly_stats.kpi_vpp_rpuserplanelink_v USING btree (date_id, region);
+
+
+--
+-- Name: flex_filters_mobile_operator_index; Type: INDEX; Schema: rfdb; Owner: dnb
+--
+
+CREATE INDEX flex_filters_mobile_operator_index ON rfdb.flex_filters USING btree (mobile_operator);
+
+
+--
+-- Name: test update_meta_test; Type: TRIGGER; Schema: daily_stats; Owner: dnb
+--
+
+CREATE TRIGGER update_meta_test AFTER INSERT OR DELETE OR UPDATE ON daily_stats.test FOR EACH STATEMENT EXECUTE FUNCTION public.update_meta();
+
+
+--
+-- PostgreSQL database dump complete
+--
+

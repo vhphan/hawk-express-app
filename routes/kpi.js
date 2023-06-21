@@ -219,7 +219,6 @@ router.get('/cellsList', asyncHandler(async (req, res) => {
         }
     })
 
-
 }));
 
 

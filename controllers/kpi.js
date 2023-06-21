@@ -287,13 +287,13 @@ const getCellsList = async (tech, region, cellPartial) => {
         return await sql`
                 select cell_id from dnb.daily_stats.cells_list
                 where cell_id ilike ${cellSubstring} and tech = ${tech}
-                order by cell_id
+                order by cell_id LIMIT 200;
                 `;
     }
     return await sql`
             select cell_id from dnb.daily_stats.cells_list
             where region ilike ${region} AND cell_id ilike ${cellSubstring} and tech = ${tech}
-            ORDER BY cell_id;
+            ORDER BY cell_id LIMIT 200;
             `;
 
 

@@ -10,6 +10,8 @@ with dt as (
             on ff.flex_filtername_eutrancellfdd2 = t1.flex_filtername
     WHERE "Region" is not null
     AND t1."date_id" >= df_dpm.on_board_date::timestamp
+    AND t1."date_id" > now() - interval '14 days'    
+
 )
 SELECT
 date_id,

@@ -65,9 +65,9 @@ http {
         <%= include_passenger_internal_template('server.erb', 8, true, binding) %>
         <%= include_passenger_internal_template('rails_asset_pipeline.erb', 8, false) %>
 
-        location /node/apps/kpi-frontend {
-            try_files $uri $uri/ /index.html;
-        }
+        # location /node/apps/kpi-frontend {
+        #     try_files $uri/index.html;
+        # }
         ### BEGIN your own configuration options ###
         # This is a good place to put your own config
         # options. Note that your options must not

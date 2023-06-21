@@ -222,3 +222,18 @@ select min(date_id), max(date_id) from hourly_stats.kpi_nr_nrcelldu
 
 select count(*) from hourly_stats.kpi_nrcelldu_flex
 
+
+
+
+
+
+
+
+
+-- query to check location of postgres config file
+
+SELECT name, setting FROM pg_settings WHERE name = 'config_file';
+
+SHOW config_file;
+
+SELECT max(date_id) from daily_stats.kpi_nr_nrcelldu;

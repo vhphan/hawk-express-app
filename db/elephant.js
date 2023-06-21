@@ -9,4 +9,16 @@ const sqlElephant = postgres({
     password: process.env.ELEPHANT_PASSWORD,
 })
 
-module.exports = sqlElephant
+
+
+module.exports = {
+    sqlElephant,
+    listenerElephant: async () => {
+        console.log('listening to elephant');
+        await sqlElephant.listen('events', payload => {
+            const json = JSON.parse(payload);
+            console.log(payload);
+            console.log(json);
+        });
+    }
+}
