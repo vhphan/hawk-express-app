@@ -136,6 +136,8 @@ pyscripts/venv
 db/df_dpm/*
 uploads/*
 apps/kpi-frontend/*
+apps/kpi-frontend-v2/*
+apps/*
 sample_jsons_api/*
 
 *.pyc

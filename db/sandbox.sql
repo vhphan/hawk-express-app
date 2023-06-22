@@ -237,3 +237,30 @@ SELECT name, setting FROM pg_settings WHERE name = 'config_file';
 SHOW config_file;
 
 SELECT max(date_id) from daily_stats.kpi_nr_nrcelldu;
+
+select * from information_schema.columns where table_name ilike 'dc_e_nr_events_nrcelldu_flex_day' and table_schema = 'daily_stats';
+
+select * from information_schema.columns where table_name ilike 'dc_e_erbs_eutrancellfdd_flex_day' and table_schema = 'daily_stats';
+
+select "endc_sr_den " from daily_stats.dc_e_nr_events_nrcellcu_flex_day order by random() limit 5;
+
+select "endc_sr_den" from daily_stats.dc_e_nr_events_nrcellcu_flex_day order by random() limit 5;
+
+select * from information_schema.columns where column_name like '% ';
+
+-- rename column that has a space at the end
+with cte as (
+select column_name from information_schema.columns where column_name like '% '
+)
+select 'alter table daily_stats.dc_e_nr_events_nrcellcu_flex_day rename column "' || column_name || '" to ' || trim(column_name) || ';' from cte;
+
+
+
+
+alter table hourly_stats.dc_e_nr_events_nrcellcu_flex_raw rename column "endc_sr_nom " to endc_sr_nom;
+alter table hourly_stats.dc_e_nr_events_nrcellcu_flex_raw rename column "endc_sr_den " to endc_sr_den;
+alter table hourly_stats.dc_e_nr_events_nrcellcu_flex_raw rename column "erab_drop_nom " to erab_drop_nom;
+alter table hourly_stats.dc_e_nr_events_nrcellcu_flex_raw rename column "erab_drop_den " to erab_drop_den;
+
+select "endc_sr_nom " from daily_stats.dc_e_nr_events_nrcellcu_flex_day order by random() limit 5;
+

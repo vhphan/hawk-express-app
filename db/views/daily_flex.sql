@@ -18,7 +18,11 @@ mobile_operator,
 100 * sum("intra-sgnb_pscell_change_success_nom")|||sum("intra-sgnb_pscell_change_success_den")  as  "intra-sgnb_pscell_change_success" ,
 100 * sum("inter-sgnb_pscell_change_success_nom")|||sum("inter-sgnb_pscell_change_success_den")  as  "inter-sgnb_pscell_change_success" ,
 100 * sum("5g_ho_success_rate_dnb_5g_to_dnb_nom")|||sum("5g_ho_success_rate_dnb_5g_to_dnb_den")  as  "5g_ho_success_rate_dnb_5g_to_dnb" ,
-100 * sum("inter_rat_ho_success_rate_dnb_5g_to_mno_4g_nom")|||sum("inter_rat_ho_success_rate_dnb_5g_to_mno_4g_den")  as  "inter_rat_ho_success_rate_dnb_5g_to_mno_4g" 
+100 * sum("inter_rat_ho_success_rate_dnb_5g_to_mno_4g_nom")|||sum("inter_rat_ho_success_rate_dnb_5g_to_mno_4g_den")  as  "inter_rat_ho_success_rate_dnb_5g_to_mno_4g",
+100 * sum("endc_sr_nom")|||sum("endc_sr_den")  as  "endc_sr" ,
+100 * sum("erab_drop_nom")|||sum("erab_drop_den")  as  "erab_drop" ,
+sum(max_rrc_connected_user_endc) as max_rrc_connected_user_endc,
+sum(eps_fallback_attempt) as eps_fallback_attempt
 from dt
 group by date_id, mobile_operator, rollup("Region")
 order by region, date_id;
@@ -57,6 +61,7 @@ date_id,
 "Region" as region,
 mobile_operator,
 sum("ul_traffic_volume_nom")|||(1024*1024*1024)  as  "ul_traffic_volume" ,
+sum("dl_traffic_volume_nom")|||(1024*1024*1024)  as  "dl_traffic_volume" ,
 100 * sum("dl_qpsk_nom")|||sum("dl_modulation_den")  as  "dl_qpsk"  ,
 100 * sum("dl_16qam_nom")|||sum("dl_modulation_den")  as  "dl_16qam"  ,
 100 * sum("dl_64qam_nom")|||sum("dl_modulation_den")  as  "dl_64qam"  ,
