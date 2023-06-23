@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const { logger } = require('../middleware/logger');
 
 
 const { testQuery } = require("../db/dailyKpiQueries");
@@ -25,6 +26,11 @@ const {
 const asyncHandler = require("../middleware/async");
 const { kpiList, kpiListFlex, mobileOperators } = require("../configs/kpiList");
 
+// log full url for every request
+router.use((req, res, next) => {
+    logger.info(req.protocol + '://' + req.get('host') + req.originalUrl);
+    next();
+});
 
 const tables = {
     nr: [

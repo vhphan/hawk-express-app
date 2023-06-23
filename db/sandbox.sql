@@ -264,3 +264,46 @@ alter table hourly_stats.dc_e_nr_events_nrcellcu_flex_raw rename column "erab_dr
 
 select "endc_sr_nom " from daily_stats.dc_e_nr_events_nrcellcu_flex_day order by random() limit 5;
 
+
+
+select "endc_sr_den " from daily_stats.dc_e_nr_events_nrcellcu_flex_day order by random() limit 5;
+
+
+
+select count(*) from dnb.daily_stats.cells_list;
+
+select distinct tech from dnb.daily_stats.cells_list limit 5;
+
+select date_id, dl_user_throughput_den from dnb.daily_stats.dc_e_nr_nrcelldu_day
+where dl_user_throughput_den<>1000
+order by random() limit 5;
+;
+
+select count(*) from dnb.daily_stats.dc_e_nr_nrcelldu_day
+where dl_user_throughput_den<>1000;
+
+select * from pg_indexes where indexdef ilike '%unique%' and tablename ilike 'kpi%'
+order by tablename;
+;
+
+
+drop index kpi_erbs_eutrancellfdd_v_date_id_region_idx1;
+
+-- drop the following indexes
+-- kpi_erbs_eutrancellfdd_v_date_id_region_idx1
+-- kpi_erbs_eutrancellfdd_v_date_id_region_idx1
+-- kpi_erbs_eutrancellrelation_date_id_region_idx1
+-- kpi_erbs_eutrancellrelation_date_id_region_idx1
+-- kpi_erbsg2_mpprocessingresource_v_date_id_region_idx1
+-- kpi_erbsg2_mpprocessingresource_v_date_id_region_idx1
+-- kpi_nr_nrcelldu_v_date_id_region_idx1
+-- kpi_nr_nrcelldu_v_date_id_region_idx1
+
+drop index hourly_stats.kpi_erbs_eutrancellfdd_v_date_id_region_idx1;
+drop index hourly_stats.kpi_erbs_eutrancellrelation_date_id_region_idx1;
+drop index hourly_stats.kpi_erbsg2_mpprocessingresource_v_date_id_region_idx1;
+drop index hourly_stats.kpi_nr_nrcelldu_v_date_id_region_idx1;
+    
+
+
+

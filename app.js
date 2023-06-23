@@ -53,12 +53,12 @@ if (process.env.NODE_ENV === "development") {
     app.get('/', (req, res) => res.redirect('/node/ctr/ctr-dl'));
 }
 
-// const kpiFrontendRoute = (req, res) => res.sendFile(__dirname + '/apps/kpi-frontend/index.html');
-// app.get('/node/apps/kpi-frontend', kpiFrontendRoute);
-// app.get('/node/apps/kpi-frontend/*', kpiFrontendRoute);
-
-// app.use('/node/apps/kpi-frontend/', express.static(__dirname + '/apps/kpi-frontend/'));
+app.use('/node/apps/dashboard-v1/', express.static(__dirname + '/apps/kpi-frontend/'));
 app.use('/node/apps/', express.static(__dirname + '/apps/'));
+const kpiFrontendRoute = (req, res) => res.sendFile(__dirname + '/apps/dashboard-v1/index.html');
+app.get('/node/apps/dashboard-v1', kpiFrontendRoute);
+app.get('/node/apps/dashboard-v1/*', kpiFrontendRoute);
+
 
 
 const { createSocket } = require('./ePortal/eSocket');

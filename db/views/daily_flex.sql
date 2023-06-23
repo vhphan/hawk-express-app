@@ -69,8 +69,8 @@ sum("dl_traffic_volume_nom")|||(1024*1024*1024)  as  "dl_traffic_volume" ,
 100 * sum("ul_qpsk_nom")|||sum("ul_modulation_den")  as  "ul_qpsk"  ,
 100 * sum("ul_16qam_nom")|||sum("ul_modulation_den")  as  "ul_16qam"  ,
 100 * sum("ul_64qam_nom")|||sum("ul_modulation_den")  as  "ul_64qam"  ,
-sum("dl_user_throughput_nom")|||1000  as  "dl_user_throughput" ,
-sum("ul_user_throughput_nom")|||1000  as  "ul_user_throughput" 
+sum("dl_user_throughput_nom")|||sum("dl_user_throughput_den")  as  "dl_user_throughput" ,
+sum("ul_user_throughput_nom")|||sum("ul_user_throughput_den")  as  "ul_user_throughput" 
 from dt
 group by date_id, mobile_operator, rollup("Region")
 order by region, date_id;

@@ -283,7 +283,7 @@ const getCellsList = async (tech, region, cellPartial) => {
 
     const cellSubstring = cellPartial === '' ? '%' : '%' + cellPartial + '%'
 
-    if (region === 'all') {
+    if (region === 'ALL') {
         return await sql`
                 select cell_id from dnb.daily_stats.cells_list
                 where cell_id ilike ${cellSubstring} and tech = ${tech}

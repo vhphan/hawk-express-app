@@ -12,14 +12,13 @@ with dt as (
 select
 date_id,
 "Region" as region,
-sum("dl_user_throughput_nom")|||1000  as  "dl_user_throughput" ,
-sum("ul_user_throughput_nom")|||1000  as  "ul_user_throughput" ,
-sum("dl_cell_throughput_nom")|||1000  as  "dl_cell_throughput" ,
-sum("ul_cell_throughput_nom")|||1000  as  "ul_cell_throughput" ,
+sum("dl_user_throughput_nom")|||sum("dl_user_throughput_den")  as  "dl_user_throughput" ,
+sum("dl_user_throughput_nom")|||sum("dl_user_throughput_den")  as  "ul_user_throughput" ,
+sum("dl_cell_throughput_nom")|||sum("dl_cell_throughput_den")  as  "dl_cell_throughput" ,
+sum("ul_cell_throughput_nom")|||sum("ul_cell_throughput_den")  as  "ul_cell_throughput" ,
 sum("dl_data_volume_gb_nom")|||power(1024,3)  as  "dl_data_volume_gb" ,
 sum("ul_data_volume_gb_nom")|||power(1024,3)  as  "ul_data_volume_gb" ,
 sum("total_traffic_gb_nom")|||power(1024,3) as  "total_traffic_gb" ,
-
 100 * sum("dl_qpsk_nom") ||| sum("dl_modulation_den") as  "dl_qpsk"  ,
 100 * sum("dl_16qam_nom") ||| sum("dl_modulation_den") as  "dl_16qam"  ,
 100 * sum("dl_64qam_nom") ||| sum("dl_modulation_den") as  "dl_64qam"  ,
@@ -28,7 +27,6 @@ sum("total_traffic_gb_nom")|||power(1024,3) as  "total_traffic_gb" ,
 100 * sum("ul_16qam_nom") ||| sum("ul_modulation_den") as  "ul_16qam"  ,
 100 * sum("ul_64qam_nom") ||| sum("ul_modulation_den") as  "ul_64qam"  ,
 100 * sum("ul_256qam_nom") ||| sum("ul_modulation_den") as  "ul_256qam"  ,
-
 sum("dl_mac_vol_to_scell_nom")||| power(1024,3) as "dl_mac_vol_to_scell" ,
 sum("dl_mac_vol_as_scell_nom")||| power(1024,3) as "dl_mac_vol_as_scell" ,
 sum("dl_mac_vol_to_scell_ext_nom")||| power(1024,3) as "dl_mac_vol_to_scell_ext" ,
@@ -43,6 +41,10 @@ dt
     where "Region" is not null
     GROUP BY date_id, rollup("Region")
     ORDER BY region, date_id;
+
+
+
+
 
 drop materialized view if exists hourly_stats.kpi_nr_nrcellcu_2;
 
