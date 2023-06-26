@@ -307,3 +307,38 @@ drop index hourly_stats.kpi_nr_nrcelldu_v_date_id_region_idx1;
 
 
 
+
+
+select flex_filtername, max_rrc_connected_user_endc, eps_fallback_attempt from
+daily_stats.dc_e_nr_events_nrcellcu_flex_day
+order by random() LIMIT 10;
+
+select date_id, sum(eps_fallback_attempt) from
+daily_stats.dc_e_nr_events_nrcellcu_flex_day
+group by date_id
+order by random() LIMIT 10;
+
+
+select * from dnb.rfdb.flex_filters;
+
+with dt as (
+    select * from dnb.daily_stats.dc_e_nr_events_nrcellcu_flex_day as t1
+        INNER JOIN dnb.rfdb.cell_mapping as cm 
+            on cm."Cellname" = t1."nrcellcu"
+        INNER JOIN dnb.rfdb.df_dpm
+            on cm."SITEID" = df_dpm.site_id
+        INNER JOIN dnb.rfdb.flex_filters as ff 
+            on ff.flex_filtername_nrcellcu = t1.flex_filtername
+    WHERE "Region" is not null
+    AND t1."date_id" >= df_dpm.on_board_date::timestamp
+)
+SELECT
+date_id,
+"Region" as region,
+mobile_operator,
+sum(max_rrc_connected_user_endc) as max_rrc_connected_user_endc
+-- sum(eps_fallback_attempt) as eps_fallback_attempt
+from dt
+group by date_id, mobile_operator, rollup("Region")
+order by region, date_id;
+

@@ -12,6 +12,7 @@ const {
     getRegionDailyStatsNRFlex,
     getRegionDailyStatsLTEFlex,
     getCellsList,
+    getClustersList
 
 } = require("../controllers/kpi");
 const {
@@ -222,6 +223,19 @@ router.get('/cellsList', asyncHandler(async (req, res) => {
             region,
             tech,
             cellPartial,
+        }
+    })
+
+}));
+
+router.get('/clustersList', asyncHandler(async (req, res) => {
+
+    const results = await getClustersList();
+    res.json({
+        success: true,
+        data: results,
+        meta: {
+            time: new Date(),
         }
     })
 

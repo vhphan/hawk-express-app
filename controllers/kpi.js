@@ -296,10 +296,13 @@ const getCellsList = async (tech, region, cellPartial) => {
             ORDER BY cell_id LIMIT 200;
             `;
 
-
 }
 
-
+const getClustersList = async (tech, region, clusterPartial) => {
+    return await sql`
+        select distinct "Cluster_ID" from dnb.rfdb.cell_mapping order by "Cluster_ID";
+    `;
+}
 
 const refreshMaterializedViews = async () => {
     logger.info('Refreshing materialized views');
@@ -443,5 +446,6 @@ module.exports = {
     refreshMaterializedViews,
     refreshMaterializedViewsHourly,
 
-    getCellsList
+    getCellsList,
+    getClustersList
 }
