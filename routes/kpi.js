@@ -12,7 +12,9 @@ const {
     getRegionDailyStatsNRFlex,
     getRegionDailyStatsLTEFlex,
     getCellsList,
-    getClustersList
+    getClustersList,
+    getClusterDailyStatsNR
+
 
 } = require("../controllers/kpi");
 const {
@@ -240,6 +242,33 @@ router.get('/clustersList', asyncHandler(async (req, res) => {
     })
 
 }));
+
+router.get('/dailyStatsCluster', asyncHandler(async (req, res) => {
+
+    const { tech } = req.query;
+    const cluster = req.query.cluster;
+
+    const promises = tables[tech].map((table) => {
+        if (tech === 'nr') return getClusterDailyStatsNR(table, cluster);
+        if (tech === 'lte') return getClusterDailyStatsLTE(table, cluster);
+    });
+
+    const results = await compileResultsKpiArrays(promises, tech, cluster, 'cluster');
+
+    res.json({
+        success: true,
+        data: results,
+        meta: {
+            time: new Date(),
+            cluster,
+            tech,
+        }
+    });
+
+
+}));
+
+
 
 
 module.exports = router;

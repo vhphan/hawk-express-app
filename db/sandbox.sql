@@ -342,3 +342,7 @@ from dt
 group by date_id, mobile_operator, rollup("Region")
 order by region, date_id;
 
+
+
+select distinct "Cluster_ID" from dnb.rfdb.cell_mapping;
+

@@ -431,7 +431,80 @@ const createCronToRefreshMaterializedViews = async () => {
 
 }
 
+const getClusterDailyStatsNR = async (tableName, cluster) => {
 
+    if (tableName === 'dc_e_nr_nrcelldu_day') {
+        return await sql`
+            select * from dnb.daily_stats.clusters_kpi_nr_nrcelldu as dt
+            where cluster_id = ${cluster}
+            order by date_id
+        `;
+    }
+
+    if (tableName === 'dc_e_nr_nrcellcu_day') {
+        return await sql`
+            select * from dnb.daily_stats.clusters_kpi_nr_nrcellcu as dt
+            where cluster_id = ${cluster}
+            order by date_id
+        `;
+    }
+
+    if (tableName === 'dc_e_nr_nrcelldu_v_day') {
+        return await sql`
+            select * from dnb.daily_stats.clusters_kpi_nr_nrcelldu_v as dt
+            where cluster_id = ${cluster}
+            order by date_id
+        `;
+    }
+
+    if (tableName === 'dc_e_erbsg2_mpprocessingresource_v_day') {
+        return await sql`
+            select * from dnb.daily_stats.clusters_kpi_erbsg2_mpprocessingresource_v as dt
+            where cluster_id = ${cluster}
+            order by date_id
+        `;
+    }
+
+    if (tableName === 'dc_e_vpp_rpuserplanelink_v_day') {
+        return await sql`
+            select * from dnb.daily_stats.clusters_kpi_vpp_rpuserplanelink_v as dt
+            where cluster_id = ${cluster}
+            order by date_id
+        `;
+    }
+
+
+    throw new Error('Invalid table name for NR region daily stats; ' + tableName);
+
+}
+
+const getClusterDailyStatsLTE = async (tableName, cluster) => {
+
+    if (tableName === 'dc_e_erbs_eutrancellfdd_day') {
+        return await sql`
+            select * from dnb.daily_stats.kpi_erbs_eutrancellfdd as dt
+            where cluster_id = ${cluster}
+            order by date_id
+        `;
+    }
+
+    if (tableName === 'dc_e_erbs_eutrancellfdd_v_day') {
+        return await sql`
+            select * from dnb.daily_stats.kpi_erbs_eutrancellfdd_v as dt
+            where cluster_id = ${cluster}
+            order by date_id
+        `;
+    }
+
+    if (tableName === 'dc_e_erbs_eutrancellrelation_day') {
+        return await sql`
+            select * from dnb.daily_stats.kpi_erbs_eutrancellrelation as dt
+            where cluster_id = ${cluster}
+            order by date_id
+            `;
+    }
+
+}
 
 module.exports = {
     getCellDailyStatsNR,
@@ -447,5 +520,8 @@ module.exports = {
     refreshMaterializedViewsHourly,
 
     getCellsList,
-    getClustersList
+    getClustersList,
+
+    getClusterDailyStatsNR,
+    getCellDailyStatsLTE,
 }

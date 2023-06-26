@@ -1,0 +1,73 @@
+{
+    "client": "Thunder Client",
+    "collectionName": "hawk",
+    "dateExported": "2023-06-26T01:18:26.103Z",
+    "version": "1.1",
+    "folders": [],
+    "requests": [
+        {
+            "_id": "e04f09ef-1dd9-4a97-aa06-23b66ccaeab4",
+            "colId": "6b4eded2-79d6-4ac9-812e-6523e525f3bd",
+            "containerId": "",
+            "name": "daily stats per region tech=nr",
+            "url": "http://localhost:3000/node/kpi/v1/dailyStatsRegion?tech=nr&region=CENTRAL",
+            "method": "GET",
+            "sortNum": 10000,
+            "created": "2023-06-23T05:20:13.588Z",
+            "modified": "2023-06-23T05:20:13.588Z",
+            "headers": [],
+            "params": [
+                {
+                    "name": "tech",
+                    "value": "nr",
+                    "isPath": false
+                },
+                {
+                    "name": "region",
+                    "value": "CENTRAL",
+                    "isPath": false
+                }
+            ],
+            "tests": []
+        },
+        {
+            "_id": "dcc759ba-a061-43ef-b9ff-23914188163e",
+            "colId": "6b4eded2-79d6-4ac9-812e-6523e525f3bd",
+            "containerId": "",
+            "name": "daily stats per CLUSTER tech=nr ",
+            "url": "http://localhost:3000/node/kpi/v1/dailyStatsCluster?tech=nr&cluster=PPTT_01",
+            "method": "GET",
+            "sortNum": 15000,
+            "created": "2023-06-26T01:13:51.630Z",
+            "modified": "2023-06-26T01:15:41.073Z",
+            "headers": [],
+            "params": [
+                {
+                    "name": "tech",
+                    "value": "nr",
+                    "isPath": false
+                },
+                {
+                    "name": "cluster",
+                    "value": "PPTT_01",
+                    "isPath": false
+                }
+            ],
+            "tests": []
+        },
+        {
+            "_id": "a15f7d3a-d489-4682-9143-a66e156e434d",
+            "colId": "6b4eded2-79d6-4ac9-812e-6523e525f3bd",
+            "containerId": "",
+            "name": "clusters list",
+            "url": "http://localhost:3000/node/kpi/v1/clustersList",
+            "method": "GET",
+            "sortNum": 20000,
+            "created": "2023-06-23T05:20:23.016Z",
+            "modified": "2023-06-23T05:20:42.052Z",
+            "headers": [],
+            "params": [],
+            "tests": []
+        }
+    ]
+}
