@@ -32,11 +32,7 @@ create operator ||| (procedure = daily_stats.division, leftarg = anyelement, rig
 
 
 
-drop materialized view daily_stats.kpi_nr_nrcelldu;
-
-select pg_get_viewdef('daily_stats.kpi_nr_nrcelldu');
-
-drop materialized view daily_stats.kpi_nr_nrcelldu;
+drop materialized view if exists daily_stats.kpi_nr_nrcelldu;
 create materialized view daily_stats.kpi_nr_nrcelldu as
 select
 date_id,
@@ -75,17 +71,7 @@ INNER JOIN dnb.rfdb.cell_mapping as cm on cm."Cellname" = dt."nrcelldu"
     WHERE "Region" is not null
     GROUP BY date_id, rollup("Region");
 
-select date_id, sum("dl_user_throughput_nom")/sum("dl_user_throughput_den")  as  "dl_user_throughput" 
-from dnb.daily_stats.dc_e_nr_nrcelldu_day as dt
-group by date_id;
-
-select nrcelldu, date_id, ("dl_user_throughput_nom")/1000  as  "dl_user_throughput" 
-from dnb.daily_stats.dc_e_nr_nrcelldu_day as dt
-order by random() limit 5;
-
-
-
-drop materialized view daily_stats.kpi_nr_nrcellcu;
+drop materialized view if exists daily_stats.kpi_nr_nrcellcu;
 create materialized view daily_stats.kpi_nr_nrcellcu as
 select
 date_id,
@@ -108,81 +94,85 @@ INNER JOIN dnb.rfdb.cell_mapping as cm on cm."Cellname" = dt."nrcellcu"
     WHERE "Region" is not null
     GROUP BY date_id, rollup("Region");
 
--- check indexes on all tables
-select * from pg_indexes where schemaname ilike 'hourly%' and tablename ilike 'dc_e%';
+/*markdown
+## dc_e_nr_nrcelldu_v_day
+*/
 
-set search_path to daily_stats, public;
-
--- alter table dc_e_nr_events_nrcelldu_flex_day modify column nrcelldu to varchar(100)
-
-ALTER TABLE dc_e_nr_events_nrcelldu_flex_day ALTER COLUMN nrcelldu TYPE varchar(100);
-ALTER TABLE dc_e_nr_events_nrcelldu_flex_day ALTER COLUMN nr_name TYPE varchar(100);
-
--- alter table dc_e_nr_events_nrcelldu_flex_day modify column nrcelldu to varchar(100)
-
-ALTER TABLE dc_e_nr_events_nrcellcu_flex_day ALTER COLUMN nrcellcu TYPE varchar(100);
-ALTER TABLE dc_e_nr_events_nrcellcu_flex_day ALTER COLUMN nr_name TYPE varchar(100);
-
-create index on daily_stats.dc_e_nr_events_nrcellcu_flex_day (nrcellcu);
-create index on daily_stats.dc_e_nr_events_nrcelldu_flex_day (nrcelldu);
-
-alter table daily_stats.dc_e_nr_events_nrcelldu_flex_day alter column dl_user_throughput_nom type double precision;
-alter table daily_stats.dc_e_nr_events_nrcelldu_flex_day alter column ul_user_throughput_nom type double precision;
-
-CREATE OR REPLACE FUNCTION to_double1(text)
-RETURNS double precision AS $$
-  SELECT CASE WHEN upper($1) = 'NULL' THEN NULL
-         ELSE $1::double precision END
-$$ LANGUAGE sql IMMUTABLE STRICT;
-
-select to_double1(dl_user_throughput_nom) from daily_stats.dc_e_nr_events_nrcelldu_flex_day order by random() limit 3 ;
-
-update daily_stats.dc_e_nr_events_nrcelldu_flex_day set dl_user_throughput_nom = null
-where dl_user_throughput_nom = 'NULL';
-
-update daily_stats.dc_e_nr_events_nrcelldu_flex_day set ul_user_throughput_nom = null
-where ul_user_throughput_nom = 'NULL';
-
-alter table daily_stats.dc_e_nr_events_nrcelldu_flex_day alter column dl_user_throughput_nom type double precision;
-alter table daily_stats.dc_e_nr_events_nrcelldu_flex_day alter column ul_user_throughput_nom type double precision;
-
-alter table daily_stats.dc_e_nr_events_nrcelldu_flex_day add column dl_user_throughput_nom2 double precision;
+drop materialized view daily_stats.kpi_nr_nrcelldu_v;
+create materialized view daily_stats.kpi_nr_nrcelldu_v as
+select
+date_id,
+"Region" as region,
+sum("latency_only_radio_interface_nom")|||sum("latency_only_radio_interface_den")  as  "latency_only_radio_interface" ,
+sum("average_cqi_nom")|||sum("average_cqi_den")  as  "average_cqi" ,
+sum("avg_pusch_ul_rssi_nom")|||sum("avg_pusch_ul_rssi_den")  as  "avg_pusch_ul_rssi"
+from
+dnb.daily_stats.dc_e_nr_nrcelldu_v_day as dt
+INNER JOIN dnb.rfdb.cell_mapping as cm on cm."Cellname" = dt."nrcelldu"
+    INNER JOIN (SELECT site_id, on_board_date::date, time::date
+            FROM dnb.rfdb.df_dpm,
+                generate_series(on_board_date::date, now(), '1 day') as time) as obs
+                            on obs.time = dt."date_id" and cm."SITEID" = obs.site_id
+    WHERE "Region" is not null
+    GROUP BY date_id, rollup("Region");
 
 
-alter table daily_stats.dc_e_nr_events_nrcelldu_flex_day add column ul_user_throughput_nom2 double precision;
-
-
-update daily_stats.dc_e_nr_events_nrcelldu_flex_day set dl_user_throughput_nom2 = to_double1(dl_user_throughput_nom);
+drop materialized view daily_stats.kpi_vpp_rpuserplanelink_v;
+create materialized view daily_stats.kpi_vpp_rpuserplanelink_v as
+select
+date_id,
+"Region" as region,
+100 * sum("packet_loss_dl_nom")|||sum("packet_loss_dl_den")  as  "packet_loss_dl" ,
+100 * sum("packet_loss_ul_nom")|||sum("packet_loss_ul_den")  as  "packet_loss_ul" 
+from
+dnb.daily_stats.dc_e_vpp_rpuserplanelink_v_day as dt
+INNER JOIN dnb.rfdb.cell_mapping as cm on cm."Sitename" = dt."ne_name"
+    INNER JOIN (SELECT site_id, on_board_date::date, time::date
+            FROM dnb.rfdb.df_dpm,
+                generate_series(on_board_date::date, now(), '1 day') as time) as obs
+                            on obs.time = dt."date_id" and cm."SITEID" = obs.site_id
+    WHERE "Region" is not null
+    GROUP BY date_id::date, rollup("Region");
 
 
 
+drop materialized view daily_stats.kpi_erbsg2_mpprocessingresource_v;
+create materialized view daily_stats.kpi_erbsg2_mpprocessingresource_v as
+select
+date_id,
+"Region" as region,
+sum("gnodeb_cpu_load_nom")|||sum("gnodeb_cpu_load_den")  as  "gnodeb_cpu_load"
+from
+dnb.daily_stats.dc_e_erbsg2_mpprocessingresource_v_day as dt
+INNER JOIN dnb.rfdb.cell_mapping as cm on cm."Sitename" = dt."erbs"
+    INNER JOIN (SELECT site_id, on_board_date::date, time::date
+            FROM dnb.rfdb.df_dpm,
+                generate_series(on_board_date::date, now(), '1 day') as time) as obs
+                            on obs.time = dt."date_id" and cm."SITEID" = obs.site_id
+    WHERE "Region" is not null
+    GROUP BY date_id::date, rollup("Region");
 
-update daily_stats.dc_e_nr_events_nrcelldu_flex_day set ul_user_throughput_nom2 = to_double1(ul_user_throughput_nom);
+create unique index on daily_stats.kpi_nr_nrcellcu (date_id, region);
+create unique index on daily_stats.kpi_nr_nrcelldu (date_id, region);
+create unique index on daily_stats.kpi_nr_nrcelldu_v (date_id, region);
+create unique index on daily_stats.kpi_erbsg2_mpprocessingresource_v (date_id, region);
+create unique index on daily_stats.kpi_vpp_rpuserplanelink_v (date_id, region);
 
 
-select dl_user_throughput_nom, ul_user_throughput_nom from daily_stats.dc_e_nr_events_nrcelldu_flex_day order by random() limit 10 ;
-
--- drop column dl_user_throughput_nom and rename dl_user_throughput_nom2 to dl_user_throughput_nom;
-alter table daily_stats.dc_e_nr_events_nrcelldu_flex_day drop column dl_user_throughput_nom;
-alter table daily_stats.dc_e_nr_events_nrcelldu_flex_day rename column dl_user_throughput_nom2 to dl_user_throughput_nom;
-
-
-
--- drop column dl_user_throughput_nom and rename dl_user_throughput_nom2 to dl_user_throughput_nom;
-alter table daily_stats.dc_e_nr_events_nrcelldu_flex_day drop column ul_user_throughput_nom;
-alter table daily_stats.dc_e_nr_events_nrcelldu_flex_day rename column ul_user_throughput_nom2 to ul_user_throughput_nom;
+REFRESH MATERIALIZED VIEW CONCURRENTLY dnb.daily_stats.kpi_nr_nrcelldu;
+REFRESH MATERIALIZED VIEW CONCURRENTLY dnb.daily_stats.kpi_nr_nrcellcu;
+REFRESH MATERIALIZED VIEW CONCURRENTLY dnb.daily_stats.kpi_nr_nrcelldu_v;
+REFRESH MATERIALIZED VIEW CONCURRENTLY dnb.daily_stats.kpi_erbsg2_mpprocessingresource_v;
+REFRESH MATERIALIZED VIEW CONCURRENTLY dnb.daily_stats.kpi_vpp_rpuserplanelink_v;
 
 
 
-select * from daily_stats.dc_e_nr_events_nrcelldu_flex_day order by random() limit 3 ;
+/*markdown
+# FLEX VIEWS
 
-SELECT site_id, on_board_date::date, time::date
-            FROM dnb.daily_stats.df_dpm,
-                generate_series(on_board_date::date, now(), '1 day') as time
+*/
 
-select count(*) from dnb.daily_stats.cell_mapping;
-
-drop materialized view daily_stats.kpi_nr_events_nrcelldu_flex;
+drop materialized view if exists daily_stats.kpi_nr_events_nrcelldu_flex;
 create materialized view daily_stats.kpi_nr_events_nrcelldu_flex as
 select
 date_id,
@@ -207,7 +197,7 @@ LEFT JOIN dnb.rfdb.cell_mapping as cm on cm."Cellname" = dt."nrcelldu"
     WHERE "Region" is not null
     GROUP BY date_id, rollup("Region");
 
-drop materialized view daily_stats.kpi_nr_events_nrcellcu_flex;
+drop materialized view if exists daily_stats.kpi_nr_events_nrcellcu_flex;
 create materialized view daily_stats.kpi_nr_events_nrcellcu_flex as
 select
 date_id,
@@ -226,147 +216,8 @@ LEFT JOIN dnb.rfdb.cell_mapping as cm on cm."Cellname" = dt."nrcellcu"
     WHERE "Region" is not null
     GROUP BY date_id, rollup("Region");
 
-select * from pg_indexes where tablename ilike 'dc%';
+create unique index on daily_stats.kpi_nr_events_nrcelldu_flex (date_id, region);
+create unique index on daily_stats.kpi_nr_events_nrcellcu_flex (date_id, region);
 
-alter table daily_stats.dc_e_nr_events_nrcellcu_flex_day alter column flex_filtername type varchar(100);
-
-alter table daily_stats.dc_e_nr_events_nrcelldu_flex_day alter column flex_filtername type varchar(100);
-
-select column_name from information_schema.columns where table_name ilike 'dc%' and column_name ilike '%_nom' and table_name ilike '%_nr_%' order by column_name;
-
-
-
-
-/*markdown
-
-# CELL LEVEL
-
-
-*/
-
-select nrcelldu from dnb.daily_stats.dc_e_nr_nrcelldu_day order by random() limit 10;
-
-/*markdown
-## dc_e_nr_nrcelldu_v_day
-*/
-
-
-alter table daily_stats.dc_e_nr_nrcelldu_v_day alter column nrcelldu type varchar(100);
-alter table daily_stats.dc_e_nr_nrcelldu_v_day alter column nr_name type varchar(100);
-
-
-
-
-create index dc_e_nr_nrcelldu_v_day_idx on daily_stats.dc_e_nr_nrcelldu_v_day (nrcelldu);
-
-drop materialized view daily_stats.kpi_nr_nrcelldu_v;
-create materialized view daily_stats.kpi_nr_nrcelldu_v as
-select
-date_id,
-"Region" as region,
-sum("latency_only_radio_interface_nom")|||sum("latency_only_radio_interface_den")  as  "latency_only_radio_interface" ,
-sum("average_cqi_nom")|||sum("average_cqi_den")  as  "average_cqi" ,
-sum("avg_pusch_ul_rssi_nom")|||sum("avg_pusch_ul_rssi_den")  as  "avg_pusch_ul_rssi"
-from
-dnb.daily_stats.dc_e_nr_nrcelldu_v_day as dt
-INNER JOIN dnb.rfdb.cell_mapping as cm on cm."Cellname" = dt."nrcelldu"
-    INNER JOIN (SELECT site_id, on_board_date::date, time::date
-            FROM dnb.rfdb.df_dpm,
-                generate_series(on_board_date::date, now(), '1 day') as time) as obs
-                            on obs.time = dt."date_id" and cm."SITEID" = obs.site_id
-    WHERE "Region" is not null
-    GROUP BY date_id, rollup("Region");
-
-
-alter table daily_stats.dc_e_vpp_rpuserplanelink_v_day alter column ne_name type varchar(100);
-
-create index on daily_stats.dc_e_vpp_rpuserplanelink_v_day (ne_name);
-
-select * from daily_stats.dc_e_vpp_rpuserplanelink_v_day limit 3;
-
-select * from daily_stats.cell_mapping limit 3;
-
-
-drop materialized view daily_stats.kpi_vpp_rpuserplanelink_v;
-create materialized view daily_stats.kpi_vpp_rpuserplanelink_v as
-select
-date_id,
-"Region" as region,
-100 * sum("packet_loss_dl_nom")|||sum("packet_loss_dl_den")  as  "packet_loss_dl" ,
-100 * sum("packet_loss_ul_nom")|||sum("packet_loss_ul_den")  as  "packet_loss_ul" 
-from
-dnb.daily_stats.dc_e_vpp_rpuserplanelink_v_day as dt
-INNER JOIN dnb.rfdb.cell_mapping as cm on cm."Sitename" = dt."ne_name"
-    INNER JOIN (SELECT site_id, on_board_date::date, time::date
-            FROM dnb.rfdb.df_dpm,
-                generate_series(on_board_date::date, now(), '1 day') as time) as obs
-                            on obs.time = dt."date_id" and cm."SITEID" = obs.site_id
-    WHERE "Region" is not null
-    GROUP BY date_id::date, rollup("Region");
-
-
-
-select count( distinct date_id ) from daily_stats.dc_e_vpp_rpuserplanelink_v_day;
-
-select count(distinct date_id) from daily_stats.dc_e_erbsg2_mpprocessingresource_v_day;
-
-
-drop materialized view daily_stats.kpi_erbsg2_mpprocessingresource_v;
-
-
-
-drop materialized view daily_stats.kpi_erbsg2_mpprocessingresource_v;
-create materialized view daily_stats.kpi_erbsg2_mpprocessingresource_v as
-select
-date_id,
-"Region" as region,
-sum("gnodeb_cpu_load_nom")|||sum("gnodeb_cpu_load_den")  as  "gnodeb_cpu_load"
-from
-dnb.daily_stats.dc_e_erbsg2_mpprocessingresource_v_day as dt
-INNER JOIN dnb.rfdb.cell_mapping as cm on cm."Sitename" = dt."erbs"
-    INNER JOIN (SELECT site_id, on_board_date::date, time::date
-            FROM dnb.rfdb.df_dpm,
-                generate_series(on_board_date::date, now(), '1 day') as time) as obs
-                            on obs.time = dt."date_id" and cm."SITEID" = obs.site_id
-    WHERE "Region" is not null
-    GROUP BY date_id::date, rollup("Region");
-
-
-alter table daily_stats.dc_e_erbsg2_mpprocessingresource_v_day alter column erbs type varchar(100);
-
-create index on daily_stats.dc_e_erbsg2_mpprocessingresource_v_day (erbs);
-
-alter table daily_stats.dc_e_erbsg2_mpprocessingresource_v_day rename column gnobeb_cpu_load_nom to gnodeb_cpu_load_nom;
-
-alter table daily_stats.dc_e_erbsg2_mpprocessingresource_v_day rename column gnobeb_cpu_load_den to gnodeb_cpu_load_den;
-
-
-
-
-
-create unique index on daily_stats.kpi_nr_nrcellcu (date_id, region);
-create unique index on daily_stats.kpi_nr_nrcelldu (date_id, region);
-create unique index on daily_stats.kpi_nr_nrcelldu_v (date_id, region);
-create unique index on daily_stats.kpi_erbsg2_mpprocessingresource_v (date_id, region);
-create unique index on daily_stats.kpi_vpp_rpuserplanelink_v (date_id, region);
-
-
-REFRESH MATERIALIZED VIEW CONCURRENTLY dnb.daily_stats.kpi_nr_nrcelldu;
-REFRESH MATERIALIZED VIEW CONCURRENTLY dnb.daily_stats.kpi_nr_nrcellcu;
-REFRESH MATERIALIZED VIEW CONCURRENTLY dnb.daily_stats.kpi_nr_nrcelldu_v;
-REFRESH MATERIALIZED VIEW CONCURRENTLY dnb.daily_stats.kpi_erbsg2_mpprocessingresource_v;
-REFRESH MATERIALIZED VIEW CONCURRENTLY dnb.daily_stats.kpi_vpp_rpuserplanelink_v;
-
-
-
-select distinct region from daily_stats.kpi_nr_nrcelldu_v;
-
-
-
-
-
-select cell_availability_den from daily_stats.dc_e_nr_nrcelldu_day 
-group by cell_availability_den;
-
-select cell_availability_den, count(*) from hourly_stats.dc_e_nr_nrcelldu_raw
-group by cell_availability_den;
+refresh materialized view concurrently dnb.daily_stats.kpi_nr_events_nrcelldu_flex;
+refresh materialized view concurrently dnb.daily_stats.kpi_nr_events_nrcellcu_flex;
