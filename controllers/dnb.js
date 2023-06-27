@@ -163,7 +163,29 @@ const deleteAllRows = async (tableName, schemaName) => {
     return result;
 };
 
+const getTableRowsCount = async (tableName, schemaName) => {
+    const url = new URL(`https://api.eprojecttrackers.com/node/dnb/tableRowCount?dbName=dnb&schemaName=${schemaName}&tableName=cell_mapping`);
+    const api = process.env.EPORTAL_API_KEY;
+    const response = (await axios.get(url.href, {
+        headers: {
+            API: api
+        }
+    })
+    ).data;
+    if (response.success === false) {
+        throw new Error('Error in fetching data from ePortal. tableRowCount API failed for table: ' + tableName + ' schema: ' + schemaName);
+    }
+    return response.data.rowsCount;
+}
+
 const insertDfDpmTable = async () => {
+
+    const dpmRowsCount = await getTableRowsCount('df_dpm', 'rfdb');
+    if (dpmRowsCount === 0) {
+        logger.info('No rows in df_dpm table. Fetching data from ePortal. Aborting..');
+        return;
+    }
+
     deleteAllRows('df_dpm', 'rfdb');
     const data = await getTableDataFromPortal('df_dpm');
     const result = await insertMultipleRows(data, 'df_dpm', 'rfdb');
@@ -172,6 +194,13 @@ const insertDfDpmTable = async () => {
 };
 
 const insertCellMappingTable = async () => {
+
+    const cellMappingRowsCount = await getTableRowsCount('cell_mapping', 'rfdb');
+    if (cellMappingRowsCount === 0) {
+        logger.info('No rows in cell_mapping table. Fetching data from ePortal. Aborting..');
+        return;
+    }
+
     deleteAllRows('cell_mapping', 'rfdb');
     const data = await getTableDataFromPortal('cell_mapping');
     const result = await insertMultipleRows(data, 'cell_mapping', 'rfdb');

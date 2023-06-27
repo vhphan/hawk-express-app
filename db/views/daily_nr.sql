@@ -94,11 +94,7 @@ INNER JOIN dnb.rfdb.cell_mapping as cm on cm."Cellname" = dt."nrcellcu"
     WHERE "Region" is not null
     GROUP BY date_id, rollup("Region");
 
-/*markdown
-## dc_e_nr_nrcelldu_v_day
-*/
-
-drop materialized view daily_stats.kpi_nr_nrcelldu_v;
+drop materialized view if exists daily_stats.kpi_nr_nrcelldu_v;
 create materialized view daily_stats.kpi_nr_nrcelldu_v as
 select
 date_id,

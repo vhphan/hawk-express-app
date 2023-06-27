@@ -69,3 +69,79 @@ create unique index on daily_stats.clusters_kpi_nr_nrcellcu (date_id, cluster_id
 refresh materialized view concurrently daily_stats.clusters_kpi_nr_nrcelldu;
 refresh materialized view concurrently daily_stats.clusters_kpi_nr_nrcellcu;
 
+
+
+drop materialized view if exists daily_stats.clusters_kpi_nr_nrcelldu_v;
+
+create materialized view daily_stats.clusters_kpi_nr_nrcelldu_v as
+select
+date_id,
+"Cluster_ID" as cluster_id,
+sum("latency_only_radio_interface_nom")|||sum("latency_only_radio_interface_den")  as  "latency_only_radio_interface" ,
+sum("average_cqi_nom")|||sum("average_cqi_den")  as  "average_cqi" ,
+sum("avg_pusch_ul_rssi_nom")|||sum("avg_pusch_ul_rssi_den")  as  "avg_pusch_ul_rssi"
+from
+dnb.daily_stats.dc_e_nr_nrcelldu_v_day as dt
+INNER JOIN dnb.rfdb.cell_mapping as cm on cm."Cellname" = dt."nrcelldu"
+    INNER JOIN (SELECT site_id, on_board_date::date, time::date
+            FROM dnb.rfdb.df_dpm,
+                generate_series(on_board_date::date, now(), '1 day') as time) as obs
+                            on obs.time = dt."date_id" and cm."SITEID" = obs.site_id
+    WHERE "Cluster_ID" is not null
+    GROUP BY date_id, "Cluster_ID";
+
+
+
+create unique index on daily_stats.clusters_kpi_nr_nrcelldu_v (date_id, cluster_id);
+
+refresh materialized view concurrently daily_stats.clusters_kpi_nr_nrcelldu_v;
+
+
+drop materialized view if exists daily_stats.clusters_kpi_vpp_rpuserplanelink_v;
+create materialized view daily_stats.clusters_kpi_vpp_rpuserplanelink_v as
+select
+date_id,
+"Cluster_ID" as cluster_id,
+100 * sum("packet_loss_dl_nom")|||sum("packet_loss_dl_den")  as  "packet_loss_dl" ,
+100 * sum("packet_loss_ul_nom")|||sum("packet_loss_ul_den")  as  "packet_loss_ul" 
+from
+dnb.daily_stats.dc_e_vpp_rpuserplanelink_v_day as dt
+INNER JOIN dnb.rfdb.cell_mapping as cm on cm."Sitename" = dt."ne_name"
+    INNER JOIN (SELECT site_id, on_board_date::date, time::date
+            FROM dnb.rfdb.df_dpm,
+                generate_series(on_board_date::date, now(), '1 day') as time) as obs
+                            on obs.time = dt."date_id" and cm."SITEID" = obs.site_id
+    WHERE "Region" is not null
+    GROUP BY date_id, "Cluster_ID";
+
+create unique index on daily_stats.clusters_kpi_vpp_rpuserplanelink_v (date_id, cluster_id);
+
+refresh materialized view concurrently daily_stats.clusters_kpi_vpp_rpuserplanelink_v;
+
+drop materialized view if exists daily_stats.clusters_kpi_erbsg2_mpprocessingresource_v;
+create materialized view daily_stats.clusters_kpi_erbsg2_mpprocessingresource_v as
+select
+date_id,
+"Cluster_ID" as cluster_id,
+sum("gnodeb_cpu_load_nom")|||sum("gnodeb_cpu_load_den")  as  "gnodeb_cpu_load"
+from
+dnb.daily_stats.dc_e_erbsg2_mpprocessingresource_v_day as dt
+INNER JOIN dnb.rfdb.cell_mapping as cm on cm."Sitename" = dt."erbs"
+    INNER JOIN (SELECT site_id, on_board_date::date, time::date
+            FROM dnb.rfdb.df_dpm,
+                generate_series(on_board_date::date, now(), '1 day') as time) as obs
+                            on obs.time = dt."date_id" and cm."SITEID" = obs.site_id
+    WHERE "Region" is not null
+    GROUP BY date_id, "Cluster_ID";
+
+create unique index on daily_stats.clusters_kpi_erbsg2_mpprocessingresource_v (date_id, cluster_id);
+
+REFRESH MATERIALIZED VIEW CONCURRENTLY daily_stats.clusters_kpi_erbsg2_mpprocessingresource_v;
+
+
+REFRESH MATERIALIZED VIEW CONCURRENTLY dnb.daily_stats.clusters_kpi_nr_nrcelldu;
+REFRESH MATERIALIZED VIEW CONCURRENTLY dnb.daily_stats.clusters_kpi_nr_nrcellcu;
+REFRESH MATERIALIZED VIEW CONCURRENTLY dnb.daily_stats.clusters_kpi_nr_nrcelldu_v;
+REFRESH MATERIALIZED VIEW CONCURRENTLY dnb.daily_stats.clusters_kpi_erbsg2_mpprocessingresource_v;
+REFRESH MATERIALIZED VIEW CONCURRENTLY dnb.daily_stats.clusters_kpi_vpp_rpuserplanelink_v;
+

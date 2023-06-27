@@ -300,7 +300,12 @@ const getCellsList = async (tech, region, cellPartial) => {
 
 const getClustersList = async (tech, region, clusterPartial) => {
     return await sql`
-        select distinct "Cluster_ID" from dnb.rfdb.cell_mapping order by "Cluster_ID";
+        select "Region" as region,
+        "Cluster_ID" as cluster_id
+        from dnb.rfdb.cell_mapping
+        where "Cluster_ID" not ilike 'unknown'
+        group by "Region", "Cluster_ID"
+        order by "Cluster_ID";
     `;
 }
 
@@ -412,22 +417,9 @@ const createCronToRefreshMaterializedViews = async () => {
         await refreshMaterializedViews();
     });
 
-    cron.schedule('30 4 * * *', async () => {
+    cron.schedule('06 * * * *', async () => {
         await refreshMaterializedViewsHourly();
     });
-
-    cron.schedule('30 9 * * *', async () => {
-        await refreshMaterializedViewsHourly();
-    });
-
-    cron.schedule('30 13 * * *', async () => {
-        await refreshMaterializedViewsHourly();
-    });
-
-    cron.schedule('30 16 * * *', async () => {
-        await refreshMaterializedViewsHourly();
-    });
-
 
 }
 

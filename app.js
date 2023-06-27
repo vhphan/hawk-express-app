@@ -70,10 +70,14 @@ const socket = createSocket();
 
 
 if (process.env.NODE_ENV !== "development") {
-    createCronToDeleteFilesOlderThanNDays(__dirname + '/tmp/dl', 2);
-    createCronToRunMainDPM();
-    createCronToRunMainCellMapping();
-    createCronToRefreshMaterializedViews();
+    try {
+        createCronToDeleteFilesOlderThanNDays(__dirname + '/tmp/dl', 2);
+        createCronToRunMainDPM();
+        createCronToRunMainCellMapping();
+        createCronToRefreshMaterializedViews();
+    } catch (error) {
+        logger.error(error);
+    }
 }
 
 if (process.env.NODE_ENV === "development") {
