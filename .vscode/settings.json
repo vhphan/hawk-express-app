@@ -16,5 +16,5 @@
         "editor.defaultFormatter": "ms-python.autopep8"
     },
     "python.formatting.provider": "none",
-    "workbench.colorTheme": "monokai-charcoal (red)",
+    "workbench.colorTheme": "Visual Studio Light",
 }

@@ -277,13 +277,12 @@ router.get('/dailyStatsCluster', asyncHandler(async (req, res) => {
 
 router.get('/hourlyStatsCluster', asyncHandler(async (req, res) => {
 
-    const { tech } = req.query;
-    const cluster = req.query.cluster;
+    const { tech, cluster } = req.query;
 
     const promises = tablesHourly[tech].map((table) => {
 
-        if (tech === 'nr') return getClusterHourlyStatsNR(table);
-        if (tech === 'lte') return getClusterHourlyStatsLTE(table);
+        if (tech === 'nr') return getClusterHourlyStatsNR(table, cluster);
+        if (tech === 'lte') return getClusterHourlyStatsLTE(table, cluster);
 
     });
 

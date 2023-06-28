@@ -204,7 +204,7 @@ const getRegionHourlyStatsLTEFlex = async (tableName) => {
     throw new Error('Invalid table name for LTE region daily stats; ' + tableName);
 };
 
-const getClusterHourlyStatsNR = async (tableName) => {
+const getClusterHourlyStatsNR = async (tableName, cluster) => {
 
     if (tableName === 'dc_e_nr_nrcelldu_raw') {
         return await sql`
