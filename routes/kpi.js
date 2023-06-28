@@ -5,6 +5,7 @@ const { logger } = require('../middleware/logger');
 
 const { testQuery } = require("../db/dailyKpiQueries");
 const {
+
     getCellDailyStatsNR,
     getCellDailyStatsLTE,
     getRegionDailyStatsNR,
@@ -16,15 +17,17 @@ const {
     getClusterDailyStatsNR,
     getClusterDailyStatsLTE,
 
-
 } = require("../controllers/kpi");
 const {
+
     getRegionHourlyStatsNR,
     getRegionHourlyStatsLTE,
     getRegionHourlyStatsNRFlex,
     getRegionHourlyStatsLTEFlex,
     getCellHourlyStatsNR,
     getCellHourlyStatsLTE,
+    getClusterHourlyStatsNR,
+    getClusterHourlyStatsLTE,
 
 } = require("../controllers/kpiHourly");
 const asyncHandler = require("../middleware/async");
@@ -272,6 +275,33 @@ router.get('/dailyStatsCluster', asyncHandler(async (req, res) => {
 
 
 
+router.get('/hourlyStatsCluster', asyncHandler(async (req, res) => {
+
+    const { tech } = req.query;
+    const cluster = req.query.cluster;
+
+    const promises = tablesHourly[tech].map((table) => {
+
+        if (tech === 'nr') return getClusterHourlyStatsNR(table);
+        if (tech === 'lte') return getClusterHourlyStatsLTE(table);
+
+    });
+
+
+    const results = await compileResultsKpiArrays(promises, tech, cluster, 'cluster');
+
+    res.json({
+        success: true,
+        data: results,
+        meta: {
+            time: new Date(),
+            cluster,
+            tech,
+        }
+    });
+
+
+}));
 
 module.exports = router;
 

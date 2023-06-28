@@ -9,7 +9,7 @@ with dt as (
     WHERE "Region" is not null
     AND t1."date_id" >= df_dpm.on_board_date::timestamp
 )
-select 
+select
 date_id,
 "Cluster_ID" as cluster_id,
 100 * sum("call_setup_success_rate_nom")|||sum("call_setup_success_rate_den")  as  "call_setup_success_rate" ,
@@ -47,13 +47,6 @@ group by "date_id", "Cluster_ID"
 ;
 
 
-
-
-
-
-
-
-
 create unique index on dnb.daily_stats.clusters_kpi_erbs_eutrancellfdd(date_id, cluster_id);
 
 drop materialized view if exists dnb.daily_stats.clusters_kpi_erbs_eutrancellrelation;
@@ -78,7 +71,29 @@ group by "date_id", "Cluster_ID"
 
 create unique index on dnb.daily_stats.clusters_kpi_erbs_eutrancellrelation(date_id, cluster_id);
 
+create materialized view daily_stats.clusters_kpi_erbs_eutrancellfdd_v as
+select
+date_id,
+"Cluster_ID" as cluster_id,
+sum("resource_block_utilizing_rate(dl)_nom")|||sum("resource_block_utilizing_rate(dl)_den")  as  "resource_block_utilizing_rate(dl)" ,
+sum("resource_block_utilizing_rate(ul)_nom")|||sum("resource_block_utilizing_rate(ul)_den")  as  "resource_block_utilizing_rate(ul)" ,
+sum("average_cqi_nom")|||sum("average_cqi_den")  as  "average_cqi" ,
+sum("avg_pusch_ul_rssi_nom")|||sum("avg_pusch_ul_rssi_den")  as  "avg_pusch_ul_rssi"
+from
+dnb.daily_stats.dc_e_erbs_eutrancellfdd_v_day as dt
+INNER JOIN dnb.rfdb.cell_mapping as cm on cm."Cellname" = dt."eutrancellfdd"
+    INNER JOIN (SELECT site_id, on_board_date::date, time::date
+            FROM dnb.rfdb.df_dpm,
+                generate_series(on_board_date::date, now(), '1 day') as time) as obs
+                            on obs.time = dt."date_id" and cm."SITEID" = obs.site_id
+    WHERE "Cluster_ID" is not null
+    GROUP BY date_id, "Cluster_ID";
+
+create unique index on dnb.daily_stats.clusters_kpi_erbs_eutrancellfdd_v(date_id, cluster_id);
+
 refresh materialized view concurrently dnb.daily_stats.clusters_kpi_erbs_eutrancellfdd;
 refresh materialized view concurrently dnb.daily_stats.clusters_kpi_erbs_eutrancellrelation;
+refresh materialized view concurrently dnb.daily_stats.clusters_kpi_erbs_eutrancellfdd_v;
+
 
 

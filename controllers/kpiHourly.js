@@ -204,6 +204,83 @@ const getRegionHourlyStatsLTEFlex = async (tableName) => {
     throw new Error('Invalid table name for LTE region daily stats; ' + tableName);
 };
 
+const getClusterHourlyStatsNR = async (tableName) => {
+
+    if (tableName === 'dc_e_nr_nrcelldu_raw') {
+        return await sql`
+            select * from dnb.hourly_stats.clusters_kpi_nr_nrcelldu as dt
+            where cluster_id = ${cluster}
+            order by date_id
+        `;
+    }
+
+    if (tableName === 'dc_e_nr_nrcellcu_raw') {
+        return await sql`
+            select * from dnb.hourly_stats.clusters_kpi_nr_nrcellcu as dt
+            where cluster_id = ${cluster}
+            order by date_id
+        `;
+    }
+
+    if (tableName === 'dc_e_nr_nrcelldu_v_raw') {
+        return await sql`
+            select * from dnb.hourly_stats.clusters_kpi_nr_nrcelldu_v as dt
+            where cluster_id = ${cluster}
+            order by date_id
+        `;
+    }
+
+    if (tableName === 'dc_e_erbsg2_mpprocessingresource_v_raw') {
+        return await sql`
+            select * from dnb.hourly_stats.clusters_kpi_erbsg2_mpprocessingresource_v as dt
+            where cluster_id = ${cluster}
+            order by date_id
+        `;
+    }
+
+    if (tableName === 'dc_e_vpp_rpuserplanelink_v_raw') {
+        return await sql`
+            select * from dnb.hourly_stats.clusters_kpi_vpp_rpuserplanelink_v as dt
+            where cluster_id = ${cluster}
+            order by date_id
+        `;
+    }
+
+
+    throw new Error('Invalid table name for NR region hourly stats; ' + tableName);
+
+
+};
+
+
+const getClusterHourlyStatsLTE = async (tableName, cluster) => {
+
+    if (tableName === 'dc_e_erbs_eutrancellfdd_raw') {
+        return await sql`
+            select * from dnb.hourly_stats.clusters_kpi_erbs_eutrancellfdd as dt
+            where cluster_id = ${cluster}
+            order by date_id
+        `;
+    }
+
+    if (tableName === 'dc_e_erbs_eutrancellfdd_v_raw') {
+        return await sql`
+            select * from dnb.hourly_stats.clusters_kpi_erbs_eutrancellfdd_v as dt
+            where cluster_id = ${cluster}
+            order by date_id
+        `;
+    }
+
+    if (tableName === 'dc_e_erbs_eutrancellrelation_raw') {
+        return await sql`
+            select * from dnb.hourly_stats.clusters_kpi_erbs_eutrancellrelation as dt
+            where cluster_id = ${cluster}
+            order by date_id
+            `;
+    }
+
+}
+
 
 module.exports = {
     getCellHourlyStatsNR,
@@ -211,5 +288,7 @@ module.exports = {
     getRegionHourlyStatsNR,
     getRegionHourlyStatsLTE,
     getRegionHourlyStatsNRFlex,
-    getRegionHourlyStatsLTEFlex
+    getRegionHourlyStatsLTEFlex,
+    getClusterHourlyStatsNR,
+    getClusterHourlyStatsLTE,
 };
