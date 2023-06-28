@@ -31,7 +31,7 @@ app.get('/node/', function (req, res) {
 // app.use('/node/vscode', createProxyMiddleware({
 //         changeOrigin: true,
 //         prependPath: false,
-//         target: "http://localhost:8000",
+//         target: "http://localhost:8080",
 //         ws: true,
 //         logLevel: 'debug',
 //         pathRewrite: {

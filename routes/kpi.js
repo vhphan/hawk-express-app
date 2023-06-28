@@ -13,7 +13,8 @@ const {
     getRegionDailyStatsLTEFlex,
     getCellsList,
     getClustersList,
-    getClusterDailyStatsNR
+    getClusterDailyStatsNR,
+    getClusterDailyStatsLTE,
 
 
 } = require("../controllers/kpi");
@@ -28,6 +29,7 @@ const {
 } = require("../controllers/kpiHourly");
 const asyncHandler = require("../middleware/async");
 const { kpiList, kpiListFlex, mobileOperators } = require("../configs/kpiList");
+const { cache6h } = require("../middleware/cache");
 
 // log full url for every request
 router.use((req, res, next) => {
@@ -230,7 +232,7 @@ router.get('/cellsList', asyncHandler(async (req, res) => {
 
 }));
 
-router.get('/clustersList', asyncHandler(async (req, res) => {
+router.get('/clustersList', cache6h, asyncHandler(async (req, res) => {
 
     const results = await getClustersList();
     res.json({

@@ -346,3 +346,9 @@ order by region, date_id;
 
 select distinct "Cluster_ID" from dnb.rfdb.cell_mapping;
 
+
+
+-- get all materialized views in a schema
+
+select matviewname from pg_matviews where schemaname = 'daily_stats';
+
