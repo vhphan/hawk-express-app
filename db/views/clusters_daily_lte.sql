@@ -9,7 +9,7 @@ with dt as (
     WHERE "Region" is not null
     AND t1."date_id" >= df_dpm.on_board_date::timestamp
 )
-select
+select 
 date_id,
 "Cluster_ID" as cluster_id,
 100 * sum("call_setup_success_rate_nom")|||sum("call_setup_success_rate_den")  as  "call_setup_success_rate" ,
@@ -49,6 +49,7 @@ group by "date_id", "Cluster_ID"
 
 create unique index on dnb.daily_stats.clusters_kpi_erbs_eutrancellfdd(date_id, cluster_id);
 
+--erbs_eutrancellrelation
 drop materialized view if exists dnb.daily_stats.clusters_kpi_erbs_eutrancellrelation;
 create materialized view dnb.daily_stats.clusters_kpi_erbs_eutrancellrelation as
 with dt as (
@@ -71,6 +72,7 @@ group by "date_id", "Cluster_ID"
 
 create unique index on dnb.daily_stats.clusters_kpi_erbs_eutrancellrelation(date_id, cluster_id);
 
+--erbs_eutrancellfdd_v
 create materialized view daily_stats.clusters_kpi_erbs_eutrancellfdd_v as
 select
 date_id,
@@ -89,11 +91,11 @@ INNER JOIN dnb.rfdb.cell_mapping as cm on cm."Cellname" = dt."eutrancellfdd"
     WHERE "Cluster_ID" is not null
     GROUP BY date_id, "Cluster_ID";
 
-create unique index on dnb.daily_stats.clusters_kpi_erbs_eutrancellfdd_v(date_id, cluster_id);
+create unique index on hourly_stats.kpi_erbs_eutrancellfdd(date_id, cluster_id);
+create unique index on hourly_stats.kpi_erbs_eutrancellrelation(date_id, cluster_id);
+create unique index on hourly_stats.kpi_erbs_eutrancellfdd_v(date_id, cluster_id);
 
 refresh materialized view concurrently dnb.daily_stats.clusters_kpi_erbs_eutrancellfdd;
 refresh materialized view concurrently dnb.daily_stats.clusters_kpi_erbs_eutrancellrelation;
 refresh materialized view concurrently dnb.daily_stats.clusters_kpi_erbs_eutrancellfdd_v;
-
-
 

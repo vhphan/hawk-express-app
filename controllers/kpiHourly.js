@@ -107,7 +107,7 @@ const getCellHourlyStatsNR = async (cellId, tableName) => {
 
 const getCellHourlyStatsLTE = async (tableName) => {
 
-    if (tableName == 'dc_e_erbs_eutrancellfdd_day'){
+    if (tableName == 'dc_e_erbs_eutrancellfdd_day') {
 
     }
 
@@ -280,6 +280,36 @@ const getClusterHourlyStatsLTE = async (tableName, cluster) => {
     }
 
 }
+const getClusterHourlyStatsNRFlex = async (tableName) => {
+
+    if (tableName === 'dc_e_nr_events_nrcellcu_flex_raw') {
+        return await sql`
+            select * from dnb.hourly_stats.clusters_kpi_nrcellcu_flex as dt order by date_id
+        `;
+    }
+
+    if (tableName === 'dc_e_nr_events_nrcelldu_flex_raw') {
+        return await sql`
+            select * from dnb.hourly_stats.clusters_kpi_nrcelldu_flex as dt order by date_id
+        `;
+    }
+
+
+    throw new Error('Invalid table name for NR cluster hourly stats; ' + tableName);
+
+}
+
+
+const getClusterHourlyStatsLTEFlex = async (tableName) => {
+    if (tableName === 'dc_e_erbs_eutrancellfdd_flex_raw') {
+        return await sql`
+            select * from dnb.hourly_stats.clusters_kpi_eutrancellfdd_flex as dt order by date_id
+        `;
+    }
+
+    throw new Error('Invalid table name for LTE cluster daily stats; ' + tableName);
+};
+
 
 
 module.exports = {
@@ -291,4 +321,6 @@ module.exports = {
     getRegionHourlyStatsLTEFlex,
     getClusterHourlyStatsNR,
     getClusterHourlyStatsLTE,
+    getClusterHourlyStatsNRFlex,
+    getClusterHourlyStatsLTEFlex
 };

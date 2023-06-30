@@ -498,6 +498,36 @@ const getClusterDailyStatsLTE = async (tableName, cluster) => {
 
 }
 
+
+const getClusterDailyStatsNRFlex = async (tableName) => {
+
+    if (tableName === 'dc_e_nr_events_nrcellcu_flex_day') {
+        return await sql`
+            select * from dnb.daily_stats.clusters_kpi_nrcellcu_flex as dt order by date_id
+        `;
+    }
+
+    if (tableName === 'dc_e_nr_events_nrcelldu_flex_day') {
+        return await sql`
+            select * from dnb.daily_stats.clusters_kpi_nrcelldu_flex as dt order by date_id
+        `;
+    }
+
+
+    throw new Error('Invalid table name for NR cluster flex daily stats; ' + tableName);
+
+}
+
+const getClusterDailyStatsLTEFlex = async (tableName) => {
+    if (tableName === 'dc_e_erbs_eutrancellfdd_flex_day') {
+        return await sql`
+            select * from dnb.daily_stats.clusters_kpi_eutrancellfdd_flex as dt order by date_id
+        `;
+    }
+
+    throw new Error('Invalid table name for LTE cluster flex daily stats; ' + tableName);
+};
+
 module.exports = {
     getCellDailyStatsNR,
     getCellDailyStatsLTE,
@@ -517,4 +547,6 @@ module.exports = {
     getClusterDailyStatsNR,
     getClusterDailyStatsLTE,
     getCellDailyStatsLTE,
+    getClusterDailyStatsNRFlex,
+    getClusterDailyStatsLTEFlex
 }

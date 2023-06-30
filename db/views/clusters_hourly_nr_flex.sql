@@ -1,6 +1,6 @@
-drop materialized view if exists hourly_stats.kpi_nrcellcu_flex;
-
-create materialized view hourly_stats.kpi_nrcellcu_flex as
+--nrcellcu_flex
+drop materialized view if exists hourly_stats.clusters_kpi_nrcellcu_flex;
+create materialized view hourly_stats.clusters_kpi_nrcellcu_flex as
 with dt as (
     select * from dnb.hourly_stats.dc_e_nr_events_nrcellcu_flex_raw as t1
         INNER JOIN dnb.rfdb.cell_mapping as cm 
@@ -15,26 +15,29 @@ with dt as (
 )
 SELECT
 date_id,
-"Region" as region,
+"Cluster_ID" as cluster_id,
 mobile_operator,
 100 * sum("intra-sgnb_pscell_change_success_nom")|||sum("intra-sgnb_pscell_change_success_den")  as  "intra-sgnb_pscell_change_success" ,
 100 * sum("inter-sgnb_pscell_change_success_nom")|||sum("inter-sgnb_pscell_change_success_den")  as  "inter-sgnb_pscell_change_success" ,
 100 * sum("5g_ho_success_rate_dnb_5g_to_dnb_nom")|||sum("5g_ho_success_rate_dnb_5g_to_dnb_den")  as  "5g_ho_success_rate_dnb_5g_to_dnb" ,
 100 * sum("inter_rat_ho_success_rate_dnb_5g_to_mno_4g_nom")|||sum("inter_rat_ho_success_rate_dnb_5g_to_mno_4g_den")  as  "inter_rat_ho_success_rate_dnb_5g_to_mno_4g",
-100 * sum("endc_sr_nom ")|||sum("endc_sr_den ")  as  "endc_sr" ,
-100 * sum("erab_drop_nom ")|||sum("erab_drop_den ")  as  "erab_drop" ,
+100 * sum("endc_sr_nom")|||sum("endc_sr_den")  as  "endc_sr" ,
+100 * sum("erab_drop_nom")|||sum("erab_drop_den")  as  "erab_drop" ,
 sum(max_rrc_connected_user_endc) as max_rrc_connected_user_endc,
 sum(eps_fallback_attempt) as eps_fallback_attempt 
 from dt
-group by date_id, mobile_operator, rollup("Region")
-order by region, date_id;
+where "Cluster_ID" is not null
+group by date_id, mobile_operator, cluster_id
+order by cluster_id, date_id;
 
-create unique index on hourly_stats.kpi_nrcellcu_flex(date_id, region, mobile_operator);
+--nrcellcu_flex
+create unique index on hourly_stats.clusters_kpi_nrcellcu_flex(date_id, cluster_id, mobile_operator);
 
 SELECT * FROM pg_indexes WHERE tablename = 'dc_e_nr_events_nrcellcu_flex_raw';
 
-drop materialized view if exists hourly_stats.kpi_nrcelldu_flex;
-create materialized view hourly_stats.kpi_nrcelldu_flex as
+--nrcelldu_flex
+drop materialized view if exists hourly_stats.clusters_kpi_nrcelldu_flex;
+create materialized view hourly_stats.clusters_kpi_nrcelldu_flex as
 with dt as (
     select * from dnb.hourly_stats.dc_e_nr_events_nrcelldu_flex_raw as t1
         INNER JOIN dnb.rfdb.cell_mapping as cm 
@@ -49,7 +52,7 @@ with dt as (
 )
 SELECT
 date_id,
-"Region" as region,
+"Cluster_ID" as cluster_id,
 mobile_operator,
 sum("ul_traffic_volume_nom")|||(1024*1024*1024)  as  "ul_traffic_volume" ,
 sum("dl_traffic_volume_nom")|||(1024*1024*1024)  as  "dl_traffic_volume" ,
@@ -63,21 +66,14 @@ sum("dl_traffic_volume_nom")|||(1024*1024*1024)  as  "dl_traffic_volume" ,
 sum("dl_user_throughput_nom")|||sum("dl_user_throughput_den")  as  "dl_user_throughput" ,
 sum("ul_user_throughput_nom")|||sum("ul_user_throughput_den")  as  "ul_user_throughput" 
 from dt
-group by date_id, mobile_operator, rollup("Region")
-order by region, date_id;
+group by date_id, mobile_operator, cluster_id
+order by cluster_id, date_id;
 
-create unique index on hourly_stats.kpi_nrcelldu_flex(date_id, region, mobile_operator);
+--nrcelldu_flex
+create unique index on hourly_stats.clusters_kpi_nrcelldu_flex(date_id, cluster_id, mobile_operator);
 
-drop materialized view if exists hourly_stats.kpi_nrcellfdd_flex;
+drop materialized view if exists hourly_stats.clusters_kpi_nrcellfdd_flex;
 
-
-create unique index on hourly_stats.kpi_eutrancellfdd_flex(date_id, region, mobile_operator);
-
-refresh materialized view concurrently hourly_stats.kpi_nrcelldu_flex;
-refresh materialized view concurrently hourly_stats.kpi_nrcellcu_flex;
+refresh materialized view concurrently hourly_stats.clusters_kpi_nrcelldu_flex;
+refresh materialized view concurrently hourly_stats.clusters_kpi_nrcellcu_flex;
 -- refresh materialized view concurrently hourly_stats.kpi_eutrancellfdd_flex;
-
-select * from pg_indexes where tablename = 'kpi_nrcelldu_flex';
-
-
-

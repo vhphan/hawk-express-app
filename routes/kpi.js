@@ -16,6 +16,8 @@ const {
     getClustersList,
     getClusterDailyStatsNR,
     getClusterDailyStatsLTE,
+    getClusterDailyStatsNRFlex,
+    getClusterDailyStatsLTEFlex
 
 } = require("../controllers/kpi");
 const {
@@ -28,6 +30,8 @@ const {
     getCellHourlyStatsLTE,
     getClusterHourlyStatsNR,
     getClusterHourlyStatsLTE,
+    getClusterHourlyStatsNRFlex,
+    getClusterHourlyStatsLTEFlex
 
 } = require("../controllers/kpiHourly");
 const asyncHandler = require("../middleware/async");
@@ -302,10 +306,64 @@ router.get('/hourlyStatsCluster', asyncHandler(async (req, res) => {
 
 }));
 
+
+router.get('/dailyStatsClusterFlex', asyncHandler(async (req, res) => {
+
+    const { tech, cluster } = req.query;
+
+    const promises = flexTables[tech].map((table) => {
+        if (tech === 'nr') return getClusterDailyStatsNRFlex(table)
+        if (tech === 'lte') return getClusterDailyStatsLTEFlex(table)
+    });
+
+    const results = await compileResultsKpiArraysFlex(promises, tech, cluster, 'cluster');
+
+    res.json({
+        success: true,
+        data: results,
+        meta: {
+            time: new Date(),
+            cluster,
+            tech,
+        }
+    });
+
+}));
+
+
+router.get('/hourlyStatsClusterFlex', asyncHandler(async (req, res) => {
+
+    const { tech, cluster } = req.query;
+
+    const promises = flexTablesHourly[tech].map((table) => {
+        if (tech === 'nr') return getClusterHourlyStatsNRFlex(table)
+        if (tech === 'lte') return getClusterHourlyStatsLTEFlex(table)
+    });
+
+    const results = await compileResultsKpiArraysFlex(promises, tech, cluster, 'cluster');
+
+    res.json({
+        success: true,
+        data: results,
+        meta: {
+            time: new Date(),
+            cluster,
+            tech,
+        }
+    });
+
+}));
+
+
 module.exports = router;
 
 
+
+
+
+//---------------------------------------------------------------------------------------------------------------------------
 // functions
+//---------------------------------------------------------------------------------------------------------------------------
 // compile results from promises
 async function compileResults(promises, tech) {
     const results = await Promise.all(promises);
