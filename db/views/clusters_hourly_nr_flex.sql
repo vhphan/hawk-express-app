@@ -107,3 +107,4 @@ create unique index on hourly_stats.clusters_kpi_nrcelldu_flex(date_id, cluster_
 refresh materialized view concurrently hourly_stats.clusters_kpi_nrcelldu_flex;
 
 -- refresh materialized view concurrently hourly_stats.kpi_eutrancellfdd_flex;
+

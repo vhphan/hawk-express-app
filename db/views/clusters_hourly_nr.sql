@@ -114,6 +114,7 @@ GROUP by
 "Cluster_ID"
 ;
 
+SELECT DISTINCT date_id FROM hourly_stats.kpi_vpp_rpuserplanelink_v order by date_id;
 
 drop materialized view if exists hourly_stats.clusters_kpi_vpp_rpuserplanelink_v;
 create materialized view hourly_stats.clusters_kpi_vpp_rpuserplanelink_v as
@@ -121,11 +122,11 @@ with dt as (
     select * from (
         select *, split_part(ne_name, '_', 1) as site_id from dnb.hourly_stats.dc_e_vpp_rpuserplanelink_v_raw
         ) as t1
-        INNER JOIN rfdb.site_mapping as sm 
+        INNER JOIN rfdb.clusters_site_mapping as sm 
             on sm."SITEID" = t1."site_id"
         INNER JOIN dnb.rfdb.df_dpm
             on sm."SITEID" = df_dpm.site_id
-    WHERE "Cluster_ID" is not null
+    -- WHERE "Region" is not null
     AND t1."date_id" >= df_dpm.on_board_date::timestamp
     AND t1."date_id" > now() - interval '14 days'
 )
@@ -136,8 +137,33 @@ date_id,
 100 * sum("packet_loss_ul_nom")|||sum("packet_loss_ul_den")  as  "packet_loss_ul"
 from dt
     where "Cluster_ID" is not null
-    GROUP BY "date_id", "Cluster_ID"
-    ;
+    GROUP BY date_id, cluster_id
+    ORDER BY cluster_id, date_id;
+
+SELECT DISTINCT date_id FROM hourly_stats.dc_e_erbsg2_mpprocessingresource_v_raw ORDER BY date_id DESC;
+
+-- drop materialized view if exists hourly_stats.clusters_kpi_erbsg2_mpprocessingresource_v;
+-- create materialized view hourly_stats.clusters_kpi_erbsg2_mpprocessingresource_v as
+-- with dt as (
+--     select * from (  
+--         select *, split_part(erbs, '_', 1) as site_id from dnb.hourly_stats.dc_e_erbsg2_mpprocessingresource_v_raw
+--         ) as t1
+--         INNER JOIN dnb.rfdb.site_mapping as sm 
+--         on sm."SITEID" = t1."site_id"
+--         INNER JOIN dnb.rfdb.df_dpm
+--         on sm."SITEID" = df_dpm.site_id
+--             WHERE "Region" is not null
+--     AND t1."date_id" >= df_dpm.on_board_date::timestamp
+--     AND t1."date_id" > now() - interval '14 days'
+--  ) 
+-- select
+--     date_id,
+--     "Cluster_ID" as cluster_id,
+--     sum("gnodeb_cpu_load_nom")|||sum("gnodeb_cpu_load_den")  as  "gnodeb_cpu_load"
+--     from
+--     dt
+--     where "Region" is not null
+--     GROUP BY date_id, "Cluster_ID";
 
 drop materialized view if exists hourly_stats.clusters_kpi_erbsg2_mpprocessingresource_v;
 create materialized view hourly_stats.clusters_kpi_erbsg2_mpprocessingresource_v as
@@ -147,11 +173,11 @@ with dt as (
         select *, split_part(erbs, '_', 1) as site_id from dnb.hourly_stats.dc_e_erbsg2_mpprocessingresource_v_raw
         
         ) as t1
-        INNER JOIN dnb.rfdb.site_mapping as sm 
+        INNER JOIN dnb.rfdb.clusters_site_mapping as sm 
         on sm."SITEID" = t1."site_id"
         INNER JOIN dnb.rfdb.df_dpm
         on sm."SITEID" = df_dpm.site_id
-            WHERE "Cluster_ID" is not null
+            -- WHERE "Region" is not null
     AND t1."date_id" >= df_dpm.on_board_date::timestamp
     AND t1."date_id" > now() - interval '14 days'
  ) 
