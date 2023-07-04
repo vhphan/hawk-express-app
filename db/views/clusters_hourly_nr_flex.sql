@@ -1,5 +1,19 @@
-UPDATE dnb.hourly_stats.dc_e_nr_events_nrcellcu_flex_raw
-SET date_id = date_id + INTERVAL '14 days';
+--UPDATE dnb.hourly_stats.dc_e_nr_events_nrcellcu_flex_raw
+--SET date_id = date_id + INTERVAL '14 days';
+
+SELECT DISTINCT date_id FROM hourly_stats.dc_e_erbs_eutrancellfdd_flex_raw;
+
+SELECT DISTINCT date_id FROM hourly_stats.dc_e_nr_events_nrcellcu_flex_raw;
+
+
+DELETE FROM hourly_stats.dc_e_nr_events_nrcellcu_flex_raw
+WHERE date_id <= '2023-06-24';
+
+SELECT DISTINCT date_id from hourly_stats.dc_e_nr_events_nrcellcu_flex_raw order by date_id desc;
+
+SELECT date_id, COUNT(*) AS COUNT
+FROM hourly_stats.dc_e_nr_events_nrcellcu_flex_raw
+GROUP BY date_id;
 
 --nrcellcu_flex
 drop materialized view if exists hourly_stats.clusters_kpi_nrcellcu_flex;
@@ -40,8 +54,16 @@ create unique index on hourly_stats.clusters_kpi_nrcellcu_flex(date_id, cluster_
 
 SELECT * FROM pg_indexes WHERE tablename = 'dc_e_nr_events_nrcellcu_flex_raw';
 
-UPDATE dnb.hourly_stats.dc_e_nr_events_nrcelldu_flex_raw
-SET date_id = date_id + INTERVAL '14 days';
+refresh materialized view concurrently hourly_stats.clusters_kpi_nrcellcu_flex;
+
+SELECT DISTINCT date_id FROM hourly_stats.dc_e_nr_events_nrcelldu_flex_raw ORDER BY date_id DESC;
+
+DELETE FROM hourly_stats.dc_e_nr_events_nrcelldu_flex_raw
+WHERE date_id > '2023-07-09';
+
+SELECT date_id, COUNT(*) AS COUNT
+FROM hourly_stats.dc_e_nr_events_nrcelldu_flex_raw
+GROUP BY date_id;
 
 --nrcelldu_flex
 drop materialized view if exists hourly_stats.clusters_kpi_nrcelldu_flex;
@@ -80,8 +102,8 @@ order by cluster_id, date_id;
 --nrcelldu_flex
 create unique index on hourly_stats.clusters_kpi_nrcelldu_flex(date_id, cluster_id, mobile_operator);
 
-drop materialized view if exists hourly_stats.clusters_kpi_nrcellfdd_flex;
+--drop materialized view if exists hourly_stats.clusters_kpi_nrcellfdd_flex;
 
 refresh materialized view concurrently hourly_stats.clusters_kpi_nrcelldu_flex;
-refresh materialized view concurrently hourly_stats.clusters_kpi_nrcellcu_flex;
+
 -- refresh materialized view concurrently hourly_stats.kpi_eutrancellfdd_flex;
