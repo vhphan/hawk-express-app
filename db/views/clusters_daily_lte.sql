@@ -46,9 +46,6 @@ where "Cluster_ID" is not null
 group by "date_id", "Cluster_ID"
 ;
 
-
-create unique index on dnb.daily_stats.clusters_kpi_erbs_eutrancellfdd(date_id, cluster_id);
-
 --erbs_eutrancellrelation
 drop materialized view if exists dnb.daily_stats.clusters_kpi_erbs_eutrancellrelation;
 create materialized view dnb.daily_stats.clusters_kpi_erbs_eutrancellrelation as
@@ -69,10 +66,8 @@ from dt
 group by "date_id", "Cluster_ID"
 ;
 
-
-create unique index on dnb.daily_stats.clusters_kpi_erbs_eutrancellrelation(date_id, cluster_id);
-
 --erbs_eutrancellfdd_v
+drop materialized view if exists dnb.daily_stats.clusters_kpi_erbs_eutrancellfdd_v;
 create materialized view daily_stats.clusters_kpi_erbs_eutrancellfdd_v as
 select
 date_id,
@@ -91,9 +86,9 @@ INNER JOIN dnb.rfdb.cell_mapping as cm on cm."Cellname" = dt."eutrancellfdd"
     WHERE "Cluster_ID" is not null
     GROUP BY date_id, "Cluster_ID";
 
-create unique index on hourly_stats.kpi_erbs_eutrancellfdd(date_id, cluster_id);
-create unique index on hourly_stats.kpi_erbs_eutrancellrelation(date_id, cluster_id);
-create unique index on hourly_stats.kpi_erbs_eutrancellfdd_v(date_id, cluster_id);
+create unique index on daily_stats.clusters_kpi_erbs_eutrancellfdd(date_id, cluster_id);
+create unique index on daily_stats.clusters_kpi_erbs_eutrancellrelation(date_id, cluster_id);
+create unique index on daily_stats.clusters_kpi_erbs_eutrancellfdd_v(date_id, cluster_id);
 
 refresh materialized view concurrently dnb.daily_stats.clusters_kpi_erbs_eutrancellfdd;
 refresh materialized view concurrently dnb.daily_stats.clusters_kpi_erbs_eutrancellrelation;

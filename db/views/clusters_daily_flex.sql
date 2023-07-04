@@ -19,32 +19,17 @@ mobile_operator,
 100 * sum("inter-sgnb_pscell_change_success_nom")|||sum("inter-sgnb_pscell_change_success_den")  as  "inter-sgnb_pscell_change_success" ,
 100 * sum("5g_ho_success_rate_dnb_5g_to_dnb_nom")|||sum("5g_ho_success_rate_dnb_5g_to_dnb_den")  as  "5g_ho_success_rate_dnb_5g_to_dnb" ,
 100 * sum("inter_rat_ho_success_rate_dnb_5g_to_mno_4g_nom")|||sum("inter_rat_ho_success_rate_dnb_5g_to_mno_4g_den")  as  "inter_rat_ho_success_rate_dnb_5g_to_mno_4g",
-100 * sum("endc_sr_nom ")|||sum("endc_sr_den ")  as  "endc_sr" ,
-100 * sum("erab_drop_nom ")|||sum("erab_drop_den ")  as  "erab_drop" ,
+100 * sum("endc_sr_nom")|||sum("endc_sr_den")  as  "endc_sr" ,
+100 * sum("erab_drop_nom")|||sum("erab_drop_den")  as  "erab_drop" ,
 sum(max_rrc_connected_user_endc) as max_rrc_connected_user_endc,
 sum(eps_fallback_attempt) as eps_fallback_attempt
 from dt
 group by date_id, mobile_operator, cluster_id
 order by cluster_id, date_id;
 
--- USE? 
-SELECT * FROM pg_indexes WHERE tablename = 'dc_e_nr_events_nrcellcu_flex_day';
-
--- USE? 
-create index on dnb.daily_stats.dc_e_nr_events_nrcellcu_flex_day (flex_filtername);
-
--- USE? 
-create index on dnb.daily_stats.dc_e_nr_events_nrcellcu_flex_day (nrcellcu);
-
 create unique index on dnb.daily_stats.clusters_kpi_nrcellcu_flex (date_id, cluster_id, mobile_operator);
 
--- USE? 
-select * from dnb.daily_stats.dc_e_nr_events_nrcelldu_flex_day order by random() limit 5;
-
 drop materialized view if exists daily_stats.clusters_kpi_nrcelldu_flex;
-
--- USE? 
-select count(*) from dnb.daily_stats.dc_e_nr_events_nrcelldu_flex_day;
 
 drop materialized view if exists daily_stats.clusters_kpi_nrcelldu_flex;
 create materialized view daily_stats.clusters_kpi_nrcelldu_flex as
@@ -77,14 +62,6 @@ sum("ul_user_throughput_nom")|||sum("ul_user_throughput_den")  as  "ul_user_thro
 from dt
 group by date_id, mobile_operator, cluster_id
 order by cluster_id, date_id;
-
-select * from pg_indexes where tablename = 'dc_e_nr_events_nrcelldu_flex_day';
-
--- USE? 
-create index on dnb.daily_stats.clusters_dc_e_nr_events_nrcelldu_flex_day (flex_filtername);
-
--- USE? 
-create index on dnb.daily_stats.clusters_dc_e_nr_events_nrcelldu_flex_day (nrcelldu);
 
 create unique index on dnb.daily_stats.clusters_kpi_nrcelldu_flex (date_id, cluster_id, mobile_operator);
 
@@ -129,23 +106,6 @@ from dt
 group by date_id, mobile_operator, cluster_id
 order by cluster_id, date_id;
 
--- USE? 
-select * from dnb.daily_stats.dc_e_erbs_eutrancellfdd_flex_day 
-where flex_filtername ilike '%99'
-order by random() limit 5;
-
--- USE? 
-select * from dnb.daily_stats.dc_e_erbs_eutrancellfdd_flex_day 
-where flex_filtername not ilike '%99'
-order by random() limit 5;
-
--- USE? 
-select * from pg_indexes where tablename = 'dc_e_erbs_eutrancellfdd_flex_day';
-
--- USE? 
-create index on dnb.daily_stats.dc_e_erbs_eutrancellfdd_flex_day (eutrancellfdd);
-create index on dnb.daily_stats.dc_e_erbs_eutrancellfdd_flex_day (flex_filtername);
-
 
 create unique index on dnb.daily_stats.clusters_kpi_eutrancellfdd_flex (date_id, cluster_id, mobile_operator);
 
@@ -155,38 +115,3 @@ refresh materialized view concurrently daily_stats.clusters_kpi_nrcelldu_flex;
 
 
 
-select * from daily_stats.clusters_kpi_eutrancellfdd_flex limit 5;
-
-
-
-
-
-
-
-select * from information_schema.tables where table_schema = 'daily_stats' order by table_name;
-
--- USE? 
-select ul_modulation_den from daily_stats.clusters_dc_e_erbs_eutrancellfdd_day order by random() limit 1000;
-
-
-
-
-
-
-
-
-
--- select active process
-select * from pg_stat_activity where state = 'active';
-
-select pid, pg_blocking_pids(pid) as blocked_by, query as blocked_query
-from pg_stat_activity
-where pg_blocking_pids(pid)::text != '{}';
-
-select * from pg_stat_activity where pid=2459672;
-
--- terminate process with pid
-
-select pg_terminate_backend(2459672);
-
-VACUUM (VERBOSE, ANALYZE) daily_stats.dc_e_nr_events_nrcelldu_flex_day;
