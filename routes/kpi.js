@@ -312,8 +312,8 @@ router.get('/dailyStatsClusterFlex', asyncHandler(async (req, res) => {
     const { tech, cluster } = req.query;
 
     const promises = flexTables[tech].map((table) => {
-        if (tech === 'nr') return getClusterDailyStatsNRFlex(table)
-        if (tech === 'lte') return getClusterDailyStatsLTEFlex(table)
+        if (tech === 'nr') return getClusterDailyStatsNRFlex(table, cluster)
+        if (tech === 'lte') return getClusterDailyStatsLTEFlex(table, cluster)
     });
 
     const results = await compileResultsKpiArraysFlex(promises, tech, cluster, 'cluster');
@@ -336,8 +336,8 @@ router.get('/hourlyStatsClusterFlex', asyncHandler(async (req, res) => {
     const { tech, cluster } = req.query;
 
     const promises = flexTablesHourly[tech].map((table) => {
-        if (tech === 'nr') return getClusterHourlyStatsNRFlex(table)
-        if (tech === 'lte') return getClusterHourlyStatsLTEFlex(table)
+        if (tech === 'nr') return getClusterHourlyStatsNRFlex(table, cluster)
+        if (tech === 'lte') return getClusterHourlyStatsLTEFlex(table, cluster)
     });
 
     const results = await compileResultsKpiArraysFlex(promises, tech, cluster, 'cluster');

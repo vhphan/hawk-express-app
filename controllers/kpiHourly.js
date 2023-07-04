@@ -280,17 +280,22 @@ const getClusterHourlyStatsLTE = async (tableName, cluster) => {
     }
 
 }
-const getClusterHourlyStatsNRFlex = async (tableName) => {
+
+const getClusterHourlyStatsNRFlex = async (tableName, cluster) => {
 
     if (tableName === 'dc_e_nr_events_nrcellcu_flex_raw') {
         return await sql`
-            select * from dnb.hourly_stats.clusters_kpi_nrcellcu_flex as dt order by date_id
+            select * from dnb.hourly_stats.clusters_kpi_nrcellcu_flex
+            where cluster_id = ${cluster}
+            order by date_id
         `;
     }
 
     if (tableName === 'dc_e_nr_events_nrcelldu_flex_raw') {
         return await sql`
-            select * from dnb.hourly_stats.clusters_kpi_nrcelldu_flex as dt order by date_id
+            select * from dnb.hourly_stats.clusters_kpi_nrcelldu_flex
+            where cluster_id = ${cluster}
+            order by date_id
         `;
     }
 
@@ -300,10 +305,12 @@ const getClusterHourlyStatsNRFlex = async (tableName) => {
 }
 
 
-const getClusterHourlyStatsLTEFlex = async (tableName) => {
+const getClusterHourlyStatsLTEFlex = async (tableName, cluster) => {
     if (tableName === 'dc_e_erbs_eutrancellfdd_flex_raw') {
         return await sql`
-            select * from dnb.hourly_stats.clusters_kpi_eutrancellfdd_flex as dt order by date_id
+            select * from dnb.hourly_stats.clusters_kpi_eutrancellfdd_flex
+            where cluster_id = ${cluster}
+            order by date_id
         `;
     }
 

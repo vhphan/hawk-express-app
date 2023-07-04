@@ -499,17 +499,21 @@ const getClusterDailyStatsLTE = async (tableName, cluster) => {
 }
 
 
-const getClusterDailyStatsNRFlex = async (tableName) => {
+const getClusterDailyStatsNRFlex = async (tableName, cluster) => {
 
     if (tableName === 'dc_e_nr_events_nrcellcu_flex_day') {
         return await sql`
-            select * from dnb.daily_stats.clusters_kpi_nrcellcu_flex as dt order by date_id
+            select * from dnb.daily_stats.clusters_kpi_nrcellcu_flex
+            where cluster_id = ${cluster}
+            order by date_id
         `;
     }
 
     if (tableName === 'dc_e_nr_events_nrcelldu_flex_day') {
         return await sql`
-            select * from dnb.daily_stats.clusters_kpi_nrcelldu_flex as dt order by date_id
+            select * from dnb.daily_stats.clusters_kpi_nrcelldu_flex
+            where cluster_id = ${cluster}
+            order by date_id
         `;
     }
 
