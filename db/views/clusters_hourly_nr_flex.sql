@@ -1,3 +1,6 @@
+UPDATE dnb.hourly_stats.dc_e_nr_events_nrcellcu_flex_raw
+SET date_id = date_id + INTERVAL '14 days';
+
 --nrcellcu_flex
 drop materialized view if exists hourly_stats.clusters_kpi_nrcellcu_flex;
 create materialized view hourly_stats.clusters_kpi_nrcellcu_flex as
@@ -30,10 +33,15 @@ where "Cluster_ID" is not null
 group by date_id, mobile_operator, cluster_id
 order by cluster_id, date_id;
 
+
+
 --nrcellcu_flex
 create unique index on hourly_stats.clusters_kpi_nrcellcu_flex(date_id, cluster_id, mobile_operator);
 
 SELECT * FROM pg_indexes WHERE tablename = 'dc_e_nr_events_nrcellcu_flex_raw';
+
+UPDATE dnb.hourly_stats.dc_e_nr_events_nrcelldu_flex_raw
+SET date_id = date_id + INTERVAL '14 days';
 
 --nrcelldu_flex
 drop materialized view if exists hourly_stats.clusters_kpi_nrcelldu_flex;

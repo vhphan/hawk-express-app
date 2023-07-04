@@ -19,9 +19,6 @@ SELECT string_agg( ''''||"eutrancellfdd"||'''' , ',') FROM (
     
     ) as t;
 
-"string_agg"
--- "'DAKIN0176_L7_0030','DQBTU0170_L7_0020','DBPET0819_L7_0020','DJJBR0375_L7_0020','DWKUL0685_L7_0020','DJSGT1178_L7_0010','DDKBR0133_L7_0010','DCPKN0618_L7_0020','DJJBR0317_L7_0010','DJKLJ1258_L7_0030','DQSIB0987_L7_0130','DBKLG0341_L7_0030','DAKIN0344_L7_0030','DJJBR0373_L7_0010','DWKUL0529_L7_0020','DPSPT0150_L7_0110','DQMIR0706_L7_0030','DDKBR0134_L7_0030','DPTML0336_L7_0020','DSBKI0325_L7_0030','DQMIR0695_L7_0020','DSBKI0338_L7_0020','DKKMD0268_L7_0030','DJBPH0117_L7_0020','DDTMR0397_L7_0020','DBGBK0087_L7_0030','DJLED1311_L7_0010','DBPET0917_L7_0010','DWPPJ0897_L7_0030','DQKCH0269_L7_0030'"
-
 
 with dt as (
     select * from dnb.hourly_stats.dc_e_erbs_eutrancellfdd_raw as t1
@@ -30,6 +27,7 @@ with dt as (
         on cm."SITEID" = df_dpm.site_id
     WHERE "Region" is not null
     AND t1."date_id" >= df_dpm.on_board_date::timestamp
+    AND t1."date_id" > now() - interval '14 days'   
 )
 select 
 date_id,
@@ -91,6 +89,7 @@ with dt as (
         on cm."SITEID" = df_dpm.site_id
     WHERE "Region" is not null
     AND t1."date_id" >= df_dpm.on_board_date::timestamp
+    AND t1."date_id" > now() - interval '14 days'   
 )
 select
 date_id,
@@ -121,6 +120,7 @@ with dt as (
         on cm."SITEID" = df_dpm.site_id
     WHERE "Region" is not null
     AND t1."date_id" >= df_dpm.on_board_date::timestamp
+    AND t1."date_id" > now() - interval '14 days'   
 )
 select date_id,
 sum("resource_block_utilizing_rate(dl)_nom")|||sum("resource_block_utilizing_rate(dl)_den")  as  "resource_block_utilizing_rate(dl)" ,

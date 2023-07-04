@@ -1,9 +1,26 @@
 UPDATE dnb.hourly_stats.dc_e_erbs_eutrancellfdd_flex_raw
-SET date_id = date_id + INTERVAL '14 days';
+SET date_id = date_id + INTERVAL '2 weeks'
+WHERE TRUE;
 
---eutrancellfdd_flex
-drop materialized view if exists hourly_stats.clusters_kpi_eutrancellfdd_flex;
-create materialized view hourly_stats.clusters_kpi_eutrancellfdd_flex as
+SELECT string_agg( ''''||"eutrancellfdd"||'''' , ',') FROM (
+    
+    select "eutrancellfdd" from
+    
+        (select distinct "eutrancellfdd" from hourly_stats.dc_e_erbs_eutrancellfdd_flex_raw) as t0
+    
+    order by random() limit 30
+    
+    ) as t;
+
+-- 'DQKCH0294_L7_0010','DBKLG0534_L7_0020','DBKSG0655_L7_0030','DWKUL0150_L7_0030','DBHSG0242_L7_0020',
+-- 'DJJBR0403_L7_0030','DWKUL0638_L7_0010','DWKUL0981_L7_0010','DQKCH0266_L7_0030','DQKCH0353_L7_0030',
+-- 'DJJBR0446_L7_0030','DJJBR0394_L7_0020','DBKLG0310_L7_0010','DKPDG0479_L7_0010','DBKSG0667_L7_0010',
+-- 'DBULG1754_L7_0010','DQMIR0746_L7_0010','DCBNT0004_L7_0130','DNSBN0353_L7_0010','DJJBR0739_L7_0010',
+-- 'DNSBN0206_L7_0020','DTKTG0206_L7_0010','DWKUL0553_L7_0010','DNSBN0229_L7_0020','DMMKT0187_L7_0020',
+-- 'DBKSG0680_L7_0010','DBKLG0355_L7_0020','DTKNR0381_L7_0030','DSLHD0469_L7_0020','DJKLJ1267_L7_0030'
+
+-- hourly_stats.kpi_eutrancellfdd_flex 
+
 with dt as (
     select * from dnb.hourly_stats.dc_e_erbs_eutrancellfdd_flex_raw as t1
         INNER JOIN dnb.rfdb.cell_mapping as cm 
@@ -14,11 +31,10 @@ with dt as (
             on ff.flex_filtername_eutrancellfdd2 = t1.flex_filtername
     WHERE "Region" is not null
     AND t1."date_id" >= df_dpm.on_board_date::timestamp
-    AND t1."date_id" > now() - interval '14 days' 
-    )
+    AND t1."date_id" > now() - interval '14 days'
+)
 SELECT
 date_id,
-"Cluster_ID" as cluster_id,
 mobile_operator,
 100 * sum("e-rab_setup_success_rate_nom")|||sum("e-rab_setup_success_rate_den")  as  "e-rab_setup_success_rate" ,
 100 * sum("erab_drop_call_rate_nom")|||sum("erab_drop_call_rate_den")  as  "erab_drop_call_rate" ,
@@ -41,16 +57,13 @@ sum("ul_data_volume_nom")|||(1024*1024*1024)  as  "ul_data_volume" ,
 100 * sum("dl_64qam_nom") ||| sum("dl_modulation_den") as  "dl_64qam"  , 
 100 * sum("dl_256qam_nom") ||| sum("dl_modulation_den") as  "dl_256qam" 
 from dt
-where "Cluster_ID" is not null
-group by date_id, mobile_operator, cluster_id
-
-
-
-
-create unique index on dnb.hourly_stats.clusters_kpi_eutrancellfdd_flex (date_id, cluster_id, mobile_operator);
-
-create unique index on dnb.hourly_stats.clusters_kpi_eutrancellfdd_flex (date_id, cluster_id, mobile_operator);
-
-refresh materialized view concurrently dnb.hourly_stats.clusters_kpi_eutrancellfdd_flex;
-
-
+INNER JOIN dnb.rfdb.cell_mapping as cm on cm."Cellname" = dt."eutrancellfdd"
+    WHERE cm."Cellname" IN (
+        -- list of cells from above
+        'DQKCH0294_L7_0010','DBKLG0534_L7_0020','DBKSG0655_L7_0030','DWKUL0150_L7_0030','DBHSG0242_L7_0020',
+        'DJJBR0403_L7_0030','DWKUL0638_L7_0010','DWKUL0981_L7_0010','DQKCH0266_L7_0030','DQKCH0353_L7_0030',
+        'DJJBR0446_L7_0030','DJJBR0394_L7_0020','DBKLG0310_L7_0010','DKPDG0479_L7_0010','DBKSG0667_L7_0010',
+        'DBULG1754_L7_0010','DQMIR0746_L7_0010','DCBNT0004_L7_0130','DNSBN0353_L7_0010','DJJBR0739_L7_0010',
+        'DNSBN0206_L7_0020','DTKTG0206_L7_0010','DWKUL0553_L7_0010','DNSBN0229_L7_0020','DMMKT0187_L7_0020',
+        'DBKSG0680_L7_0010','DBKLG0355_L7_0020','DTKNR0381_L7_0030','DSLHD0469_L7_0020','DJKLJ1267_L7_0030')
+    GROUP BY date_id,mobile_operator;

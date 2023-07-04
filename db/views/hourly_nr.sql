@@ -5,9 +5,9 @@ with dt as (
         INNER JOIN dnb.rfdb.cell_mapping as cm on cm."Cellname" = t1."nrcelldu"
         INNER JOIN dnb.rfdb.df_dpm
         on cm."SITEID" = df_dpm.site_id
-    WHERE "Region" is not null
-    AND t1."date_id" >= df_dpm.on_board_date::timestamp
-    AND t1."date_id" > now() - interval '14 days'
+    -- WHERE "Region" is not null
+    -- AND t1."date_id" >= df_dpm.on_board_date::timestamp
+    -- AND t1."date_id" > now() - interval '14 days'
 )
 select
 date_id,
