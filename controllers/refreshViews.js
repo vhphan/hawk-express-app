@@ -1,4 +1,11 @@
-const { refreshMaterializedViews, refreshMaterializedViewsHourly } = require("./kpi");
+const {
+    refreshMaterializedViews,
+    refreshMaterializedViewsHourly,
+    refreshMaterializedViewsClusters,
+    refreshMaterializedViewsHourlyClusters,
+} = require("./kpi");
 
-refreshMaterializedViews();
-refreshMaterializedViewsHourly()
+// refreshMaterializedViews();
+refreshMaterializedViewsHourly();
+// refreshMaterializedViewsClusters();
+refreshMaterializedViewsHourlyClusters()

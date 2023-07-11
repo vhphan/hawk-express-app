@@ -71,7 +71,7 @@ const searchFilesWithPatternAndMeContext = (dir, pattern, meContext) => {
 
 const searchFilesUsingGlob = (dateString, dateTimeString, meContext, fileType = '') => {
 
-    const globPattern = `/data4/*/CTR_LOGS/bot-*${dateString}*/CTR_Files/${dateString}/*${meContext}*/*${dateTimeString}*${fileType}*`;
+    const globPattern = `/data4/*/CTR_LOGS/bot-*/CTR_Files/${dateString}/*${meContext}*/*${dateTimeString}*${fileType}*`;
     const glob = require("glob");
     const files = glob.sync(globPattern);
     return files;

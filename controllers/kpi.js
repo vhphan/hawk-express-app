@@ -285,15 +285,31 @@ const getCellsList = async (tech, region, cellPartial) => {
 
     if (region === 'ALL') {
         return await sql`
-                select cell_id from dnb.daily_stats.cells_list
+                select cell_id from dnb.rfdb.cell_list
                 where cell_id ilike ${cellSubstring} and tech = ${tech}
                 order by cell_id LIMIT 200;
                 `;
     }
     return await sql`
-            select cell_id from dnb.daily_stats.cells_list
+            select cell_id from dnb.rfdb.cell_list
             where region ilike ${region} AND cell_id ilike ${cellSubstring} and tech = ${tech}
             ORDER BY cell_id LIMIT 200;
+            `;
+
+}
+
+const getSitesList = async (tech, region, sitePartial) => {
+
+    const siteSubstring = sitePartial === '' ? '%' : '%' + sitePartial + '%'
+
+    return await sql`
+            select site_id from dnb.rfdb.site_list
+            where
+            ${
+                region==='ALL' ? sql`` : sql`region ilike ${region} AND `
+            }
+            site_id ilike ${siteSubstring} and tech = ${tech}
+            ORDER BY site_id LIMIT 200;
             `;
 
 }
@@ -313,10 +329,14 @@ const refreshMaterializedViews = async () => {
     logger.info('Refreshing materialized views');
 
     // cells list
-
     await sql`
-    refresh materialized view concurrently dnb.daily_stats.cells_list;
+    refresh materialized view concurrently dnb.rfdb.cell_list;
     `;
+
+    // sites list
+    // await sql`
+    // refresh materialized view concurrently dnb.rfdb.site_list;
+    // `;
 
     // NR
     await sql`
@@ -360,6 +380,52 @@ const refreshMaterializedViews = async () => {
 
 };
 
+
+const refreshMaterializedViewsClusters = async () => {
+    logger.info('Refreshing materialized views for clusters');
+
+    // NR
+    await sql`
+    REFRESH MATERIALIZED VIEW CONCURRENTLY dnb.daily_stats.clusters_kpi_nr_nrcelldu;
+    `;
+    await sql`
+    REFRESH MATERIALIZED VIEW CONCURRENTLY dnb.daily_stats.clusters_kpi_nr_nrcellcu;
+    `;
+    await sql`
+    REFRESH MATERIALIZED VIEW CONCURRENTLY dnb.daily_stats.clusters_kpi_nr_nrcelldu_v;
+    `;
+    await sql`
+    REFRESH MATERIALIZED VIEW CONCURRENTLY dnb.daily_stats.clusters_kpi_erbsg2_mpprocessingresource_v;
+    `;
+    await sql`
+    REFRESH MATERIALIZED VIEW CONCURRENTLY dnb.daily_stats.clusters_kpi_vpp_rpuserplanelink_v;
+    `;
+
+    // FLEX
+    await sql`
+    refresh materialized view concurrently dnb.daily_stats.clusters_kpi_eutrancellfdd_flex;
+    `;
+    await sql`
+    refresh materialized view concurrently dnb.daily_stats.clusters_kpi_nrcellcu_flex;
+    `;
+    await sql`
+    refresh materialized view concurrently dnb.daily_stats.clusters_kpi_nrcelldu_flex;
+    `;
+
+    // LTE
+    await sql`
+    refresh materialized view concurrently dnb.daily_stats.clusters_kpi_erbs_eutrancellfdd;
+    `;
+    await sql`
+    refresh materialized view concurrently dnb.daily_stats.clusters_kpi_erbs_eutrancellrelation;
+    `;
+    await sql`
+    refresh materialized view concurrently dnb.daily_stats.clusters_kpi_erbs_eutrancellfdd_v;
+    `;
+    logger.info('Finished refreshing materialized views for clusters');
+
+};
+
 const refreshMaterializedViewsHourly = async () => {
     logger.info('Refreshing hourly materialized views');
     // NR
@@ -390,7 +456,6 @@ const refreshMaterializedViewsHourly = async () => {
     refresh materialized view concurrently dnb.hourly_stats.kpi_erbs_eutrancellfdd_v;
     `;
 
-
     // FLEX
     await sql`
     refresh materialized view concurrently dnb.hourly_stats.kpi_eutrancellfdd_flex;
@@ -401,6 +466,52 @@ const refreshMaterializedViewsHourly = async () => {
     await sql`
     refresh materialized view concurrently dnb.hourly_stats.kpi_nrcelldu_flex;
     `;
+
+    logger.info('Finished refreshing hourly materialized views');
+
+};
+
+const refreshMaterializedViewsHourlyClusters = async () => {
+    logger.info('Refreshing hourly materialized views for clusters');
+    // NR
+    await sql`
+    REFRESH MATERIALIZED VIEW CONCURRENTLY dnb.hourly_stats.clusters_kpi_nr_nrcelldu;
+    `;
+    await sql`
+    REFRESH MATERIALIZED VIEW CONCURRENTLY dnb.hourly_stats.clusters_kpi_nr_nrcellcu;
+    `;
+    await sql`
+    REFRESH MATERIALIZED VIEW CONCURRENTLY dnb.hourly_stats.clusters_kpi_nr_nrcelldu_v;
+    `;
+    await sql`
+    REFRESH MATERIALIZED VIEW CONCURRENTLY dnb.hourly_stats.clusters_kpi_erbsg2_mpprocessingresource_v;
+    `;
+    await sql`
+    REFRESH MATERIALIZED VIEW CONCURRENTLY dnb.hourly_stats.clusters_kpi_vpp_rpuserplanelink_v;
+    `;
+
+    // LTE
+    await sql`
+    refresh materialized view concurrently dnb.hourly_stats.clusters_kpi_erbs_eutrancellfdd;
+    `;
+    await sql`
+    refresh materialized view concurrently dnb.hourly_stats.clusters_kpi_erbs_eutrancellrelation;
+    `;
+    await sql`
+    refresh materialized view concurrently dnb.hourly_stats.clusters_kpi_erbs_eutrancellfdd_v;
+    `;
+
+    // FLEX
+    await sql`
+    refresh materialized view concurrently dnb.hourly_stats.clusters_kpi_eutrancellfdd_flex;
+    `;
+    await sql`
+    refresh materialized view concurrently dnb.hourly_stats.clusters_kpi_nrcellcu_flex;
+    `;
+    await sql`
+    refresh materialized view concurrently dnb.hourly_stats.clusters_kpi_nrcelldu_flex;
+    `;
+
     logger.info('Finished refreshing hourly materialized views');
 
 };
@@ -544,8 +655,11 @@ module.exports = {
     createCronToRefreshMaterializedViews,
     refreshMaterializedViews,
     refreshMaterializedViewsHourly,
+    refreshMaterializedViewsClusters,
+    refreshMaterializedViewsHourlyClusters,
 
     getCellsList,
+    getSitesList,
     getClustersList,
 
     getClusterDailyStatsNR,
